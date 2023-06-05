@@ -1,14 +1,33 @@
 <%- include('partials/header'); -%>
 
+<h1>Neuen Benutzer registrieren</h1>
+
+<% if (typeof status != 'undefined') { %>
+<div class="w3-panel w3-red">
+  <h3>Danger!</h3>
+  <p><%= status %></p>
+</div>
+<%}  %>
+
 <form action="/signup">
-  <h2>Sign up</h2>
-  <label for="email">Email</label>
-  <input type="text" name="email" required />
-  <div class="email error"></div>
-  <label for="password">Password</label>
-  <input type="password" name="password" required />
-  <div class="password error"></div>
-  <button>Sign up</button>
+
+  <label>Email*</label>
+  <input type="text" name="email" value="" class="w3-input" required>
+  <div class="w3-red email error"></div>
+  <label>Passwort*</label>
+  <input type="password" name="password" value="" class="w3-input" required>
+  <div class="w3-red password error"></div>
+  <label>Passwort (Wiederholung)*</label>
+  <input type="password" name="passwordRepeat" value="" class="w3-input" required>
+  <label>Nachname*</label>
+  <input type="text" name="lastName" value="" class="w3-input" required>
+  <label>Vorname</label>
+  <input type="text" name="firstName" value="" class="w3-input">
+
+
+  <p>
+    <input class="w3-button w3-black" type="submit" value="Senden">
+
 </form>
 
 <%- include('partials/footer'); -%>
@@ -28,25 +47,32 @@
     // get values
     const email = form.email.value;
     const password = form.password.value;
+    console.log(email, password);
 
     try {
-      const res = await fetch('/signup', { 
-        method: 'POST', 
-        body: JSON.stringify({ email, password }),
-        headers: {'Content-Type': 'application/json'}
+      const res = await fetch('/signup', {
+        method: 'POST',
+        body: JSON.stringify({
+          email,
+          password
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
       const data = await res.json();
       console.log(data);
       if (data.errors) {
+        console.log("errors", data.errors);
         emailError.textContent = data.errors.email;
         passwordError.textContent = data.errors.password;
+        console.log(emailError, passwordError);
       }
       if (data.user) {
         location.assign('/');
       }
 
-    }
-    catch (err) {
+    } catch (err) {
       console.log(err);
     }
 
