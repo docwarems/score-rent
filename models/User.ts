@@ -1,6 +1,9 @@
 import { Model, Schema, model} from 'mongoose';
 const { isEmail } = require('validator');
 import bcrypt from 'bcrypt';
+import jwt, { sign } from "jsonwebtoken";
+import nodemailer from "nodemailer";
+require("dotenv").config();
 
 // the adding of a static User Method from the JS code had to be rewritten according to
 // https://mongoosejs.com/docs/typescript/statics-and-methods.html
@@ -63,6 +66,48 @@ userSchema.pre('save', async function(next: any) {
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
+
+// fire a function after doc saved to db
+userSchema.post('save', async function(next: any) {
+  await sendVerificationEmail(this);
+  next();
+});
+
+// Create a nodemailer transporter TODO: dupliziert von app.ts
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT!),
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+  greetingTimeout: 1000 * 10,
+  logger:
+    !!process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
+});
+transporter.verify(function (error, success) {
+  if (error) {
+    console.log(error);
+  } else {
+    console.log("SMTP server is ready to take our messages");
+  }
+});
+
+// Send verification email to the user
+async function sendVerificationEmail(user: any) {
+  const token = jwt.sign({ userId: user._id }, "mysecret", { expiresIn: "1h" });
+  const verificationUrl = `${process.env.CYCLIC_URL}/verify-email?token=${token}`;
+  const email = user.email;
+  const subject = "Email Verification";
+  const html = `Please click on the following link to verify your email address: <a href="${verificationUrl}">${verificationUrl}</a>`;
+  const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
+
+  const result = await transporter.sendMail(mailOptions);
+  // const smtpDebug = process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
+  if (transporter.logger) {
+    console.log("Sendmail", result);
+  }
+}
 
 
 export const User = model<IUser, UserModel>('User', userSchema);
