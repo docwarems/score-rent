@@ -1,11 +1,12 @@
 // import User from "../models/User";
+import { errorMonitor } from "nodemailer/lib/xoauth2";
 import { User } from "../models/User";
 import jwt from 'jsonwebtoken';
 
 // handle errors
 const handleErrors = (err: any) => {
   console.log(err.message, err.code);
-  let errors = { email: '', password: '' };
+  let errors = { email: '', password: '', passwordRepeat: '', lastName: "" };
 
   // incorrect email
   if (err.message === 'incorrect email') {
@@ -15,6 +16,10 @@ const handleErrors = (err: any) => {
   // incorrect password
   if (err.message === 'incorrect password') {
     errors.password = 'Das Passwort ist nicht korrekt';
+  }
+
+  if (err.message === "repeated password wrong") {
+    errors.password = 'Passwort und Passwort Wiederholung stimmen nicht überein';
   }
 
   // duplicate email error
@@ -55,10 +60,16 @@ module.exports.login_get = (req: any, res: any) => {
 }
 
 module.exports.signup_post = async (req: any, res: any) => {
-  const { email, password } = req.body;
+  const { email, password, passwordRepeat, firstName, lastName, verificationToken } = req.body;
+
 
   try {
-    const user = await User.create({ email, password });
+    if (password !== passwordRepeat) {
+      throw(new Error("repeated password wrong"));
+    }
+  
+    const verificationToken = Math.random().toString(36).substr(2);
+    const user = await User.create({ email, password, firstName, lastName, verificationToken });
     const token = createToken(user._id as unknown as string);
     res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
     res.status(201).json({ user: user._id });

@@ -8,6 +8,10 @@ import bcrypt from 'bcrypt';
 interface IUser {
   email: string,
   password: string,
+  firstName: string,
+  lastName: string,
+  isVerified: boolean,
+  verificationToken: String,
 }
 
 interface UserModel extends Model<IUser> {
@@ -17,16 +21,29 @@ interface UserModel extends Model<IUser> {
 const userSchema = new Schema<IUser, UserModel>({
   email: {
     type: String,
-    required: [true, 'Please enter an email'],
+    required: [true, 'Bitte E-Mail angeben'],
     unique: true,
     lowercase: true,
-    validate: [isEmail, 'Please enter a valid email']
+    validate: [isEmail, 'Bitte eine gültige E-Mail-Adresse angeben']
   },
   password: {
     type: String,
-    required: [true, 'Please enter a password'],
-    minlength: [6, 'Minimum password length is 6 characters'],
-  }
+    required: [true, 'Bitte Kennwort angeben'],
+    minlength: [6, 'Die minimale Kennwort Länge sind 6 Zeichen'],
+  },
+  firstName:{
+    type: String,
+    required: false,
+  },
+  lastName:{
+    type: String,
+    required: [true, "Bitte Nachnamen angeben"],
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationToken: String
 });
 userSchema.static("login", async function login(email: string, password: string) {
   const user: any = await this.findOne({ email });
