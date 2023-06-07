@@ -95,7 +95,7 @@ transporter.verify(function (error, success) {
 
 // Send verification email to the user
 async function sendVerificationEmail(user: any) {
-  const token = jwt.sign({ userId: user._id }, "mysecret", { expiresIn: "1h" });
+  const token = jwt.sign({ userId: user._id }, process.env.EMAIL_VERIFICATION_SECRET!, { expiresIn: "1h" });
   const verificationUrl = `${process.env.CYCLIC_URL}/verify-email?token=${token}`;
   const email = user.email;
   const subject = "Email Verification";

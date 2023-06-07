@@ -2,6 +2,7 @@
 import { errorMonitor } from "nodemailer/lib/xoauth2";
 import { User } from "../models/User";
 import jwt from 'jsonwebtoken';
+require("dotenv").config();
 
 // handle errors
 const handleErrors = (err: any) => {
@@ -45,7 +46,7 @@ const handleErrors = (err: any) => {
 // create json web token
 const maxAge = 3 * 24 * 60 * 60;
 const createToken = (id: string) => {
-  return jwt.sign({ id }, 'net ninja secret', {
+  return jwt.sign({ id }, process.env.JWT_SECRET!, {
     expiresIn: maxAge
   });
 };

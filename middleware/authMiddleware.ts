@@ -1,12 +1,13 @@
 const jwt = require('jsonwebtoken');
 import { User } from "../models/User";
+require("dotenv").config();
 
 const requireAuth = (req: any, res: any, next: any) => {
   const token = req.cookies.jwt;
 
   // check json web token exists & is verified
   if (token) {
-    jwt.verify(token, 'net ninja secret', (err: any, decodedToken: any) => {
+    jwt.verify(token, process.env.JWT_SECRET, (err: any, decodedToken: any) => {
       if (err) {
         console.log(err.message);
         res.redirect('/login');
@@ -24,7 +25,7 @@ const requireAuth = (req: any, res: any, next: any) => {
 const checkUser = (req: any, res: any, next: Function) => {
   const token = req.cookies.jwt;
   if (token) {
-    jwt.verify(token, 'net ninja secret', async (err: any, decodedToken: any) => {
+    jwt.verify(token, process.env.JWT_SECRET, async (err: any, decodedToken: any) => {
       if (err) {
         res.locals.user = null;
         next();
