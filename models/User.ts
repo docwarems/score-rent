@@ -1,6 +1,6 @@
-import { Model, Schema, model} from 'mongoose';
-const { isEmail } = require('validator');
-import bcrypt from 'bcrypt';
+import { Model, Schema, model } from "mongoose";
+const { isEmail } = require("validator");
+import bcrypt from "bcrypt";
 import jwt, { sign } from "jsonwebtoken";
 import nodemailer from "nodemailer";
 require("dotenv").config();
@@ -9,12 +9,12 @@ require("dotenv").config();
 // https://mongoosejs.com/docs/typescript/statics-and-methods.html
 
 interface IUser {
-  email: string,
-  password: string,
-  firstName: string,
-  lastName: string,
-  isVerified: boolean,
-  verificationToken: String|undefined,
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  isVerified: boolean;
+  verificationToken: String | undefined;
 }
 
 interface UserModel extends Model<IUser> {
@@ -24,51 +24,54 @@ interface UserModel extends Model<IUser> {
 const userSchema = new Schema<IUser, UserModel>({
   email: {
     type: String,
-    required: [true, 'Bitte E-Mail angeben'],
+    required: [true, "Bitte E-Mail angeben"],
     unique: true,
     lowercase: true,
-    validate: [isEmail, 'Bitte eine gültige E-Mail-Adresse angeben']
+    validate: [isEmail, "Bitte eine gültige E-Mail-Adresse angeben"],
   },
   password: {
     type: String,
-    required: [true, 'Bitte Kennwort angeben'],
-    minlength: [6, 'Die minimale Kennwort Länge sind 6 Zeichen'],
+    required: [true, "Bitte Kennwort angeben"],
+    minlength: [6, "Die minimale Kennwort Länge sind 6 Zeichen"],
   },
-  firstName:{
+  firstName: {
     type: String,
     required: false,
   },
-  lastName:{
+  lastName: {
     type: String,
     required: [true, "Bitte Nachnamen angeben"],
   },
   isVerified: {
     type: Boolean,
-    default: false
+    default: false,
   },
   verificationToken: String,
 });
-userSchema.static("login", async function login(email: string, password: string) {
-  const user: any = await this.findOne({ email });
-  if (user) {
-    const auth = await bcrypt.compare(password, user.password);
-    if (auth) {
-      return user;
+userSchema.static(
+  "login",
+  async function login(email: string, password: string) {
+    const user: any = await this.findOne({ email });
+    if (user) {
+      const auth = await bcrypt.compare(password, user.password);
+      if (auth) {
+        return user;
+      }
+      throw Error("incorrect password");
     }
-    throw Error('incorrect password');
+    throw Error("incorrect email");
   }
-  throw Error('incorrect email');
-});
+);
 
 // fire a function before doc saved to db
-userSchema.pre('save', async function(next: any) {
+userSchema.pre("save", async function (next: any) {
   const salt = await bcrypt.genSalt();
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
 
 // fire a function after doc saved to db
-userSchema.post('save', async function(doc: any, next: any) {
+userSchema.post("save", async function (doc: any, next: any) {
   // for new registered users send verification e-mail
   if (this.verificationToken) {
     await sendVerificationEmail(this);
@@ -98,7 +101,11 @@ transporter.verify(function (error, success) {
 
 // Send verification email to the user
 async function sendVerificationEmail(user: any) {
-  const token = jwt.sign({ userId: user._id }, process.env.EMAIL_VERIFICATION_SECRET!, { expiresIn: "1h" });
+  const token = jwt.sign(
+    { userId: user._id },
+    process.env.EMAIL_VERIFICATION_SECRET!,
+    { expiresIn: "1h" }
+  );
   const verificationUrl = `${process.env.CYCLIC_URL}/verify-email?token=${token}`;
   const email = user.email;
   const subject = "Email Verification";
@@ -108,9 +115,8 @@ async function sendVerificationEmail(user: any) {
   const result = await transporter.sendMail(mailOptions);
   // const smtpDebug = process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
   if (transporter.logger) {
-    console.log("Sendmail", result);
+    console.log("Verification e-mail:", result);
   }
 }
 
-
-export const User = model<IUser, UserModel>('User', userSchema);
+export const User = model<IUser, UserModel>("User", userSchema);

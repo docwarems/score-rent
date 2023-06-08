@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 import { User } from "../models/User";
 require("dotenv").config();
 
@@ -10,14 +10,14 @@ const requireAuth = (req: any, res: any, next: any) => {
     jwt.verify(token, process.env.JWT_SECRET, (err: any, decodedToken: any) => {
       if (err) {
         console.log(err.message);
-        res.redirect('/login');
+        res.redirect("/login");
       } else {
         console.log(decodedToken);
         next();
       }
     });
   } else {
-    res.redirect('/login');
+    res.redirect("/login");
   }
 };
 
@@ -25,21 +25,24 @@ const requireAuth = (req: any, res: any, next: any) => {
 const checkUser = (req: any, res: any, next: Function) => {
   const token = req.cookies.jwt;
   if (token) {
-    jwt.verify(token, process.env.JWT_SECRET, async (err: any, decodedToken: any) => {
-      if (err) {
-        res.locals.user = null;
-        next();
-      } else {
-        let user = await User.findById(decodedToken.id);
-        res.locals.user = user;
-        next();  
+    jwt.verify(
+      token,
+      process.env.JWT_SECRET,
+      async (err: any, decodedToken: any) => {
+        if (err) {
+          res.locals.user = null;
+          next();
+        } else {
+          let user = await User.findById(decodedToken.id);
+          res.locals.user = user;
+          next();
+        }
       }
-    });
+    );
   } else {
     res.locals.user = null;
     next();
   }
 };
-
 
 module.exports = { requireAuth, checkUser };
