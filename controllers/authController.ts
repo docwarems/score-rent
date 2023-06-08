@@ -89,38 +89,38 @@ const transporter = nodemailer.createTransport({
 });
 
 // Send email to the user after successful registration and verification
-async function sendVerificationSuccessfulEmail(user: any) {
-  await QRCode.toDataURL(
-    "userId=" + user._id + "&email=" + user.email,
-    async function (err: any, url: string) {
-      // console.log("qrcodeUrl=", url)
+const sendVerificationSuccessfulEmail = async (user: any) => {
+  try {
+    const text = "userId=" + user._id + "&email=" + user.email;
+    const url = await QRCode.toDataURL(text);
+    console.log(text, url);
 
-      const email = user.email;
-      const subject = "Registrierung erfolgreich";
-      const html = `
-      Bitte speichern Sie den folgenden QRCode. Er wird für das Ausleihen von Noten benötigt.
-      <p></p>
-      User Id: ${user._id}<br>
-      E-Mail: ${user.email}
-      Name: ${user.firstName}&nbsp;${user.lastName}
-      <p></p>      
-      Embedded image: <img src="${url}"/>'
-    `;
+    const email = user.email;
+    const subject = "Registrierung erfolgreich";
+    const html = `
+    Bitte speichern Sie den folgenden QRCode. Er wird für das Ausleihen von Noten benötigt.
+    <p></p>
+    E-Mail: ${user.email}<br>
+    Name: ${user.firstName}&nbsp;${user.lastName}
+    <p></p>      
+    Embedded image: <img src="${url}"/>'
+  `;
 
-      const mailOptions = {
-        from: process.env.SMTP_FROM,
-        to: email,
-        subject,
-        html,
-      };
+    const mailOptions = {
+      from: process.env.SMTP_FROM,
+      to: email,
+      subject,
+      html,
+    };
 
-      const result = await transporter.sendMail(mailOptions);
-      if (transporter.logger) {
-        console.log("Registration successful e-mail:", result);
-      }
+    const result = await transporter.sendMail(mailOptions);
+    if (transporter.logger) {
+      console.log("Registration successful e-mail:", result);
     }
-  );
-}
+  } catch (err) {
+    console.error(err);
+  }
+};
 
 module.exports.verify_email_get = async (req: any, res: any) => {
   const token = req.query.token as string;

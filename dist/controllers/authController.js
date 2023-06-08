@@ -82,36 +82,36 @@ const transporter = nodemailer_1.default.createTransport({
     logger: !!process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
 });
 // Send email to the user after successful registration and verification
-function sendVerificationSuccessfulEmail(user) {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield QRCode.toDataURL("userId=" + user._id + "&email=" + user.email, function (err, url) {
-            return __awaiter(this, void 0, void 0, function* () {
-                // console.log("qrcodeUrl=", url)
-                const email = user.email;
-                const subject = "Registrierung erfolgreich";
-                const html = `
-      Bitte speichern Sie den folgenden QRCode. Er wird für das Ausleihen von Noten benötigt.
-      <p></p>
-      User Id: ${user._id}<br>
-      E-Mail: ${user.email}
-      Name: ${user.firstName}&nbsp;${user.lastName}
-      <p></p>      
-      Embedded image: <img src="${url}"/>'
-    `;
-                const mailOptions = {
-                    from: process.env.SMTP_FROM,
-                    to: email,
-                    subject,
-                    html,
-                };
-                const result = yield transporter.sendMail(mailOptions);
-                if (transporter.logger) {
-                    console.log("Registration successful e-mail:", result);
-                }
-            });
-        });
-    });
-}
+const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const text = "userId=" + user._id + "&email=" + user.email;
+        const url = yield QRCode.toDataURL(text);
+        console.log(text, url);
+        const email = user.email;
+        const subject = "Registrierung erfolgreich";
+        const html = `
+    Bitte speichern Sie den folgenden QRCode. Er wird für das Ausleihen von Noten benötigt.
+    <p></p>
+    E-Mail: ${user.email}<br>
+    Name: ${user.firstName}&nbsp;${user.lastName}
+    <p></p>      
+    Embedded image: <img src="${url}"/>'
+  `;
+        const mailOptions = {
+            from: process.env.SMTP_FROM,
+            to: email,
+            subject,
+            html,
+        };
+        const result = yield transporter.sendMail(mailOptions);
+        if (transporter.logger) {
+            console.log("Registration successful e-mail:", result);
+        }
+    }
+    catch (err) {
+        console.error(err);
+    }
+});
 module.exports.verify_email_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const token = req.query.token;
     const decodedToken = jsonwebtoken_1.default.verify(token, process.env.EMAIL_VERIFICATION_SECRET);
