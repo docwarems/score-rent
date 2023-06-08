@@ -1,5 +1,5 @@
 {
-  "name": "node-express-jwt-auth-ts",
+  "name": "score-rent",
   "version": "1.0.0",
   "description": "",
   "main": "dist/app.js",
@@ -27,18 +27,20 @@
     "prettier": "2.8.8"
   },
   "scripts": {
+    "start": "node dist/app.js",
     "dev": "nodemon app.ts",
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/iamshaunjp/node-express-jwt-auth.git"
+    "url": "git+https://github.com/docwarems/score-rent.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "iamshaunjp, docwarems",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/iamshaunjp/node-express-jwt-auth/issues"
+    "url": "https://github.com/docwarems/score-rent.git/issues"
   },
-  "homepage": "https://github.com/iamshaunjp/node-express-jwt-auth#readme"
+  "homepage": "https://github.com/docwarems/score-rent.git#readme"
 }
