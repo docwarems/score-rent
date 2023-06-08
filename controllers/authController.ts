@@ -56,8 +56,47 @@ module.exports.signup_get = (req: any, res: any) => {
   res.render('signup');
 }
 
+module.exports.signup_success_get = (req: any, res: any) => {
+  res.render('signup-success');
+}
+
 module.exports.login_get = (req: any, res: any) => {
   res.render('login');
+}
+
+enum EmailVerificationStatus {
+  OK,
+  NOT_REGISTERED,
+  ALREADY_VERFIED
+}
+
+module.exports.verify_email_get = async (req: any, res: any) => {
+  const token = req.query.token as string;
+  const decodedToken = jwt.verify(token, process.env.EMAIL_VERIFICATION_SECRET!) as { userId: string };
+
+  let verificationResult: {status: EmailVerificationStatus, message: string };
+  const user = await User.findById(decodedToken.userId);
+  if (!user) {
+    verificationResult = {status: EmailVerificationStatus.NOT_REGISTERED, message: "Benutzer nicht gefunden" };
+  } else if (user.isVerified) {
+    verificationResult = {status: EmailVerificationStatus.ALREADY_VERFIED, message: "Die E-Mail Adresse wurde bereits verifiziert" };
+  } else {
+    user.isVerified = true;
+    user.verificationToken = undefined;
+  
+    try {
+      await user.save();
+      verificationResult = {status: EmailVerificationStatus.OK, message: "Die E-Mail Adresse wurde erfolgreich verifiziert" };
+    } catch (error) {
+      console.error("Error verifying email", error);
+      return res.status(500).json({ message: "Internal server error" });          
+    }
+  }
+
+  res.render('verify-email', {
+    EmailVerificationStatus: EmailVerificationStatus,
+    verificationResult:  verificationResult,
+  });
 }
 
 module.exports.signup_post = async (req: any, res: any) => {

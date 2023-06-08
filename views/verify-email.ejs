@@ -1,0 +1,29 @@
+<%- include('partials/header'); -%>
+
+<% if (verificationResult.status === EmailVerificationStatus.NOT_REGISTERED) { %>
+<div class="w3-panel w3-red">
+  <h3>Fehler bei Verifizierung</h3>
+  <p><%= verificationResult.message %></p>
+</div>
+
+<p></p>
+<a href="/signup" class="w3-button w3-black">Zur Registrierung</a>
+<% } else if (verificationResult.status === EmailVerificationStatus.ALREADY_VERFIED) { %>
+<div class="w3-panel w3-red">
+  <h3>Fehler bei Verifizierung</h3>
+  <p><%= verificationResult.message %></p>
+</div>
+
+<p></p>
+<a href="/login" class="w3-button w3-black">Zum Login</a>
+<% } else { %>
+<div class="w3-panel w3-green">
+  <h3>E-Mail Verifizierung erfolgreich</h3>
+</div>
+
+<p></p>
+<a href="/login" class="w3-button w3-black">Zum Login</a>
+<% } %>
+
+
+<%- include('partials/footer'); -%>

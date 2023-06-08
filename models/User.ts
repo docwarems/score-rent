@@ -14,7 +14,7 @@ interface IUser {
   firstName: string,
   lastName: string,
   isVerified: boolean,
-  verificationToken: String,
+  verificationToken: String|undefined,
 }
 
 interface UserModel extends Model<IUser> {
@@ -46,7 +46,7 @@ const userSchema = new Schema<IUser, UserModel>({
     type: Boolean,
     default: false
   },
-  verificationToken: String
+  verificationToken: String,
 });
 userSchema.static("login", async function login(email: string, password: string) {
   const user: any = await this.findOne({ email });
@@ -68,8 +68,11 @@ userSchema.pre('save', async function(next: any) {
 });
 
 // fire a function after doc saved to db
-userSchema.post('save', async function(next: any) {
-  await sendVerificationEmail(this);
+userSchema.post('save', async function(doc: any, next: any) {
+  // for new registered users send verification e-mail
+  if (this.verificationToken) {
+    await sendVerificationEmail(this);
+  }
   next();
 });
 
