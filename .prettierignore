@@ -1,0 +1,8 @@
+# from .gitignore
+/node_modules
+/dist
+.env
+.foo
+
+build
+coverage
