@@ -93,7 +93,7 @@ const sendVerificationSuccessfulEmail = async (user: any) => {
   try {
     const text = "userId=" + user._id + "&email=" + user.email;
     const url = await QRCode.toDataURL(text);
-    console.log(text, url);
+    // console.log(text, url);
 
     const email = user.email;
     const subject = "Registrierung erfolgreich";
@@ -111,6 +111,9 @@ const sendVerificationSuccessfulEmail = async (user: any) => {
       to: email,
       subject,
       html,
+      attachments: [
+        { path: url },
+      ]
     };
 
     const result = await transporter.sendMail(mailOptions);

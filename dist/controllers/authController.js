@@ -86,7 +86,7 @@ const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void
     try {
         const text = "userId=" + user._id + "&email=" + user.email;
         const url = yield QRCode.toDataURL(text);
-        console.log(text, url);
+        // console.log(text, url);
         const email = user.email;
         const subject = "Registrierung erfolgreich";
         const html = `
@@ -102,6 +102,9 @@ const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void
             to: email,
             subject,
             html,
+            attachments: [
+                { path: url },
+            ]
         };
         const result = yield transporter.sendMail(mailOptions);
         if (transporter.logger) {
