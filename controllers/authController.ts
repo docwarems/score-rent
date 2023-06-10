@@ -88,6 +88,20 @@ const transporter = nodemailer.createTransport({
     !!process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
 });
 
+/**
+ * Create a espass (electronic smart pass) file to be opened with PassAndroid (and obviously only with this app)
+ * - main.json (this constant); the message will converted to a QR Code
+ * - icon.png with logo (HSC logo in resources folder)
+ * - create a ZIP
+ * - rename zip extension to espass
+ * 
+ * see: 
+ * - https://datatypes.net/open-espass-files
+ * - https://espass.it/
+ * - Apple Passbook file reference: https://developer.apple.com/library/archive/documentation/UserExperience/Reference/PassKit_Bundle/Chapters/Introduction.html#//apple_ref/doc/uid/TP40012026-CH0-SW1
+ */
+const espassContent = '{"accentColor":"#ff0000ff","app":"passandroid","barCode":{"format":"QR_CODE","message":"email=ms2702@online.de&id=123456"},"description":"hsc user ","fields":[],"id":"009fb73a-6e5a-4870-a732-da5526a72863","locations":[],"type":"EVENT","validTimespans":[]}';
+
 // Send email to the user after successful registration and verification
 const sendVerificationSuccessfulEmail = async (user: any) => {
   try {
@@ -103,7 +117,7 @@ const sendVerificationSuccessfulEmail = async (user: any) => {
     E-Mail: ${user.email}<br>
     Name: ${user.firstName}&nbsp;${user.lastName}
     <p></p>      
-    Embedded image: <img src="${url}"/>'
+    Embedded image: <img src="${url}"/>
   `;
 
     const mailOptions = {
