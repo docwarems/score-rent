@@ -88,6 +88,33 @@ const transporter = nodemailer.createTransport({
     !!process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
 });
 
+async function createEspassFile(user: any) {
+  return new Promise<void>((resolve, reject) => {
+    var fs = require("fs");
+    var JSZip = require("jszip");
+    
+    // const userId = "123";
+    // const email = "ms2702@online.de"
+    const id = "009fb73a-6e5a-4870-a732-da5526a72863";  // TODO: UUID
+  
+    var zip = new JSZip();
+    zip.file("main.json", `{"accentColor":"#ff0000ff","app":"passandroid","barCode":{"format":"QR_CODE","message":"email=${user.email}&id=${user._id}"},"description":"HSC Benutzer","fields":[],"id":"${id}","locations":[],"type":"EVENT","validTimespans":[]}`);
+    const imageData = fs.readFileSync(__dirname + "/../resources/hsc-logo-black.png");
+    zip.file("logo.png", imageData);
+    // ... and other manipulations
+    
+    zip
+    .generateNodeStream({type:'nodebuffer',streamFiles:true})
+    .pipe(fs.createWriteStream('/tmp/hsc-noten.espass'))
+    .on('finish', async function () {
+        // JSZip generates a readable stream with a "end" event,
+        // but is piped here in a writable stream which emits a "finish" event.
+        console.log("espassfile written.");
+        resolve();
+    })
+  });  
+}
+
 /**
  * Create a espass (electronic smart pass) file to be opened with PassAndroid (and obviously only with this app)
  * - main.json (this constant); the message will converted to a QR Code
@@ -104,6 +131,8 @@ const espassContent = '{"accentColor":"#ff0000ff","app":"passandroid","barCode":
 
 // Send email to the user after successful registration and verification
 const sendVerificationSuccessfulEmail = async (user: any) => {
+  await createEspassFile(user); // TODO: in Memory statt speichern
+
   try {
     const text = "userId=" + user._id + "&email=" + user.email;
     const url = await QRCode.toDataURL(text);
@@ -127,6 +156,7 @@ const sendVerificationSuccessfulEmail = async (user: any) => {
       html,
       attachments: [
         { path: url },
+        { path: "/tmp/hsc-noten.espass" },
       ]
     };
 
