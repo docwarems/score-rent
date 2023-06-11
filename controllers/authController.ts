@@ -49,7 +49,7 @@ const handleErrors = (err: any) => {
 };
 
 // create json web token
-const maxAge = 3 * 24 * 60 * 60;
+const maxAge = 60 * 60;
 const createToken = (id: string) => {
   return jwt.sign({ id }, process.env.JWT_SECRET!, {
     expiresIn: maxAge,
@@ -146,7 +146,7 @@ const sendVerificationSuccessfulEmail = async (user: any) => {
     E-Mail: ${user.email}<br>
     Name: ${user.firstName}&nbsp;${user.lastName}
     <p></p>      
-    Embedded image: <img src="${url}"/>
+    QR Code: <img src="${url}"/>    
   `;
 
     const mailOptions = {
@@ -234,8 +234,6 @@ module.exports.signup_post = async (req: any, res: any) => {
       lastName,
       verificationToken,
     });
-    const token = createToken(user._id as unknown as string);
-    res.cookie("jwt", token, { httpOnly: true, maxAge: maxAge * 1000 });
     res.status(201).json({ user: user._id });
   } catch (err) {
     const errors = handleErrors(err);

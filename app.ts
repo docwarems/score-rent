@@ -27,10 +27,7 @@ mongoose
 
 // routes
 app.get("*", checkUser);
-app.get("/", (req: any, res: any) => res.render("home"));
-app.get("/smoothies", requireAuth, (req: any, res: any) =>
-  res.render("smoothies")
-);
+app.get("/", requireAuth, (req: any, res: any) => res.render("home"));
 app.use(authRoutes);
 
 // Create a nodemailer transporter

@@ -1,14 +1,16 @@
 <%- include('partials/header'); -%>
 
+<h1>Login</h1>
+
 <form action="/signup">
-  <h2>Login</h2>
-  <label for="email">Email</label>
-  <input type="text" name="email"  />
-  <div class="email error"></div>
-  <label for="password">Password</label>
-  <input type="password" name="password"  />
-  <div class="password error"></div>
-  <button>login</button>
+  <label>Email</label>
+  <input type="text" name="email" value="" class="w3-input" required>
+  <div class="w3-red email error"></div>
+  <label>Passwort</label>
+  <input type="password" name="password" value="" class="w3-input" required>
+  <div class="w3-red password error"></div>
+  <p>
+    <button class="w3-button w3-black">Login</button>
 </form>
 
 <%- include('partials/footer'); -%>
@@ -30,10 +32,15 @@
     const password = form.password.value;
 
     try {
-      const res = await fetch('/login', { 
-        method: 'POST', 
-        body: JSON.stringify({ email, password }),
-        headers: {'Content-Type': 'application/json'}
+      const res = await fetch('/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          email,
+          password
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
       const data = await res.json();
       console.log(data);
@@ -45,8 +52,7 @@
         location.assign('/');
       }
 
-    }
-    catch (err) {
+    } catch (err) {
       console.log(err);
     }
   });

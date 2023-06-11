@@ -66,7 +66,12 @@ userSchema.static(
 // fire a function before doc saved to db
 userSchema.pre("save", async function (next: any) {
   const salt = await bcrypt.genSalt();
-  this.password = await bcrypt.hash(this.password, salt);
+
+  // we must ensure that the password will only be hashed if it is not already hashed
+  // we doesn't have a safe criteria for this right now
+  if (!this.isVerified) {
+    this.password = await bcrypt.hash(this.password, salt);
+  }
   next();
 });
 
