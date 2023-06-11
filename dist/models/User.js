@@ -63,7 +63,11 @@ userSchema.static("login", function login(email, password) {
 userSchema.pre("save", function (next) {
     return __awaiter(this, void 0, void 0, function* () {
         const salt = yield bcrypt_1.default.genSalt();
-        this.password = yield bcrypt_1.default.hash(this.password, salt);
+        // we must ensure that the password will only be hashed if it is not already hashed
+        // we doesn't have a safe criteria for this right now
+        if (!this.isVerified) {
+            this.password = yield bcrypt_1.default.hash(this.password, salt);
+        }
         next();
     });
 });

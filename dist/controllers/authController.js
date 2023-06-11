@@ -48,7 +48,7 @@ const handleErrors = (err) => {
     return errors;
 };
 // create json web token
-const maxAge = 3 * 24 * 60 * 60;
+const maxAge = 60 * 60;
 const createToken = (id) => {
     return jsonwebtoken_1.default.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: maxAge,
@@ -81,8 +81,49 @@ const transporter = nodemailer_1.default.createTransport({
     greetingTimeout: 1000 * 10,
     logger: !!process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
 });
+function createEspassFile(user) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return new Promise((resolve, reject) => {
+            var fs = require("fs");
+            var JSZip = require("jszip");
+            // const userId = "123";
+            // const email = "ms2702@online.de"
+            const id = "009fb73a-6e5a-4870-a732-da5526a72863"; // TODO: UUID
+            var zip = new JSZip();
+            zip.file("main.json", `{"accentColor":"#ff0000ff","app":"passandroid","barCode":{"format":"QR_CODE","message":"email=${user.email}&id=${user._id}"},"description":"HSC Benutzer","fields":[],"id":"${id}","locations":[],"type":"EVENT","validTimespans":[]}`);
+            const imageData = fs.readFileSync(__dirname + "/../resources/hsc-logo-black.png");
+            zip.file("logo.png", imageData);
+            // ... and other manipulations
+            zip
+                .generateNodeStream({ type: 'nodebuffer', streamFiles: true })
+                .pipe(fs.createWriteStream('/tmp/hsc-noten.espass'))
+                .on('finish', function () {
+                return __awaiter(this, void 0, void 0, function* () {
+                    // JSZip generates a readable stream with a "end" event,
+                    // but is piped here in a writable stream which emits a "finish" event.
+                    console.log("espassfile written.");
+                    resolve();
+                });
+            });
+        });
+    });
+}
+/**
+ * Create a espass (electronic smart pass) file to be opened with PassAndroid (and obviously only with this app)
+ * - main.json (this constant); the message will converted to a QR Code
+ * - icon.png with logo (HSC logo in resources folder)
+ * - create a ZIP
+ * - rename zip extension to espass
+ *
+ * see:
+ * - https://datatypes.net/open-espass-files
+ * - https://espass.it/
+ * - Apple Passbook file reference: https://developer.apple.com/library/archive/documentation/UserExperience/Reference/PassKit_Bundle/Chapters/Introduction.html#//apple_ref/doc/uid/TP40012026-CH0-SW1
+ */
+const espassContent = '{"accentColor":"#ff0000ff","app":"passandroid","barCode":{"format":"QR_CODE","message":"email=ms2702@online.de&id=123456"},"description":"hsc user ","fields":[],"id":"009fb73a-6e5a-4870-a732-da5526a72863","locations":[],"type":"EVENT","validTimespans":[]}';
 // Send email to the user after successful registration and verification
 const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void 0, function* () {
+    yield createEspassFile(user); // TODO: in Memory statt speichern
     try {
         const text = "userId=" + user._id + "&email=" + user.email;
         const url = yield QRCode.toDataURL(text);
@@ -95,7 +136,7 @@ const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void
     E-Mail: ${user.email}<br>
     Name: ${user.firstName}&nbsp;${user.lastName}
     <p></p>      
-    Embedded image: <img src="${url}"/>'
+    QR Code: <img src="${url}"/>    
   `;
         const mailOptions = {
             from: process.env.SMTP_FROM,
@@ -104,6 +145,7 @@ const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void
             html,
             attachments: [
                 { path: url },
+                { path: "/tmp/hsc-noten.espass" },
             ]
         };
         const result = yield transporter.sendMail(mailOptions);
@@ -167,8 +209,6 @@ module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, fun
             lastName,
             verificationToken,
         });
-        const token = createToken(user._id);
-        res.cookie("jwt", token, { httpOnly: true, maxAge: maxAge * 1000 });
         res.status(201).json({ user: user._id });
     }
     catch (err) {

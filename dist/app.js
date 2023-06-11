@@ -26,8 +26,7 @@ mongoose_1.default
     .catch((err) => console.log(err));
 // routes
 app.get("*", checkUser);
-app.get("/", (req, res) => res.render("home"));
-app.get("/smoothies", requireAuth, (req, res) => res.render("smoothies"));
+app.get("/", requireAuth, (req, res) => res.render("home"));
 app.use(authRoutes);
 // Create a nodemailer transporter
 // const transporter = nodemailer.createTransport({
