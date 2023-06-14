@@ -45,6 +45,10 @@ const userSchema = new mongoose_1.Schema({
         default: false,
     },
     verificationToken: String,
+    isAdmin: {
+        type: Boolean,
+        default: false,
+    },
 });
 userSchema.static("login", function login(email, password) {
     return __awaiter(this, void 0, void 0, function* () {
