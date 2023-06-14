@@ -17,6 +17,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 require("dotenv").config();
 const nodemailer_1 = __importDefault(require("nodemailer"));
 var QRCode = require("qrcode");
+const uuid_1 = require("uuid");
 // handle errors
 const handleErrors = (err) => {
     console.log(err.message, err.code);
@@ -81,16 +82,26 @@ const transporter = nodemailer_1.default.createTransport({
     greetingTimeout: 1000 * 10,
     logger: !!process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
 });
-function createEspassFile(user) {
+/**
+ * Create a espass (electronic smart pass) file to be opened with PassAndroid (and obviously only with this app)
+ * - main.json (this constant); the message will converted to a QR Code
+ * - icon.png with logo (HSC logo in resources folder)
+ * - create a ZIP
+ * - rename zip extension to espass
+ *
+ * see:
+ * - https://datatypes.net/open-espass-files
+ * - https://espass.it/
+ * - Apple Passbook file reference: https://developer.apple.com/library/archive/documentation/UserExperience/Reference/PassKit_Bundle/Chapters/Introduction.html#//apple_ref/doc/uid/TP40012026-CH0-SW1
+ */
+function createEspassFile(token) {
     return __awaiter(this, void 0, void 0, function* () {
         return new Promise((resolve, reject) => {
             var fs = require("fs");
             var JSZip = require("jszip");
-            // const userId = "123";
-            // const email = "ms2702@online.de"
-            const id = "009fb73a-6e5a-4870-a732-da5526a72863"; // TODO: UUID
+            const id = (0, uuid_1.v4)();
             var zip = new JSZip();
-            zip.file("main.json", `{"accentColor":"#ff0000ff","app":"passandroid","barCode":{"format":"QR_CODE","message":"email=${user.email}&id=${user._id}"},"description":"HSC Benutzer","fields":[],"id":"${id}","locations":[],"type":"EVENT","validTimespans":[]}`);
+            zip.file("main.json", `{"accentColor":"#ff0000ff","app":"passandroid","barCode":{"format":"QR_CODE","message":"${token}"},"description":"HSC Benutzer","fields":[],"id":"${id}","locations":[],"type":"EVENT","validTimespans":[]}`);
             const imageData = fs.readFileSync(__dirname + "/../resources/hsc-logo-black.png");
             zip.file("logo.png", imageData);
             // ... and other manipulations
@@ -108,26 +119,15 @@ function createEspassFile(user) {
         });
     });
 }
-/**
- * Create a espass (electronic smart pass) file to be opened with PassAndroid (and obviously only with this app)
- * - main.json (this constant); the message will converted to a QR Code
- * - icon.png with logo (HSC logo in resources folder)
- * - create a ZIP
- * - rename zip extension to espass
- *
- * see:
- * - https://datatypes.net/open-espass-files
- * - https://espass.it/
- * - Apple Passbook file reference: https://developer.apple.com/library/archive/documentation/UserExperience/Reference/PassKit_Bundle/Chapters/Introduction.html#//apple_ref/doc/uid/TP40012026-CH0-SW1
- */
-const espassContent = '{"accentColor":"#ff0000ff","app":"passandroid","barCode":{"format":"QR_CODE","message":"email=ms2702@online.de&id=123456"},"description":"hsc user ","fields":[],"id":"009fb73a-6e5a-4870-a732-da5526a72863","locations":[],"type":"EVENT","validTimespans":[]}';
 // Send email to the user after successful registration and verification
 const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void 0, function* () {
-    yield createEspassFile(user); // TODO: in Memory statt speichern
+    // we encode the user data into a JWT in order to prohibit manual QRCode creation outside the app
+    const token = jsonwebtoken_1.default.sign({ userId: user._id, email: user.email }, process.env.EMAIL_VERIFICATION_SECRET, { expiresIn: "5y" } // TODO: check in "y" valid
+    );
+    yield createEspassFile(token); // TODO: in Memory statt speichern
     try {
-        const text = "userId=" + user._id + "&email=" + user.email;
-        const url = yield QRCode.toDataURL(text);
-        // console.log(text, url);
+        // const text = "userId=" + user._id + "&email=" + user.email;
+        const url = yield QRCode.toDataURL(token);
         const email = user.email;
         const subject = "Registrierung erfolgreich";
         const html = `
