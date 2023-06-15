@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const User_1 = require("../models/User");
+const Score_1 = require("../models/Score");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 require("dotenv").config();
 const nodemailer_1 = __importDefault(require("nodemailer"));
@@ -233,3 +234,23 @@ module.exports.logout_get = (req, res) => {
     res.cookie("jwt", "", { maxAge: 1 });
     res.redirect("/");
 };
+module.exports.register_score_get = (req, res) => {
+    res.redirect("/register-score");
+};
+module.exports.register_score_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { composer, work, signature, count, } = req.body;
+    try {
+        // const verificationToken = Math.random().toString(36).substr(2);
+        const score = yield Score_1.Score.create({
+            composer,
+            work,
+            signature,
+            count,
+        });
+        res.status(201).json({ score: score._id });
+    }
+    catch (err) {
+        const errors = handleErrors(err);
+        res.status(400).json({ errors });
+    }
+});

@@ -45,4 +45,13 @@ const checkUser = (req: any, res: any, next: Function) => {
   }
 };
 
-module.exports = { requireAuth, checkUser };
+const requireAdmin = (req: any, res: any, next: Function) => {
+  const user = res.locals.user;
+  if (user.isAdmin) {
+    next();
+  } else {
+    res.redirect("/");
+  }
+};
+
+module.exports = { requireAuth, checkUser, requireAdmin };

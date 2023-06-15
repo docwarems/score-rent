@@ -1,4 +1,5 @@
 import { User } from "../models/User";
+import { Score } from "../models/Score";
 import jwt from "jsonwebtoken";
 require("dotenv").config();
 import nodemailer from "nodemailer";
@@ -259,4 +260,31 @@ module.exports.login_post = async (req: any, res: any) => {
 module.exports.logout_get = (req: any, res: any) => {
   res.cookie("jwt", "", { maxAge: 1 });
   res.redirect("/");
+};
+
+module.exports.register_score_get = (req: any, res: any) => {
+  res.redirect("/register-score");
+};
+
+module.exports.register_score_post = async (req: any, res: any) => {
+  const {
+    composer,
+    work,
+    signature,
+    count,
+  } = req.body;
+
+  try {
+    // const verificationToken = Math.random().toString(36).substr(2);
+    const score = await Score.create({
+      composer,
+      work,
+      signature,
+      count,
+    });
+    res.status(201).json({ score: score._id });
+  } catch (err) {
+    const errors = handleErrors(err);
+    res.status(400).json({ errors });
+  }
 };
