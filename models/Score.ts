@@ -33,7 +33,7 @@ const scoreSchema = new Schema<IScore, ScoreModel>({
   signature: {
     type: String,
     required: [true, "Bitte Signatur angeben"],
-    lowercase: true,
+    uppercase: true,
     unique: true,
   },
   count: {
