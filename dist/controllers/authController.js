@@ -267,3 +267,36 @@ module.exports.register_score_post = (req, res) => __awaiter(void 0, void 0, voi
         res.status(400).json({ errors });
     }
 });
+module.exports.checkout_get = (req, res) => {
+    res.redirect("/checkout");
+};
+module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId, scoreId } = req.body;
+    try {
+        if (scoreId) {
+            console.log("checkout_post", scoreId);
+            const score = yield Score_1.Score.findOne({ _id: "6490059f08678ddf446c7244" });
+            if (score) {
+                console.log("checkout_post", score);
+                res.status(201).json({ checkoutScore: score });
+            }
+            else {
+                res.status(400).json({ message: "Score not found" });
+            }
+        }
+        else if (userId) {
+            // const userId = "6489edc05376f9a7898dc898";
+            const user = yield User_1.User.findOne({ _id: userId });
+            if (user) {
+                console.log("checkout_post", user);
+                res.status(201).json({ checkoutUser: user });
+            }
+            else {
+                res.status(400).json({ message: "User not found" });
+            }
+        }
+    }
+    catch (error) {
+        res.status(500).json({ error });
+    }
+});
