@@ -1,0 +1,104 @@
+<%- include('partials/header'); -%>
+
+<h1>Ausleihe</h1>
+
+<form action="/checkout">
+    <button class="w3-button w3-black btnScan">User scannen</button>
+</form>
+
+
+<!-- <script src="./node_modules/html5-qrcode/html5-qrcode.min.js"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js" integrity="sha512-k/KAe4Yff9EUdYI5/IAHlwUswqeipP+Cp5qnrsUjTPCgl51La2/JhyyjNciztD7mWNKLSXci48m7cctATKfLlQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<style>
+  main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #reader {
+    width: 600px;
+  }
+
+  #result {
+    text-align: center;
+    font-size: 1.5rem;
+  }
+</style>
+<main>
+  <div id="reader"></div>
+  <div id="result"></div>
+</main>
+
+
+<%- include('partials/footer'); -%>
+
+<script>
+  const form = document.querySelector('form');
+  const btnScan = document.querySelector('.btnScan');
+
+  var scanner;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    scanner = new Html5QrcodeScanner('reader', {
+      qrbox: {
+        width: 250,
+        height: 250,
+      },
+      fps: 20,
+    });
+    scanner.render(success, error);
+
+  });
+
+  async function submitScanResult(userId, scoreId) {
+    console.log("submitScanResult: userId=" + userId + ", scoreId=" + scoreId);
+    try {
+      const res = await fetch('/checkout', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId,
+          scoreId
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await res.json();
+      console.log(data);
+      if (data.errors) {
+        //   emailError.textContent = data.errors.email;
+        //   passwordError.textContent = data.errors.password;
+      }
+      if (data.checkoutUser) {}
+      if (data.checkoutScore) {}
+
+    } catch (err) {
+      console.log(err);
+    }
+
+  }
+
+  async function success(result) {
+    console.log(result);
+    if (btnScan.textContent == "User scannen") {
+      scanner.clear();
+      console.log("submit user");
+      await submitScanResult(result, undefined);
+      btnScan.textContent = "Noten scannen";
+    } else if (btnScan.textContent == "Noten scannen") {
+      scanner.clear();
+      document.getElementById('reader').remove();
+      await submitScanResult("6489edc05376f9a7898dc898", result);
+      btnScan.textContent = "Ausleihe durchführen";
+    }
+  }
+
+  function error(err) {
+    console.error(err);
+  }
+
+</script>

@@ -301,3 +301,37 @@ module.exports.register_score_post = async (req: any, res: any) => {
     res.status(400).json({ errors });
   }
 };
+
+module.exports.checkout_get = (req: any, res: any) => {
+  res.redirect("/checkout");
+};
+
+module.exports.checkout_post = async (req: any, res: any) => {
+  const { userId, scoreId } = req.body;
+
+  try {
+    if (scoreId) {
+      console.log("checkout_post", scoreId);
+      const score = await Score.findOne({ _id: "6490059f08678ddf446c7244" });
+
+      if (score) {
+        console.log("checkout_post", score);
+        res.status(201).json({ checkoutScore: score });
+      } else {
+        res.status(400).json({ message: "Score not found" });
+      }
+    } else if (userId) {
+      // const userId = "6489edc05376f9a7898dc898";
+      const user = await User.findOne({ _id: userId });
+
+      if (user) {
+        console.log("checkout_post", user);
+        res.status(201).json({ checkoutUser: user });
+      } else {
+        res.status(400).json({ message: "User not found" });
+      }
+    }
+  } catch(error) {
+    res.status(500).json({ error });
+  }
+};
