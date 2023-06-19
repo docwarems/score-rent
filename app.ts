@@ -2,7 +2,11 @@ const express = require("express");
 import mongoose from "mongoose";
 const authRoutes = require("./routes/authRoutes");
 const cookieParser = require("cookie-parser");
-const { requireAuth, checkUser, requireAdmin } = require("./middleware/authMiddleware");
+const {
+  requireAuth,
+  checkUser,
+  requireAdmin,
+} = require("./middleware/authMiddleware");
 require("dotenv").config();
 import nodemailer from "nodemailer";
 
@@ -27,8 +31,12 @@ mongoose
 
 // routes
 app.get("*", checkUser);
-app.get("/", requireAuth, (req: any, res: any) => res.render("home", {"user": res.locals.user}));
-app.get("/register-score", requireAuth, requireAdmin, (req: any, res: any) => res.render("register-score", {"score": res.locals.score}));
+app.get("/", requireAuth, (req: any, res: any) =>
+  res.render("home", { user: res.locals.user })
+);
+app.get("/register-score", requireAuth, requireAdmin, (req: any, res: any) =>
+  res.render("register-score", { scoreType: res.locals.scoreType })
+);
 app.use(authRoutes);
 
 // Create a nodemailer transporter

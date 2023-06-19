@@ -19,6 +19,7 @@
   <div class="w3-red work error"></div>
   <label>Signatur*</label>
   <input type="text" name="signature" value="" class="w3-input" required>
+  <div class="w3-red signature error"></div>
   <label>Anzahl*</label>
   <input type="text" name="count" value="" class="w3-input" required>
   <p>
@@ -30,10 +31,13 @@
 
 <script>
   const form = document.querySelector('form');
+  const signatureError = document.querySelector('.signature.error');
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    // reset errors
+    signatureError.textContent = '';
 
     // get values
     const composer = form.composer.value;
@@ -58,9 +62,11 @@
       const data = await res.json();
       console.log(data);
       if (data.errors) {
-        console.log("errors", data.errors);
+        console.log("errors ejs", data.errors);
+        signatureError.textContent = data.errors.signature;
+        console.log(signatureError);
       }
-      if (data.score) {
+      if (data.scoreType) {
         location.assign('/');
       }
 

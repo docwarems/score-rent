@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Score = exports.ScoreType = void 0;
+exports.ScoreType = void 0;
 const mongoose_1 = require("mongoose");
+const { isEmail } = require("validator");
 require("dotenv").config();
 const scoreTypeSchema = new mongoose_1.Schema({
     composer: {
@@ -24,24 +25,4 @@ const scoreTypeSchema = new mongoose_1.Schema({
         required: [true, "Bitte Anzahl angeben"],
     },
 });
-const scoreSchema = new mongoose_1.Schema({
-    signature: {
-        type: String,
-        required: [true, "Bitte Signatur angeben"],
-        uppercase: true,
-    },
-    id: {
-        type: String,
-        unique: true,
-        required: true,
-        uppercase: true,
-    },
-    extId: {
-        type: String,
-    },
-    state: {
-        type: String,
-    },
-});
 exports.ScoreType = (0, mongoose_1.model)("ScoreType", scoreTypeSchema);
-exports.Score = (0, mongoose_1.model)("Score", scoreSchema);

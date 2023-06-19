@@ -20,9 +20,9 @@ const nodemailer_1 = __importDefault(require("nodemailer"));
 var QRCode = require("qrcode");
 const uuid_1 = require("uuid");
 // handle errors
-const handleErrors = (err) => {
+const handleErrors = (err, type) => {
     console.log(err.message, err.code);
-    let errors = { email: "", password: "", passwordRepeat: "", lastName: "" };
+    let errors = { email: "", password: "", passwordRepeat: "", lastName: "", signature: "" };
     // incorrect email
     if (err.message === "incorrect email") {
         errors.email = "Die E-Mail Adresse ist unbekannt";
@@ -35,9 +35,13 @@ const handleErrors = (err) => {
         errors.password =
             "Passwort und Passwort Wiederholung stimmen nicht überein";
     }
-    // duplicate email error
     if (err.code === 11000) {
-        errors.email = "Diese E-Mail Adresse ist bereits in Verwendung";
+        if (type == "email") {
+            errors.email = "Diese E-Mail Adresse ist bereits in Verwendung";
+        }
+        else if (type == "signature") {
+            errors.signature = "Diese Notensignatur ist bereits in Verwendung";
+        }
         return errors;
     }
     // validation errors
@@ -107,9 +111,9 @@ function createEspassFile(token) {
             zip.file("logo.png", imageData);
             // ... and other manipulations
             zip
-                .generateNodeStream({ type: 'nodebuffer', streamFiles: true })
-                .pipe(fs.createWriteStream('/tmp/hsc-noten.espass'))
-                .on('finish', function () {
+                .generateNodeStream({ type: "nodebuffer", streamFiles: true })
+                .pipe(fs.createWriteStream("/tmp/hsc-noten.espass"))
+                .on("finish", function () {
                 return __awaiter(this, void 0, void 0, function* () {
                     // JSZip generates a readable stream with a "end" event,
                     // but is piped here in a writable stream which emits a "finish" event.
@@ -144,10 +148,7 @@ const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void
             to: email,
             subject,
             html,
-            attachments: [
-                { path: url },
-                { path: "/tmp/hsc-noten.espass" },
-            ]
+            attachments: [{ path: url }, { path: "/tmp/hsc-noten.espass" }],
         };
         const result = yield transporter.sendMail(mailOptions);
         if (transporter.logger) {
@@ -213,7 +214,7 @@ module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, fun
         res.status(201).json({ user: user._id });
     }
     catch (err) {
-        const errors = handleErrors(err);
+        const errors = handleErrors(err, "email");
         res.status(400).json({ errors });
     }
 });
@@ -226,7 +227,7 @@ module.exports.login_post = (req, res) => __awaiter(void 0, void 0, void 0, func
         res.status(200).json({ user: user._id });
     }
     catch (err) {
-        const errors = handleErrors(err);
+        const errors = handleErrors(err, "email");
         res.status(400).json({ errors });
     }
 });
@@ -238,19 +239,31 @@ module.exports.register_score_get = (req, res) => {
     res.redirect("/register-score");
 };
 module.exports.register_score_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { composer, work, signature, count, } = req.body;
+    const { composer, work, signature, count } = req.body;
     try {
-        // const verificationToken = Math.random().toString(36).substr(2);
-        const score = yield Score_1.Score.create({
+        const scoreType = yield Score_1.ScoreType.create({
             composer,
             work,
             signature,
             count,
         });
-        res.status(201).json({ score: score._id });
+        // Nun die einzelnen Exemplare speichern
+        for (let i = 1; i <= count; i++) {
+            try {
+                const score = yield Score_1.Score.create({
+                    signature,
+                    id: signature + "-" + i,
+                });
+            }
+            catch (error) {
+                console.error("Error creating score", error);
+                res.status(500).json({ message: "Internal server error" });
+            }
+        }
+        res.status(201).json({ scoreType: scoreType._id });
     }
     catch (err) {
-        const errors = handleErrors(err);
+        const errors = handleErrors(err, "signature");
         res.status(400).json({ errors });
     }
 });

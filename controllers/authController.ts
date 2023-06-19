@@ -1,15 +1,15 @@
 import { User } from "../models/User";
-import { Score } from "../models/Score";
+import { Score, ScoreType } from "../models/Score";
 import jwt from "jsonwebtoken";
 require("dotenv").config();
 import nodemailer from "nodemailer";
 var QRCode = require("qrcode");
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 // handle errors
-const handleErrors = (err: any) => {
+const handleErrors = (err: any, type: string) => {
   console.log(err.message, err.code);
-  let errors = { email: "", password: "", passwordRepeat: "", lastName: "" };
+  let errors = { email: "", password: "", passwordRepeat: "", lastName: "", signature: "" };
 
   // incorrect email
   if (err.message === "incorrect email") {
@@ -26,9 +26,12 @@ const handleErrors = (err: any) => {
       "Passwort und Passwort Wiederholung stimmen nicht überein";
   }
 
-  // duplicate email error
   if (err.code === 11000) {
-    errors.email = "Diese E-Mail Adresse ist bereits in Verwendung";
+    if (type == "email") {
+      errors.email = "Diese E-Mail Adresse ist bereits in Verwendung";
+    } else if (type == "signature") {
+      errors.signature = "Diese Notensignatur ist bereits in Verwendung";
+    }
     return errors;
   }
 
@@ -94,8 +97,8 @@ const transporter = nodemailer.createTransport({
  * - icon.png with logo (HSC logo in resources folder)
  * - create a ZIP
  * - rename zip extension to espass
- * 
- * see: 
+ *
+ * see:
  * - https://datatypes.net/open-espass-files
  * - https://espass.it/
  * - Apple Passbook file reference: https://developer.apple.com/library/archive/documentation/UserExperience/Reference/PassKit_Bundle/Chapters/Introduction.html#//apple_ref/doc/uid/TP40012026-CH0-SW1
@@ -104,25 +107,30 @@ async function createEspassFile(token: string) {
   return new Promise<void>((resolve, reject) => {
     var fs = require("fs");
     var JSZip = require("jszip");
-    
+
     const id = uuidv4();
-  
+
     var zip = new JSZip();
-    zip.file("main.json", `{"accentColor":"#ff0000ff","app":"passandroid","barCode":{"format":"QR_CODE","message":"${token}"},"description":"HSC Benutzer","fields":[],"id":"${id}","locations":[],"type":"EVENT","validTimespans":[]}`);
-    const imageData = fs.readFileSync(__dirname + "/../resources/hsc-logo-black.png");
+    zip.file(
+      "main.json",
+      `{"accentColor":"#ff0000ff","app":"passandroid","barCode":{"format":"QR_CODE","message":"${token}"},"description":"HSC Benutzer","fields":[],"id":"${id}","locations":[],"type":"EVENT","validTimespans":[]}`
+    );
+    const imageData = fs.readFileSync(
+      __dirname + "/../resources/hsc-logo-black.png"
+    );
     zip.file("logo.png", imageData);
     // ... and other manipulations
-    
+
     zip
-    .generateNodeStream({type:'nodebuffer',streamFiles:true})
-    .pipe(fs.createWriteStream('/tmp/hsc-noten.espass'))
-    .on('finish', async function () {
+      .generateNodeStream({ type: "nodebuffer", streamFiles: true })
+      .pipe(fs.createWriteStream("/tmp/hsc-noten.espass"))
+      .on("finish", async function () {
         // JSZip generates a readable stream with a "end" event,
         // but is piped here in a writable stream which emits a "finish" event.
         console.log("espassfile written.");
         resolve();
-    })
-  });  
+      });
+  });
 }
 
 // Send email to the user after successful registration and verification
@@ -133,7 +141,7 @@ const sendVerificationSuccessfulEmail = async (user: any) => {
     process.env.EMAIL_VERIFICATION_SECRET!,
     { expiresIn: "5y" } // TODO: check in "y" valid
   );
-  
+
   await createEspassFile(token); // TODO: in Memory statt speichern
 
   try {
@@ -156,10 +164,7 @@ const sendVerificationSuccessfulEmail = async (user: any) => {
       to: email,
       subject,
       html,
-      attachments: [
-        { path: url },
-        { path: "/tmp/hsc-noten.espass" },
-      ]
+      attachments: [{ path: url }, { path: "/tmp/hsc-noten.espass" }],
     };
 
     const result = await transporter.sendMail(mailOptions);
@@ -238,7 +243,7 @@ module.exports.signup_post = async (req: any, res: any) => {
     });
     res.status(201).json({ user: user._id });
   } catch (err) {
-    const errors = handleErrors(err);
+    const errors = handleErrors(err, "email");
     res.status(400).json({ errors });
   }
 };
@@ -252,7 +257,7 @@ module.exports.login_post = async (req: any, res: any) => {
     res.cookie("jwt", token, { httpOnly: true, maxAge: maxAge * 1000 });
     res.status(200).json({ user: user._id });
   } catch (err) {
-    const errors = handleErrors(err);
+    const errors = handleErrors(err, "email");
     res.status(400).json({ errors });
   }
 };
@@ -267,24 +272,32 @@ module.exports.register_score_get = (req: any, res: any) => {
 };
 
 module.exports.register_score_post = async (req: any, res: any) => {
-  const {
-    composer,
-    work,
-    signature,
-    count,
-  } = req.body;
+  const { composer, work, signature, count } = req.body;
 
   try {
-    // const verificationToken = Math.random().toString(36).substr(2);
-    const score = await Score.create({
+    const scoreType = await ScoreType.create({
       composer,
       work,
       signature,
       count,
     });
-    res.status(201).json({ score: score._id });
+
+    // Nun die einzelnen Exemplare speichern
+    for (let i = 1; i <= count; i++) {
+      try {
+        const score = await Score.create({
+          signature,
+          id: signature + "-" + i,
+        });
+      } catch (error) {
+        console.error("Error creating score", error);
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+
+    res.status(201).json({ scoreType: scoreType._id });
   } catch (err) {
-    const errors = handleErrors(err);
+    const errors = handleErrors(err, "signature");
     res.status(400).json({ errors });
   }
 };
