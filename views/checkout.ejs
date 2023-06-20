@@ -3,7 +3,7 @@
 <h1>Ausleihe</h1>
 
 <form action="/checkout">
-    <button class="w3-button w3-black btnScan">User scannen</button>
+  <button class="w3-button w3-black btnScan">User scannen</button>
 </form>
 
 
@@ -31,7 +31,28 @@
   <div id="result"></div>
 </main>
 
+<h3>Benutzer</h3>
+<div class="w3-panel w3-border user">
+  <label>ID</label>
+  <input type="text" name="userId" value="" class="w3-input userId" readonly>
+  <label>Nachname</label>
+  <input type="text" name="lastName" value="" class="w3-input lastName" readonly>
+  <label>Vorname</label>
+  <input type="text" name="firstName" value="" class="w3-input firstName" readonly>
+</div>
 
+<h3>Noten</h3>
+<div class="w3-panel w3-border score">
+    <label>ID</label>
+    <input type="text" name="scoreId" value="" class="w3-input scoreId" readonly>
+    <label>Ext. ID</label>
+    <input type="text" name="scoreExtId" value="" class="w3-input scoreExtId" readonly>
+    <label>Zustand</label>
+    <input type="text" name="state" value="" class="w3-input state" readonly>
+    <label>Kommentar</label>
+    <input type="text" name="firstName" value="" class="w3-input comment">
+  </div>
+  
 <%- include('partials/footer'); -%>
 
 <script>
@@ -73,8 +94,26 @@
         //   emailError.textContent = data.errors.email;
         //   passwordError.textContent = data.errors.password;
       }
-      if (data.checkoutUser) {}
-      if (data.checkoutScore) {}
+      if (data.checkoutUser) {
+        const inputUserId = document.querySelector('.userId');
+        const inputFirstName = document.querySelector('.firstName');
+        const inputLastName = document.querySelector('.lastName');
+
+        inputUserId.value = data.checkoutUser._id;
+        inputFirstName.value = data.checkoutUser.firstName ? data.checkoutUser.firstName : "";
+        inputLastName.value = data.checkoutUser.lastName;
+      }
+
+      if (data.checkoutScore) {
+        const inputScoreId = document.querySelector('.scoreId');
+        const inputScoreExtId = document.querySelector('.scoreExtId');
+        const inputState = document.querySelector('.state');
+        const inputComment = document.querySelector('.comment');
+
+        inputScoreId.value = data.checkoutScore.id;
+        inputScoreExtId.value = data.checkoutScore.extId ? data.checkoutScore.extId : "";
+        inputState.value = data.checkoutScore.state ? data.checkoutScore.state : "";
+      }
 
     } catch (err) {
       console.log(err);
@@ -93,12 +132,12 @@
       scanner.clear();
       document.getElementById('reader').remove();
       await submitScanResult("6489edc05376f9a7898dc898", result);
-      btnScan.textContent = "Ausleihe durchführen";
+    //   btnScan.textContent = "Ausleihe durchführen";
+        btnScan.remove();
     }
   }
 
   function error(err) {
     console.error(err);
   }
-
 </script>
