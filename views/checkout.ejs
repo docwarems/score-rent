@@ -31,8 +31,8 @@
   <div id="result"></div>
 </main>
 
-<h3>Benutzer</h3>
-<div class="w3-panel w3-border user">
+<div class="w3-panel w3-border divUser" style="display: none">
+  <h3>Benutzer</h3>
   <label>ID</label>
   <input type="text" name="userId" value="" class="w3-input userId" readonly>
   <label>Nachname</label>
@@ -41,23 +41,25 @@
   <input type="text" name="firstName" value="" class="w3-input firstName" readonly>
 </div>
 
-<h3>Noten</h3>
-<div class="w3-panel w3-border score">
-    <label>ID</label>
-    <input type="text" name="scoreId" value="" class="w3-input scoreId" readonly>
-    <label>Ext. ID</label>
-    <input type="text" name="scoreExtId" value="" class="w3-input scoreExtId" readonly>
-    <label>Zustand</label>
-    <input type="text" name="state" value="" class="w3-input state" readonly>
-    <label>Kommentar</label>
-    <input type="text" name="firstName" value="" class="w3-input comment">
-  </div>
-  
+<div class="w3-panel w3-border divScore" style="display: none">
+  <h3>Noten</h3>
+  <label>ID</label>
+  <input type="text" name="scoreId" value="" class="w3-input scoreId" readonly>
+  <label>Ext. ID</label>
+  <input type="text" name="scoreExtId" value="" class="w3-input scoreExtId" readonly>
+  <label>Zustand</label>
+  <input type="text" name="state" value="" class="w3-input state" readonly>
+  <label>Kommentar</label>
+  <input type="text" name="firstName" value="" class="w3-input comment">
+</div>
+
 <%- include('partials/footer'); -%>
 
 <script>
   const form = document.querySelector('form');
   const btnScan = document.querySelector('.btnScan');
+  const divUser = document.querySelector('.divUser');
+  const divScore = document.querySelector('.divScore');
 
   var scanner;
 
@@ -125,15 +127,17 @@
     console.log(result);
     if (btnScan.textContent == "User scannen") {
       scanner.clear();
-      console.log("submit user");
+      //   console.log("submit user");
       await submitScanResult(result, undefined);
       btnScan.textContent = "Noten scannen";
+      divUser.style = "display: block";
     } else if (btnScan.textContent == "Noten scannen") {
       scanner.clear();
       document.getElementById('reader').remove();
       await submitScanResult("6489edc05376f9a7898dc898", result);
-    //   btnScan.textContent = "Ausleihe durchführen";
-        btnScan.remove();
+      //   btnScan.textContent = "Ausleihe durchführen";
+      divScore.style = "display: block";
+      btnScan.remove();
     }
   }
 
