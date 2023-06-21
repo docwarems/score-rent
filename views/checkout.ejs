@@ -2,7 +2,7 @@
 
 <h1>Ausleihe</h1>
 
-<form action="/checkout">
+<form action="/checkout" id="formScan">
   <button class="w3-button w3-black btnScan">User scannen</button>
 </form>
 
@@ -42,28 +42,33 @@
 </div>
 
 <div class="w3-panel w3-border divScore" style="display: none">
-  <h3>Noten</h3>
-  <label>ID</label>
-  <input type="text" name="scoreId" value="" class="w3-input scoreId" readonly>
-  <label>Ext. ID</label>
-  <input type="text" name="scoreExtId" value="" class="w3-input scoreExtId" readonly>
-  <label>Zustand</label>
-  <input type="text" name="state" value="" class="w3-input state" readonly>
-  <label>Kommentar</label>
-  <input type="text" name="firstName" value="" class="w3-input comment">
+  <form action="/checkout" id="formCheckout">
+    <h3>Noten</h3>
+    <label>ID</label>
+    <input type="text" name="scoreId" value="" class="w3-input scoreId" readonly>
+    <label>Ext. ID</label>
+    <input type="text" name="scoreExtId" value="" class="w3-input scoreExtId" readonly>
+    <label>Zustand</label>
+    <input type="text" name="state" value="" class="w3-input state" readonly>
+    <label>Kommentar</label>
+    <input type="text" name="firstName" value="" class="w3-input comment">
+    <p></p>
+    <button class="w3-button w3-black btnCheckout">Ausleihe</button>
+  </form>
 </div>
 
 <%- include('partials/footer'); -%>
 
 <script>
-  const form = document.querySelector('form');
+  const formScan = document.querySelector('#formScan');
+  const formCheckout = document.querySelector('#formCheckout');
   const btnScan = document.querySelector('.btnScan');
   const divUser = document.querySelector('.divUser');
   const divScore = document.querySelector('.divScore');
 
   var scanner;
 
-  form.addEventListener('submit', async (e) => {
+  formScan.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     scanner = new Html5QrcodeScanner('reader', {
@@ -74,7 +79,12 @@
       fps: 20,
     });
     scanner.render(success, error);
+  });
 
+  formCheckout.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    alert("Hi");
   });
 
   async function submitScanResult(userId, scoreId) {

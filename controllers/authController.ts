@@ -1,5 +1,6 @@
 import { User } from "../models/User";
 import { Score, ScoreType } from "../models/Score";
+import { Checkout } from "../models/Checkout";
 import jwt from "jsonwebtoken";
 require("dotenv").config();
 import nodemailer from "nodemailer";
@@ -310,12 +311,28 @@ module.exports.checkout_post = async (req: any, res: any) => {
   const { userId, scoreId } = req.body;
 
   try {
-    if (scoreId) {
-      console.log("checkout_post", scoreId);
-      const score = await Score.findOne({ _id: "6490059f08678ddf446c7244" });
+    const foo = false;
+    if (userId && scoreId && foo) {
+      const score = await Score.findOne({ id: scoreId });
+      if (score) {
+        const comment = "Flecken";
+        const checkout = new Checkout({
+          userId,
+          scoreId,
+          checkoutComment: comment,
+          checkoutTimestamp: new Date().toLocaleString(),
+        });
+        score.checkedOutByUserId = userId;
+      score.checkouts.push(checkout);
+  
+      }
+
+    } else if (scoreId) {
+      console.log("checkout_post: scoreId=", scoreId);
+      const score = await Score.findOne({ id: scoreId });
 
       if (score) {
-        console.log("checkout_post", score);
+        console.log("checkout_post: score=", score);
         res.status(201).json({ checkoutScore: score });
       } else {
         res.status(400).json({ message: "Score not found" });

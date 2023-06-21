@@ -2,6 +2,7 @@ import { Model, Schema, model } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt, { sign } from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import { ICheckout, Checkout, checkoutSchema } from "./Checkout";
 require("dotenv").config();
 
 interface IScoreType {
@@ -41,6 +42,8 @@ interface IScore {
   id: string; // <signature>-<#>
   extId: string;
   state: string;
+  checkedOutByUserId: string;
+  checkouts: [ICheckout]
 }
 
 interface ScoreModel extends Model<IScore> {}
@@ -63,6 +66,12 @@ const scoreSchema = new Schema<IScore, ScoreModel>({
   state: {
     type: String,
   },
+  checkedOutByUserId: {
+    type: String,
+  },
+  checkouts: {
+    type: [checkoutSchema],
+  }
 });
 
 export const ScoreType = model<IScoreType, ScoreTypeModel>(

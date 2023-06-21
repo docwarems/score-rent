@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const User_1 = require("../models/User");
 const Score_1 = require("../models/Score");
+const Checkout_1 = require("../models/Checkout");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 require("dotenv").config();
 const nodemailer_1 = __importDefault(require("nodemailer"));
@@ -273,11 +274,26 @@ module.exports.checkout_get = (req, res) => {
 module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId, scoreId } = req.body;
     try {
-        if (scoreId) {
-            console.log("checkout_post", scoreId);
-            const score = yield Score_1.Score.findOne({ _id: "6490059f08678ddf446c7244" });
+        const foo = false;
+        if (userId && scoreId && foo) {
+            const score = yield Score_1.Score.findOne({ id: scoreId });
             if (score) {
-                console.log("checkout_post", score);
+                const comment = "Flecken";
+                const checkout = new Checkout_1.Checkout({
+                    userId,
+                    scoreId,
+                    checkoutComment: comment,
+                    checkoutTimestamp: new Date().toLocaleString(),
+                });
+                score.checkedOutByUserId = userId;
+                score.checkouts.push(checkout);
+            }
+        }
+        else if (scoreId) {
+            console.log("checkout_post: scoreId=", scoreId);
+            const score = yield Score_1.Score.findOne({ id: scoreId });
+            if (score) {
+                console.log("checkout_post: score=", score);
                 res.status(201).json({ checkoutScore: score });
             }
             else {
