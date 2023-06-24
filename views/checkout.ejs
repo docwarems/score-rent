@@ -51,10 +51,22 @@
     <label>Zustand</label>
     <input type="text" name="state" value="" class="w3-input state" readonly>
     <label>Kommentar</label>
-    <input type="text" name="firstName" value="" class="w3-input comment">
+    <input type="text" name="comment" value="" class="w3-input comment">
     <p></p>
     <button class="w3-button w3-black btnCheckout">Ausleihe</button>
   </form>
+</div>
+
+<div class="w3-panel w3-green divSuccess" style="display: none">
+  <p class="pSuccess">Ausleihe erfolgreich:</p>
+</div>
+<div class="w3-panel w3-red divError" style="display: none">
+  <p class="pError">Ausleihe Fehler</p>
+</div>
+
+<div class="divHome" style="display: none">
+    <p></p>
+<a href="/" class="w3-button w3-black">Startseite</a>
 </div>
 
 <%- include('partials/footer'); -%>
@@ -63,8 +75,12 @@
   const formScan = document.querySelector('#formScan');
   const formCheckout = document.querySelector('#formCheckout');
   const btnScan = document.querySelector('.btnScan');
+  const btnCheckout = document.querySelector('.btnCheckout');
   const divUser = document.querySelector('.divUser');
   const divScore = document.querySelector('.divScore');
+  const divSuccess = document.querySelector('.divSuccess');
+  const divError = document.querySelector('.divError');
+  const divHome = document.querySelector('.divHome');
 
   var scanner;
 
@@ -78,80 +94,96 @@
       },
       fps: 20,
     });
-    scanner.render(success, error);
+    scanner.render(scanSuccess, scanError);
   });
 
   formCheckout.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    alert("Hi");
+    const inputUserId = document.querySelector('.userId');
+    const inputScoreId = document.querySelector('.scoreId');
+    const inputComment = document.querySelector('.comment');
+    await postCheckout(inputUserId.value, inputScoreId.value, inputComment.value);
   });
 
-  async function submitScanResult(userId, scoreId) {
+  async function postCheckout(userId, scoreId, comment) {
     console.log("submitScanResult: userId=" + userId + ", scoreId=" + scoreId);
     try {
       const res = await fetch('/checkout', {
         method: 'POST',
         body: JSON.stringify({
           userId,
-          scoreId
+          scoreId,
+          comment
         }),
         headers: {
           'Content-Type': 'application/json'
         }
       });
       const data = await res.json();
-      console.log(data);
+      console.log("data=", data);
       if (data.errors) {
-        //   emailError.textContent = data.errors.email;
-        //   passwordError.textContent = data.errors.password;
+        divError.style = "display: block";
+        const pError = document.querySelector('.pError');
+        pError.textContent = data.errors;
       }
-      if (data.checkoutUser) {
+      if (userId && data.checkoutUser) {
+        // User which is about to checkout found
         const inputUserId = document.querySelector('.userId');
         const inputFirstName = document.querySelector('.firstName');
         const inputLastName = document.querySelector('.lastName');
-
         inputUserId.value = data.checkoutUser._id;
         inputFirstName.value = data.checkoutUser.firstName ? data.checkoutUser.firstName : "";
-        inputLastName.value = data.checkoutUser.lastName;
+        inputLastName.value = data.checkoutUser.lastName;        
       }
 
       if (data.checkoutScore) {
-        const inputScoreId = document.querySelector('.scoreId');
-        const inputScoreExtId = document.querySelector('.scoreExtId');
-        const inputState = document.querySelector('.state');
-        const inputComment = document.querySelector('.comment');
+        if (userId && scoreId) {
+          // Checkout success
+          divUser.style = "display: none";
+          divScore.style = "display: none";
+          btnCheckout.remove();
+          divSuccess.style = "display: block";
+          divHome.style = "display: block";
+        } else if (scoreId) {
+          // score to checkout found
+          const inputScoreId = document.querySelector('.scoreId');
+          const inputScoreExtId = document.querySelector('.scoreExtId');
+          const inputState = document.querySelector('.state');
+          const inputComment = document.querySelector('.comment');
 
-        inputScoreId.value = data.checkoutScore.id;
-        inputScoreExtId.value = data.checkoutScore.extId ? data.checkoutScore.extId : "";
-        inputState.value = data.checkoutScore.state ? data.checkoutScore.state : "";
+          inputScoreId.value = data.checkoutScore.id;
+          inputScoreExtId.value = data.checkoutScore.extId ? data.checkoutScore.extId : "";
+          inputState.value = data.checkoutScore.state ? data.checkoutScore.state : "";
+        }
       }
-
     } catch (err) {
-      console.log(err);
+      console.log("err=", err);
+      divError.style = "display: block";
+        const pError = document.querySelector('.pError');
+        pError.textContent = err.message;
     }
-
   }
 
-  async function success(result) {
+  async function scanSuccess(result) {
     console.log(result);
     if (btnScan.textContent == "User scannen") {
       scanner.clear();
       //   console.log("submit user");
-      await submitScanResult(result, undefined);
+      await postCheckout(result, undefined);
       btnScan.textContent = "Noten scannen";
       divUser.style = "display: block";
     } else if (btnScan.textContent == "Noten scannen") {
       scanner.clear();
       document.getElementById('reader').remove();
-      await submitScanResult("6489edc05376f9a7898dc898", result);
+      await postCheckout(undefined, result);
       //   btnScan.textContent = "Ausleihe durchführen";
       divScore.style = "display: block";
       btnScan.remove();
     }
   }
 
-  function error(err) {
+  function scanError(err) {
     console.error(err);
   }
 </script>

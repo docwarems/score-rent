@@ -23,7 +23,13 @@ const uuid_1 = require("uuid");
 // handle errors
 const handleErrors = (err, type) => {
     console.log(err.message, err.code);
-    let errors = { email: "", password: "", passwordRepeat: "", lastName: "", signature: "" };
+    let errors = {
+        email: "",
+        password: "",
+        passwordRepeat: "",
+        lastName: "",
+        signature: "",
+    };
     // incorrect email
     if (err.message === "incorrect email") {
         errors.email = "Die E-Mail Adresse ist unbekannt";
@@ -272,13 +278,11 @@ module.exports.checkout_get = (req, res) => {
     res.redirect("/checkout");
 };
 module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { userId, scoreId } = req.body;
+    const { userId, scoreId, comment } = req.body;
     try {
-        const foo = false;
-        if (userId && scoreId && foo) {
-            const score = yield Score_1.Score.findOne({ id: scoreId });
+        if (userId && scoreId) {
+            let score = yield Score_1.Score.findOne({ id: scoreId });
             if (score) {
-                const comment = "Flecken";
                 const checkout = new Checkout_1.Checkout({
                     userId,
                     scoreId,
@@ -287,6 +291,15 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                 });
                 score.checkedOutByUserId = userId;
                 score.checkouts.push(checkout);
+                score = yield score.save();
+                if (score) {
+                    res.status(201).json({ checkoutScore: score });
+                }
+                else {
+                    res
+                        .status(400)
+                        .json({ message: "Update score with checkout record failed" });
+                }
             }
         }
         else if (scoreId) {
@@ -301,7 +314,6 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
             }
         }
         else if (userId) {
-            // const userId = "6489edc05376f9a7898dc898";
             const user = yield User_1.User.findOne({ _id: userId });
             if (user) {
                 console.log("checkout_post", user);

@@ -6,44 +6,43 @@ import { ICheckout, Checkout, checkoutSchema } from "./Checkout";
 require("dotenv").config();
 
 interface IScoreType {
-    composer: string;
-    work: string;
-    signature: string;
-    count: number;
-  }
-  
-  interface ScoreTypeModel extends Model<IScoreType> {
-  }
-  
-  const scoreTypeSchema = new Schema<IScoreType, ScoreTypeModel>({
-    composer: {
-      type: String,
-      required: [true, "Bitte Komponist angeben"],
-      unique: true,
-    },
-    work: {
-      type: String,
-      required: [true, "Bitte Werk angeben"],
-    },
-    signature: {
-      type: String,
-      required: [true, "Bitte Signatur angeben"],
-      uppercase: true,
-      unique: true,
-    },
-    count: {
-      type: Number,
-      required: [true, "Bitte Anzahl angeben"],
-    },
-  });
-  
+  composer: string;
+  work: string;
+  signature: string;
+  count: number;
+}
+
+interface ScoreTypeModel extends Model<IScoreType> {}
+
+const scoreTypeSchema = new Schema<IScoreType, ScoreTypeModel>({
+  composer: {
+    type: String,
+    required: [true, "Bitte Komponist angeben"],
+    unique: true,
+  },
+  work: {
+    type: String,
+    required: [true, "Bitte Werk angeben"],
+  },
+  signature: {
+    type: String,
+    required: [true, "Bitte Signatur angeben"],
+    uppercase: true,
+    unique: true,
+  },
+  count: {
+    type: Number,
+    required: [true, "Bitte Anzahl angeben"],
+  },
+});
+
 interface IScore {
   signature: string;
   id: string; // <signature>-<#>
   extId: string;
   state: string;
   checkedOutByUserId: string;
-  checkouts: [ICheckout]
+  checkouts: [ICheckout];
 }
 
 interface ScoreModel extends Model<IScore> {}
@@ -71,12 +70,11 @@ const scoreSchema = new Schema<IScore, ScoreModel>({
   },
   checkouts: {
     type: [checkoutSchema],
-  }
+  },
 });
 
 export const ScoreType = model<IScoreType, ScoreTypeModel>(
-    "ScoreType",
-    scoreTypeSchema
-  );  
+  "ScoreType",
+  scoreTypeSchema
+);
 export const Score = model<IScore, ScoreModel>("Score", scoreSchema);
-

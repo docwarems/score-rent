@@ -48,7 +48,7 @@ const scoreSchema = new mongoose_1.Schema({
     },
     checkouts: {
         type: [Checkout_1.checkoutSchema],
-    }
+    },
 });
 exports.ScoreType = (0, mongoose_1.model)("ScoreType", scoreTypeSchema);
 exports.Score = (0, mongoose_1.model)("Score", scoreSchema);

@@ -10,7 +10,13 @@ import { v4 as uuidv4 } from "uuid";
 // handle errors
 const handleErrors = (err: any, type: string) => {
   console.log(err.message, err.code);
-  let errors = { email: "", password: "", passwordRepeat: "", lastName: "", signature: "" };
+  let errors = {
+    email: "",
+    password: "",
+    passwordRepeat: "",
+    lastName: "",
+    signature: "",
+  };
 
   // incorrect email
   if (err.message === "incorrect email") {
@@ -308,14 +314,12 @@ module.exports.checkout_get = (req: any, res: any) => {
 };
 
 module.exports.checkout_post = async (req: any, res: any) => {
-  const { userId, scoreId } = req.body;
+  const { userId, scoreId, comment } = req.body;
 
   try {
-    const foo = false;
-    if (userId && scoreId && foo) {
-      const score = await Score.findOne({ id: scoreId });
+    if (userId && scoreId) {
+      let score = await Score.findOne({ id: scoreId });
       if (score) {
-        const comment = "Flecken";
         const checkout = new Checkout({
           userId,
           scoreId,
@@ -323,10 +327,16 @@ module.exports.checkout_post = async (req: any, res: any) => {
           checkoutTimestamp: new Date().toLocaleString(),
         });
         score.checkedOutByUserId = userId;
-      score.checkouts.push(checkout);
-  
+        score.checkouts.push(checkout);
+        score = await score.save();
+        if (score) {
+          res.status(201).json({ checkoutScore: score });
+        } else {
+          res
+            .status(400)
+            .json({ message: "Update score with checkout record failed" });
+        }
       }
-
     } else if (scoreId) {
       console.log("checkout_post: scoreId=", scoreId);
       const score = await Score.findOne({ id: scoreId });
@@ -338,7 +348,6 @@ module.exports.checkout_post = async (req: any, res: any) => {
         res.status(400).json({ message: "Score not found" });
       }
     } else if (userId) {
-      // const userId = "6489edc05376f9a7898dc898";
       const user = await User.findOne({ _id: userId });
 
       if (user) {
@@ -348,7 +357,7 @@ module.exports.checkout_post = async (req: any, res: any) => {
         res.status(400).json({ message: "User not found" });
       }
     }
-  } catch(error) {
+  } catch (error) {
     res.status(500).json({ error });
   }
 };

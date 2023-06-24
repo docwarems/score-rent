@@ -38,7 +38,10 @@ app.get("/register-score", requireAuth, requireAdmin, (req: any, res: any) =>
   res.render("register-score", { scoreType: res.locals.scoreType })
 );
 app.get("/checkout", requireAuth, requireAdmin, (req: any, res: any) =>
-  res.render("checkout", { checkoutUser: res.locals.checkoutUser, checkoutScore: res.locals.checkoutScore })
+  res.render("checkout", {
+    checkoutUser: res.locals.checkoutUser,
+    checkoutScore: res.locals.checkoutScore,
+  })
 );
 app.use(authRoutes);
 

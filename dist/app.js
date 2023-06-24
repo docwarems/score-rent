@@ -28,7 +28,10 @@ mongoose_1.default
 app.get("*", checkUser);
 app.get("/", requireAuth, (req, res) => res.render("home", { user: res.locals.user }));
 app.get("/register-score", requireAuth, requireAdmin, (req, res) => res.render("register-score", { scoreType: res.locals.scoreType }));
-app.get("/checkout", requireAuth, requireAdmin, (req, res) => res.render("checkout", { checkoutUser: res.locals.checkoutUser, checkoutScore: res.locals.checkoutScore }));
+app.get("/checkout", requireAuth, requireAdmin, (req, res) => res.render("checkout", {
+    checkoutUser: res.locals.checkoutUser,
+    checkoutScore: res.locals.checkoutScore,
+}));
 app.use(authRoutes);
 // Create a nodemailer transporter
 // const transporter = nodemailer.createTransport({
