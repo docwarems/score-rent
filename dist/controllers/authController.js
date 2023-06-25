@@ -298,29 +298,33 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                 else {
                     res
                         .status(400)
-                        .json({ message: "Update score with checkout record failed" });
+                        .json({ errors: "Update score with checkout record failed" });
                 }
             }
         }
         else if (scoreId) {
-            console.log("checkout_post: scoreId=", scoreId);
             const score = yield Score_1.Score.findOne({ id: scoreId });
             if (score) {
-                console.log("checkout_post: score=", score);
-                res.status(201).json({ checkoutScore: score });
+                const checkedOutByUserId = score.checkedOutByUserId;
+                if (checkedOutByUserId) {
+                    // res.status(400).json({ message: `Score ${scoreId} already checked out by user Id ${checkedOutByUserId}` });
+                    res.status(400).json({ errors: `Score ${scoreId} already checked out by user Id ${checkedOutByUserId}` });
+                }
+                else {
+                    res.status(201).json({ checkoutScore: score });
+                }
             }
             else {
-                res.status(400).json({ message: "Score not found" });
+                res.status(400).json({ errors: `Score with Id ${scoreId} not found` });
             }
         }
         else if (userId) {
             const user = yield User_1.User.findOne({ _id: userId });
             if (user) {
-                console.log("checkout_post", user);
                 res.status(201).json({ checkoutUser: user });
             }
             else {
-                res.status(400).json({ message: "User not found" });
+                res.status(400).json({ errors: "User not found" });
             }
         }
     }

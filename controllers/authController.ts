@@ -334,27 +334,30 @@ module.exports.checkout_post = async (req: any, res: any) => {
         } else {
           res
             .status(400)
-            .json({ message: "Update score with checkout record failed" });
+            .json({ errors: "Update score with checkout record failed" });
         }
       }
     } else if (scoreId) {
-      console.log("checkout_post: scoreId=", scoreId);
       const score = await Score.findOne({ id: scoreId });
 
       if (score) {
-        console.log("checkout_post: score=", score);
-        res.status(201).json({ checkoutScore: score });
+        const checkedOutByUserId = score.checkedOutByUserId;
+        if (checkedOutByUserId) {
+          // res.status(400).json({ message: `Score ${scoreId} already checked out by user Id ${checkedOutByUserId}` });
+          res.status(400).json({ errors: `Score ${scoreId} already checked out by user Id ${checkedOutByUserId}` });
+        } else {
+          res.status(201).json({ checkoutScore: score });
+        }
       } else {
-        res.status(400).json({ message: "Score not found" });
+        res.status(400).json({ errors: `Score with Id ${scoreId} not found` });
       }
     } else if (userId) {
       const user = await User.findOne({ _id: userId });
 
       if (user) {
-        console.log("checkout_post", user);
         res.status(201).json({ checkoutUser: user });
       } else {
-        res.status(400).json({ message: "User not found" });
+        res.status(400).json({ errors: "User not found" });
       }
     }
   } catch (error) {

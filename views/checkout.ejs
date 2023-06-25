@@ -2,6 +2,13 @@
 
 <h1>Ausleihe</h1>
 
+<div class="w3-panel w3-green divSuccess" style="display: none">
+  <p class="pSuccess">Ausleihe erfolgreich:</p>
+</div>
+<div class="w3-panel w3-red divError" style="display: none">
+  <p class="pError">Ausleihe Fehler</p>
+</div>
+
 <form action="/checkout" id="formScan">
   <button class="w3-button w3-black btnScan">User scannen</button>
 </form>
@@ -26,7 +33,7 @@
     font-size: 1.5rem;
   }
 </style>
-<main>
+<main id="scanMain">
   <div id="reader"></div>
   <div id="result"></div>
 </main>
@@ -57,16 +64,9 @@
   </form>
 </div>
 
-<div class="w3-panel w3-green divSuccess" style="display: none">
-  <p class="pSuccess">Ausleihe erfolgreich:</p>
-</div>
-<div class="w3-panel w3-red divError" style="display: none">
-  <p class="pError">Ausleihe Fehler</p>
-</div>
-
 <div class="divHome" style="display: none">
-    <p></p>
-<a href="/" class="w3-button w3-black">Startseite</a>
+  <p></p>
+  <a href="/" class="w3-button w3-black">Startseite</a>
 </div>
 
 <%- include('partials/footer'); -%>
@@ -126,6 +126,7 @@
         divError.style = "display: block";
         const pError = document.querySelector('.pError');
         pError.textContent = data.errors;
+        return false;
       }
       if (userId && data.checkoutUser) {
         // User which is about to checkout found
@@ -134,7 +135,7 @@
         const inputLastName = document.querySelector('.lastName');
         inputUserId.value = data.checkoutUser._id;
         inputFirstName.value = data.checkoutUser.firstName ? data.checkoutUser.firstName : "";
-        inputLastName.value = data.checkoutUser.lastName;        
+        inputLastName.value = data.checkoutUser.lastName;
       }
 
       if (data.checkoutScore) {
@@ -155,13 +156,16 @@
           inputScoreId.value = data.checkoutScore.id;
           inputScoreExtId.value = data.checkoutScore.extId ? data.checkoutScore.extId : "";
           inputState.value = data.checkoutScore.state ? data.checkoutScore.state : "";
+        } else {
+          console.log("We should not be here");
         }
       }
+      return true;
     } catch (err) {
       console.log("err=", err);
       divError.style = "display: block";
-        const pError = document.querySelector('.pError');
-        pError.textContent = err.message;
+      const pError = document.querySelector('.pError');
+      pError.textContent = err.message;
     }
   }
 
@@ -175,11 +179,12 @@
       divUser.style = "display: block";
     } else if (btnScan.textContent == "Noten scannen") {
       scanner.clear();
-      document.getElementById('reader').remove();
-      await postCheckout(undefined, result);
-      //   btnScan.textContent = "Ausleihe durchführen";
-      divScore.style = "display: block";
-      btnScan.remove();
+      if (await postCheckout(undefined, result)) {
+        document.getElementById('reader').remove();
+        //   btnScan.textContent = "Ausleihe durchführen";
+        divScore.style = "display: block";
+        btnScan.remove();
+      }
     }
   }
 
