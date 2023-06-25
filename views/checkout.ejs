@@ -59,6 +59,8 @@
     <input type="text" name="state" value="" class="w3-input state" readonly>
     <label>Kommentar</label>
     <input type="text" name="comment" value="" class="w3-input comment">
+    <label>Doppelte Ausleihe erlauben</label>
+    <input type="checkbox" name="allowDoubleCheckout" value="allow" class="w3-check allowDoubleCheckout">
     <p></p>
     <button class="w3-button w3-black btnCheckout">Ausleihe</button>
   </form>
@@ -81,11 +83,13 @@
   const divSuccess = document.querySelector('.divSuccess');
   const divError = document.querySelector('.divError');
   const divHome = document.querySelector('.divHome');
+  const cbAllowDoubleCheckout = document.querySelector('.allowDoubleCheckout');
 
   var scanner;
 
   formScan.addEventListener('submit', async (e) => {
     e.preventDefault();
+    divError.style = "display: none";
 
     scanner = new Html5QrcodeScanner('reader', {
       qrbox: {
@@ -99,22 +103,26 @@
 
   formCheckout.addEventListener('submit', async (e) => {
     e.preventDefault();
+    divError.style = "display: none";
 
     const inputUserId = document.querySelector('.userId');
     const inputScoreId = document.querySelector('.scoreId');
     const inputComment = document.querySelector('.comment');
-    await postCheckout(inputUserId.value, inputScoreId.value, inputComment.value);
+    const inputAllowDoubleCheckout = document.querySelector('.allowDoubleCheckout');
+    console.log("inputAllowDoubleCheckout", inputAllowDoubleCheckout, inputAllowDoubleCheckout.value);
+    await postCheckout(inputUserId.value, inputScoreId.value, inputComment.value, inputAllowDoubleCheckout.value);
   });
 
-  async function postCheckout(userId, scoreId, comment) {
-    console.log("submitScanResult: userId=" + userId + ", scoreId=" + scoreId);
+  async function postCheckout(userId, scoreId, comment, allowDoubleCheckout) {
+    console.log("submitScanResult: userId=" + userId + ", scoreId=" + scoreId, ", allowDoubleCheckout=", allowDoubleCheckout);
     try {
       const res = await fetch('/checkout', {
         method: 'POST',
         body: JSON.stringify({
           userId,
           scoreId,
-          comment
+          comment,
+          allowDoubleCheckout
         }),
         headers: {
           'Content-Type': 'application/json'
@@ -145,6 +153,7 @@
           divScore.style = "display: none";
           btnCheckout.remove();
           divSuccess.style = "display: block";
+          divError.style = "display: none";
           divHome.style = "display: block";
         } else if (scoreId) {
           // score to checkout found
@@ -173,7 +182,6 @@
     console.log(result);
     if (btnScan.textContent == "User scannen") {
       scanner.clear();
-      //   console.log("submit user");
       await postCheckout(result, undefined);
       btnScan.textContent = "Noten scannen";
       divUser.style = "display: block";
@@ -181,7 +189,6 @@
       scanner.clear();
       if (await postCheckout(undefined, result)) {
         document.getElementById('reader').remove();
-        //   btnScan.textContent = "Ausleihe durchführen";
         divScore.style = "display: block";
         btnScan.remove();
       }

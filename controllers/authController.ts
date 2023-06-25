@@ -314,27 +314,38 @@ module.exports.checkout_get = (req: any, res: any) => {
 };
 
 module.exports.checkout_post = async (req: any, res: any) => {
-  const { userId, scoreId, comment } = req.body;
+  const { userId, scoreId, comment, allowDoubleCheckout } = req.body;
 
   try {
     if (userId && scoreId) {
       let score = await Score.findOne({ id: scoreId });
       if (score) {
-        const checkout = new Checkout({
-          userId,
-          scoreId,
-          checkoutComment: comment,
-          checkoutTimestamp: new Date().toLocaleString(),
-        });
-        score.checkedOutByUserId = userId;
-        score.checkouts.push(checkout);
-        score = await score.save();
-        if (score) {
-          res.status(201).json({ checkoutScore: score });
+        // check if this user already checked out a copy of this score type
+        const scoreTypeId = scoreId.substr(0, (scoreId as string).lastIndexOf("-"));
+        const existingScores = await Score.find({ checkedOutByUserId: userId });
+        const existingScoreOfCurrentType = existingScores.find(score => score.id.substr(0, score.id.lastIndexOf("-")) === scoreTypeId);
+        const doubleCheckoutIsAllowed = allowDoubleCheckout === "allow";
+        if (!existingScoreOfCurrentType || (doubleCheckoutIsAllowed && comment)) {
+          const checkout = new Checkout({
+            userId,
+            scoreId,
+            checkoutComment: comment,
+            checkoutTimestamp: new Date().toLocaleString(),
+          });
+          score.checkedOutByUserId = userId;
+          score.checkouts.push(checkout);
+          score = await score.save();
+          if (score) {
+            res.status(201).json({ checkoutScore: score });
+          } else {
+            res
+              .status(400)
+              .json({ errors: "Update score with checkout record failed" });
+          }  
         } else {
           res
             .status(400)
-            .json({ errors: "Update score with checkout record failed" });
+            .json({ errors: `User with Id ${userId} has aleady checked out score Id ${existingScoreOfCurrentType.id}. To allow another checkout check checkbox and specify reason in comment field.` });
         }
       }
     } else if (scoreId) {
