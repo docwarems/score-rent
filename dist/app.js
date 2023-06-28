@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const mongoose_1 = __importDefault(require("mongoose"));
-const authRoutes = require("./routes/authRoutes");
+const { router, score } = require("./routes/authRoutes");
 const cookieParser = require("cookie-parser");
 const { requireAuth, checkUser, requireAdmin, } = require("./middleware/authMiddleware");
 require("dotenv").config();
@@ -27,12 +27,9 @@ mongoose_1.default
 // routes
 app.get("*", checkUser);
 app.get("/", requireAuth, (req, res) => res.render("home", { user: res.locals.user }));
-app.get("/register-score", requireAuth, requireAdmin, (req, res) => res.render("register-score", { scoreType: res.locals.scoreType }));
-app.get("/checkout", requireAuth, requireAdmin, (req, res) => res.render("checkout", {
-    checkoutUser: res.locals.checkoutUser,
-    checkoutScore: res.locals.checkoutScore,
-}));
-app.use(authRoutes);
+app.use("/score", score);
+// app.use("/foo", authRoutes); // for http://localhost:3000/foo/checkout the route handler method gets called
+// app.use("/", authRoutes); // this seems to make no difference to app.use(authRoutes)
 // Create a nodemailer transporter
 // const transporter = nodemailer.createTransport({
 //   host: process.env.SMTP_HOST,

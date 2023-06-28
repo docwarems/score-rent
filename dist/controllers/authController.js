@@ -286,9 +286,10 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                 // check if this user already checked out a copy of this score type
                 const scoreTypeId = scoreId.substr(0, scoreId.lastIndexOf("-"));
                 const existingScores = yield Score_1.Score.find({ checkedOutByUserId: userId });
-                const existingScoreOfCurrentType = existingScores.find(score => score.id.substr(0, score.id.lastIndexOf("-")) === scoreTypeId);
+                const existingScoreOfCurrentType = existingScores.find((score) => score.id.substr(0, score.id.lastIndexOf("-")) === scoreTypeId);
                 const doubleCheckoutIsAllowed = allowDoubleCheckout === "allow";
-                if (!existingScoreOfCurrentType || (doubleCheckoutIsAllowed && comment)) {
+                if (!existingScoreOfCurrentType ||
+                    (doubleCheckoutIsAllowed && comment)) {
                     const checkout = new Checkout_1.Checkout({
                         userId,
                         scoreId,
@@ -308,9 +309,9 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                     }
                 }
                 else {
-                    res
-                        .status(400)
-                        .json({ errors: `User with Id ${userId} has aleady checked out score Id ${existingScoreOfCurrentType.id}. To allow another checkout check checkbox and specify reason in comment field.` });
+                    res.status(400).json({
+                        errors: `User with Id ${userId} has aleady checked out score Id ${existingScoreOfCurrentType.id}. To allow another checkout check checkbox and specify reason in comment field.`,
+                    });
                 }
             }
         }
@@ -320,7 +321,9 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                 const checkedOutByUserId = score.checkedOutByUserId;
                 if (checkedOutByUserId) {
                     // res.status(400).json({ message: `Score ${scoreId} already checked out by user Id ${checkedOutByUserId}` });
-                    res.status(400).json({ errors: `Score ${scoreId} already checked out by user Id ${checkedOutByUserId}` });
+                    res.status(400).json({
+                        errors: `Score ${scoreId} already checked out by user Id ${checkedOutByUserId}`,
+                    });
                 }
                 else {
                     res.status(201).json({ checkoutScore: score });

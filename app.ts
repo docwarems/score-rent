@@ -1,6 +1,6 @@
 const express = require("express");
 import mongoose from "mongoose";
-const authRoutes = require("./routes/authRoutes");
+const { router, score } = require("./routes/authRoutes");
 const cookieParser = require("cookie-parser");
 const {
   requireAuth,
@@ -34,28 +34,9 @@ app.get("*", checkUser);
 app.get("/", requireAuth, (req: any, res: any) =>
   res.render("home", { user: res.locals.user })
 );
-app.get("/register-score", requireAuth, requireAdmin, (req: any, res: any) =>
-  res.render("register-score", { scoreType: res.locals.scoreType })
-);
-app.get("/checkout", requireAuth, requireAdmin, (req: any, res: any) =>
-  res.render("checkout", {
-    checkoutUser: res.locals.checkoutUser,
-    checkoutScore: res.locals.checkoutScore,
-  })
-);
 
-/**
- * The coexistence of routes defined here, e.g.
- * - app.get("/checkout")
- * and routes defined in router authRoutes 
- * - router.get("/checkout", authController.checkout_get);
- * is currently not clear to me.
- * 
- * It seems that app.get() has precedence, because the handler method from the router gets never called
- * 
- */
-app.use(authRoutes);
-// app.use("/foo", authRoutes); // for http://localhost:3000/foo/checkout the route handler method gets called 
+app.use("/score", score);
+// app.use("/foo", authRoutes); // for http://localhost:3000/foo/checkout the route handler method gets called
 // app.use("/", authRoutes); // this seems to make no difference to app.use(authRoutes)
 
 // Create a nodemailer transporter
