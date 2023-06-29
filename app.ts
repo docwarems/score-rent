@@ -36,6 +36,7 @@ app.get("/", requireAuth, (req: any, res: any) =>
 );
 
 app.use("/score", score);
+app.use(router);
 // app.use("/foo", authRoutes); // for http://localhost:3000/foo/checkout the route handler method gets called
 // app.use("/", authRoutes); // this seems to make no difference to app.use(authRoutes)
 

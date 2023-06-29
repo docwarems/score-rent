@@ -386,3 +386,77 @@ module.exports.checkout_post = async (req: any, res: any) => {
     res.status(500).json({ error });
   }
 };
+
+module.exports.checkin_post = async (req: any, res: any) => {
+  const { scoreId, comment } = req.body;
+
+  try {
+    if (scoreId && comment) {
+      let score = await Score.findOne({ id: scoreId });
+      if (score) {
+        if (score.checkedOutByUserId) {
+          // current checkout record should last element of array
+          const checkout = score.checkouts[score.checkouts.length - 1];
+          if (checkout.checkinTimestamp) {
+            res
+              .status(400)
+              .json({
+                errors: `Checkout record not found for score with Id ${scoreId}`,
+              });
+          } else {
+            score.checkedOutByUserId = "";
+            checkout.checkinTimestamp = new Date().toLocaleString();
+            checkout.checkinComment = comment;
+
+            score = await score.save();
+            if (score) {
+              res.status(201).json({ checkinScore: score });
+            } else {
+              res
+                .status(400)
+                .json({ errors: "Update score with checkout record failed" });
+            }
+          }
+        }
+      } else {
+        res
+          .status(400)
+          .json({
+            errors: `Found score with Id ${scoreId} but it's not checked out`,
+          });
+      }
+    } else if (scoreId) {
+      const score = await Score.findOne({ id: scoreId });
+
+      if (score) {
+        const checkedOutByUserId = score.checkedOutByUserId;
+        if (checkedOutByUserId) {
+          const user = await User.findOne({ _id: checkedOutByUserId });
+          if (user) {
+            res.status(200).json({ checkinScore: score, checkinUser: user });
+          } else {
+            res.status(400).json({
+              errors: `Score ${scoreId} checked out by user Id ${checkedOutByUserId}, but no user found this id`,
+            });
+          }
+        } else {
+          res
+            .status(400)
+            .json({ errors: `Score with Id ${scoreId} is not checked out` });
+        }
+      } else {
+        res.status(400).json({ errors: `Score with Id ${scoreId} not found` });
+      }
+      // } else if (userId) {
+      //   const user = await User.findOne({ _id: userId });
+
+      //   if (user) {
+      //     res.status(201).json({ checkoutUser: user });
+      //   } else {
+      //     res.status(400).json({ errors: "User not found" });
+      //   }
+    }
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+};

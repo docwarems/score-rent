@@ -6,7 +6,7 @@ const {
   requireAdmin,
 } = require("../middleware/authMiddleware");
 
-const router = Router();
+export const router = Router();
 
 router.post("*", checkUser);
 router.get("/signup", authController.signup_get);
@@ -36,5 +36,11 @@ score.get("/checkout", requireAuth, requireAdmin, (req: any, res: any) =>
   })
 );
 score.post("/checkout", authController.checkout_post);
+score.get("/checkin", requireAuth, requireAdmin, (req: any, res: any) =>
+  res.render("checkin", {
+    checkinScore: res.locals.checkinScore,
+  })
+);
+score.post("/checkin", authController.checkin_post);
 
 // module.exports = router, score;

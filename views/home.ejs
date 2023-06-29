@@ -17,10 +17,10 @@
   <% if (user.isAdmin) { %>
     <li><a href="/score/register" class="w3-button w3-black">Leihnoten registrieren</a></li>
     <li><a href="/score/checkout" class="w3-button w3-black">Noten Ausleihe</a></li>
+    <li><a href="/score/checkin" class="w3-button w3-black">Noten Rückgabe</a></li>
     <li><a href="/list-score" class="w3-button w3-black">Leihnoten Liste</a></li>
     <li><a href="/list-user" class="w3-button w3-black">Benutzer Liste</a></li>
     <li><a href="/user" class="w3-button w3-black">Benutzer anzeigen</a></li>
-    <li><a href="/checkin" class="w3-button w3-black">Noten Rückgabe</a></li>
   <% } else { %>  
     <li><a href="/checkouts" class="w3-button w3-black">Ausleihen anzeigen</a></li>
   <% } %>    
