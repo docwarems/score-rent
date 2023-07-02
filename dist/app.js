@@ -28,6 +28,7 @@ mongoose_1.default
 app.get("*", checkUser);
 app.get("/", requireAuth, (req, res) => res.render("home", { user: res.locals.user }));
 app.use("/score", score);
+app.use(router);
 // app.use("/foo", authRoutes); // for http://localhost:3000/foo/checkout the route handler method gets called
 // app.use("/", authRoutes); // this seems to make no difference to app.use(authRoutes)
 // Create a nodemailer transporter
