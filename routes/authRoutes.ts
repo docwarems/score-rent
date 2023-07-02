@@ -25,22 +25,33 @@ export const score = Router();
 
 score.get("*", checkUser, requireAuth, requireAdmin);
 score.post("*", checkUser, requireAuth, requireAdmin);
+
 score.get("/register", (req: any, res: any) =>
   res.render("register-score", { scoreType: res.locals.scoreType })
 );
 score.post("/register", authController.register_score_post);
-score.get("/checkout", requireAuth, requireAdmin, (req: any, res: any) =>
+
+score.get("/checkout", (req: any, res: any) =>
   res.render("checkout", {
     checkoutUser: res.locals.checkoutUser,
     checkoutScore: res.locals.checkoutScore,
   })
 );
 score.post("/checkout", authController.checkout_post);
-score.get("/checkin", requireAuth, requireAdmin, (req: any, res: any) =>
+
+score.get("/checkin", (req: any, res: any) =>
   res.render("checkin", {
     checkinScore: res.locals.checkinScore,
   })
 );
 score.post("/checkin", authController.checkin_post);
 
-// module.exports = router, score;
+// score.get("/checkouts", authController.checkouts_get);
+
+score.get("/checkouts", (req: any, res: any) =>
+  res.render("checkouts", {
+    filter: { signature: "", checkedOut: true },
+    checkouts: undefined,
+  })
+);
+score.post("/checkouts", authController.checkouts_post);

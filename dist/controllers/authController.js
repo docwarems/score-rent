@@ -357,9 +357,7 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
                     // current checkout record should last element of array
                     const checkout = score.checkouts[score.checkouts.length - 1];
                     if (checkout.checkinTimestamp) {
-                        res
-                            .status(400)
-                            .json({
+                        res.status(400).json({
                             errors: `Checkout record not found for score with Id ${scoreId}`,
                         });
                     }
@@ -380,9 +378,7 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
                 }
             }
             else {
-                res
-                    .status(400)
-                    .json({
+                res.status(400).json({
                     errors: `Found score with Id ${scoreId} but it's not checked out`,
                 });
             }
@@ -419,6 +415,34 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
             //     res.status(400).json({ errors: "User not found" });
             //   }
         }
+    }
+    catch (error) {
+        res.status(500).json({ error });
+    }
+});
+module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { signature, checkedOut } = req.body;
+    const filter = signature ? { signature } : {};
+    try {
+        const scores = yield Score_1.Score.find(filter, "checkouts")
+            .populate("checkouts")
+            .exec(); // TODO: when exec and when not?
+        // const scores = await Score.find({ }).populate('checkouts').exec(); // TODO: when exec and when not?
+        let checkouts = [];
+        for (const score of scores) {
+            for (const checkout of score.checkouts) {
+                checkouts.push(checkout);
+            }
+        }
+        const onlyCheckedOut = checkedOut == "true";
+        if (onlyCheckedOut) {
+            checkouts = checkouts.filter((checkout) => !checkout.checkinTimestamp); // TODO: or filter by checkedOutByUser
+        }
+        console.log("checkouts=" + checkouts.length);
+        res.render("checkouts", {
+            filter: { signature, checkedOut: onlyCheckedOut },
+            checkouts: checkouts,
+        });
     }
     catch (error) {
         res.status(500).json({ error });

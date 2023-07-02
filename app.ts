@@ -9,6 +9,7 @@ const {
 } = require("./middleware/authMiddleware");
 require("dotenv").config();
 import nodemailer from "nodemailer";
+const bodyParser = require("body-parser");
 
 const app = express();
 
@@ -16,6 +17,7 @@ const app = express();
 app.use(express.static("public"));
 app.use(express.json());
 app.use(cookieParser());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // view engine
 app.set("view engine", "ejs");

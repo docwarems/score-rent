@@ -38,8 +38,25 @@
   <div id="result"></div>
 </main>
 
+<div class="w3-panel w3-border divScore" style="display: none">
+  <form action="/checkin" id="formCheckin">
+    <h3>Noten</h3>
+    <label>ID</label>
+    <input type="text" name="scoreId" value="" class="w3-input scoreId" readonly>
+    <label>Ext. ID</label>
+    <input type="text" name="scoreExtId" value="" class="w3-input scoreExtId" readonly>
+    <label>Zustand Ausleihe</label>
+    <input type="text" name="state" value="" class="w3-input state" readonly>
+    <label class="w3-text-blue">Kommentar</label>
+    <input type="text" name="comment" value="" class="w3-input comment">
+    <p></p>
+    <button class="w3-button w3-black btnCheckin">Rückgabe</button>
+    <p></p>
+  </form>
+</div>
+
 <div class="w3-panel w3-border divUser" style="display: none">
-  <h3>Benutzer</h3>
+  <h3>Ausgeliehen durch Benutzer</h3>
   <label>ID</label>
   <input type="text" name="userId" value="" class="w3-input userId" readonly>
   <label>Nachname</label>
@@ -48,21 +65,6 @@
   <input type="text" name="firstName" value="" class="w3-input firstName" readonly>
 </div>
 
-<div class="w3-panel w3-border divScore" style="display: none">
-  <form action="/checkin" id="formCheckin">
-    <h3>Noten</h3>
-    <label>ID</label>
-    <input type="text" name="scoreId" value="" class="w3-input scoreId" readonly>
-    <label>Ext. ID</label>
-    <input type="text" name="scoreExtId" value="" class="w3-input scoreExtId" readonly>
-    <label>Zustand</label>
-    <input type="text" name="state" value="" class="w3-input state" readonly>
-    <label>Kommentar</label>
-    <input type="text" name="comment" value="" class="w3-input comment">
-    <p></p>
-    <button class="w3-button w3-black btnCheckin">Rückgabe</button>
-  </form>
-</div>
 
 <div class="divHome" style="display: none">
   <p></p>

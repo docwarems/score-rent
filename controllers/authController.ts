@@ -1,11 +1,12 @@
 import { User } from "../models/User";
 import { Score, ScoreType } from "../models/Score";
-import { Checkout } from "../models/Checkout";
+import { Checkout, checkoutSchema } from "../models/Checkout";
 import jwt from "jsonwebtoken";
 require("dotenv").config();
 import nodemailer from "nodemailer";
 var QRCode = require("qrcode");
 import { v4 as uuidv4 } from "uuid";
+import { score } from "../routes/authRoutes";
 
 // handle errors
 const handleErrors = (err: any, type: string) => {
@@ -398,11 +399,9 @@ module.exports.checkin_post = async (req: any, res: any) => {
           // current checkout record should last element of array
           const checkout = score.checkouts[score.checkouts.length - 1];
           if (checkout.checkinTimestamp) {
-            res
-              .status(400)
-              .json({
-                errors: `Checkout record not found for score with Id ${scoreId}`,
-              });
+            res.status(400).json({
+              errors: `Checkout record not found for score with Id ${scoreId}`,
+            });
           } else {
             score.checkedOutByUserId = "";
             checkout.checkinTimestamp = new Date().toLocaleString();
@@ -419,11 +418,9 @@ module.exports.checkin_post = async (req: any, res: any) => {
           }
         }
       } else {
-        res
-          .status(400)
-          .json({
-            errors: `Found score with Id ${scoreId} but it's not checked out`,
-          });
+        res.status(400).json({
+          errors: `Found score with Id ${scoreId} but it's not checked out`,
+        });
       }
     } else if (scoreId) {
       const score = await Score.findOne({ id: scoreId });
@@ -456,6 +453,38 @@ module.exports.checkin_post = async (req: any, res: any) => {
       //     res.status(400).json({ errors: "User not found" });
       //   }
     }
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+};
+
+module.exports.checkouts_post = async (req: any, res: any) => {
+  const { signature, checkedOut } = req.body;
+  const filter = signature ? { signature } : {};
+  try {
+    const scores = await Score.find(filter, "checkouts")
+      .populate("checkouts")
+      .exec(); // TODO: when exec and when not?
+    // const scores = await Score.find({ }).populate('checkouts').exec(); // TODO: when exec and when not?
+
+    let checkouts = [];
+    for (const score of scores) {
+      for (const checkout of score.checkouts) {
+        checkouts.push(checkout);
+      }
+    }
+
+    const onlyCheckedOut = checkedOut == "true";
+    if (onlyCheckedOut) {
+      checkouts = checkouts.filter(
+        (checkout: any) => !checkout.checkinTimestamp
+      ); // TODO: or filter by checkedOutByUser
+    }
+    console.log("checkouts=" + checkouts.length);
+    res.render("checkouts", {
+      filter: { signature, checkedOut: onlyCheckedOut },
+      checkouts: checkouts,
+    });
   } catch (error) {
     res.status(500).json({ error });
   }

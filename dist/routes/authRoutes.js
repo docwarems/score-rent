@@ -22,13 +22,18 @@ exports.score.get("*", checkUser, requireAuth, requireAdmin);
 exports.score.post("*", checkUser, requireAuth, requireAdmin);
 exports.score.get("/register", (req, res) => res.render("register-score", { scoreType: res.locals.scoreType }));
 exports.score.post("/register", authController.register_score_post);
-exports.score.get("/checkout", requireAuth, requireAdmin, (req, res) => res.render("checkout", {
+exports.score.get("/checkout", (req, res) => res.render("checkout", {
     checkoutUser: res.locals.checkoutUser,
     checkoutScore: res.locals.checkoutScore,
 }));
 exports.score.post("/checkout", authController.checkout_post);
-exports.score.get("/checkin", requireAuth, requireAdmin, (req, res) => res.render("checkin", {
+exports.score.get("/checkin", (req, res) => res.render("checkin", {
     checkinScore: res.locals.checkinScore,
 }));
 exports.score.post("/checkin", authController.checkin_post);
-// module.exports = router, score;
+// score.get("/checkouts", authController.checkouts_get);
+exports.score.get("/checkouts", (req, res) => res.render("checkouts", {
+    filter: { signature: "", checkedOut: true },
+    checkouts: undefined,
+}));
+exports.score.post("/checkouts", authController.checkouts_post);

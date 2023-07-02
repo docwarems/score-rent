@@ -1,0 +1,43 @@
+<%- include('partials/header'); -%>
+
+<h1>Ausleihen</h1>
+
+<div class="w3-panel w3-red divError" style="display: none">
+  <p class="pError">Fehler</p>
+</div>
+
+<div class="w3-panel w3-border divScore">
+  <form action="/score/checkouts" method="POST" id="formFilter">
+    <h3>Filter</h3>
+    <label>Noten Signatur</label>
+    <input type="text" name="signature" value="<%= filter.signature %>" class="w3-input signature">
+    <label>Nur offene</label>
+    <input type="checkbox" name="checkedOut" value="true" <%= filter.checkedOut ? "checked" : "" %> class="w3-check checkedOut">
+    <p></p>
+    <button class="w3-button w3-black btnCheckouts" type="submit">Suchen</button>
+    <p></p>
+  </form>
+</div>
+
+<% if (checkouts) { %>
+<div class="w3-responsive">
+  <table class="w3-table-all">
+    <tr>
+      <th>Noten Id</th>
+      <th>User Id</th>
+      <th>Ausgeliehen am</th>
+      <th>Rückgabe am</th>
+    </tr>
+    <% checkouts.forEach(checkout => { %>
+    <tr>
+      <td><%= checkout.scoreId %></td>
+      <td><%= checkout.userId %></td>
+      <td><%= checkout.checkoutTimestamp %></td>
+      <td><%= checkout.checkinTimestamp %></td>
+    </tr>
+    <% }); %>
+  </table>
+</div>
+<% } %>
+
+<%- include('partials/footer'); -%>
