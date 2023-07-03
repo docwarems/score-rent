@@ -32,7 +32,12 @@ exports.score.get("/checkin", (req, res) => res.render("checkin", {
 }));
 exports.score.post("/checkin", authController.checkin_post);
 // score.get("/checkouts", authController.checkouts_get);
+const signatures = [
+    { id: "VERD-REQ", name: "Verdi Requiem" },
+    { id: "MOZ-REQ", name: "Mozart Requiem" },
+]; // TODO: from db
 exports.score.get("/checkouts", (req, res) => res.render("checkouts", {
+    signatures,
     filter: { signature: "", checkedOut: true },
     checkouts: undefined,
 }));

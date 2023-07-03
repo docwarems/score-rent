@@ -340,7 +340,7 @@ module.exports.checkout_post = async (req: any, res: any) => {
             userId,
             scoreId,
             checkoutComment: comment,
-            checkoutTimestamp: new Date().toLocaleString(),
+            checkoutTimestamp: new Date(),
           });
           score.checkedOutByUserId = userId;
           score.checkouts.push(checkout);
@@ -404,7 +404,7 @@ module.exports.checkin_post = async (req: any, res: any) => {
             });
           } else {
             score.checkedOutByUserId = "";
-            checkout.checkinTimestamp = new Date().toLocaleString();
+            checkout.checkinTimestamp = new Date();
             checkout.checkinComment = comment;
 
             score = await score.save();
@@ -480,8 +480,15 @@ module.exports.checkouts_post = async (req: any, res: any) => {
         (checkout: any) => !checkout.checkinTimestamp
       ); // TODO: or filter by checkedOutByUser
     }
-    console.log("checkouts=" + checkouts.length);
+    // console.log("checkouts=" + checkouts.length);
+
+    const signatures = [
+      { id: "VERD-REQ", name: "Verdi Requiem" },
+      { id: "MOZ-REQ", name: "Mozart Requiem" },
+    ]; // TODO: from db
+
     res.render("checkouts", {
+      signatures,
       filter: { signature, checkedOut: onlyCheckedOut },
       checkouts: checkouts,
     });

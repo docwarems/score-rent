@@ -5,6 +5,9 @@
 ### General
 
 - sign QR codes
+- format timestamps
+- replace home page by menu?
+- responsive side bar?
 
 ### User registration
 

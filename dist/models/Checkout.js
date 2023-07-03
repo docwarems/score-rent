@@ -13,7 +13,7 @@ exports.checkoutSchema = new mongoose_1.Schema({
         required: true,
     },
     checkoutTimestamp: {
-        type: String,
+        type: Date,
         required: false,
     },
     checkoutComment: {
@@ -21,7 +21,7 @@ exports.checkoutSchema = new mongoose_1.Schema({
         required: false,
     },
     checkinTimestamp: {
-        type: String,
+        type: Date,
         required: false,
     },
     checkinComment: {

@@ -48,8 +48,13 @@ score.post("/checkin", authController.checkin_post);
 
 // score.get("/checkouts", authController.checkouts_get);
 
+const signatures = [
+  { id: "VERD-REQ", name: "Verdi Requiem" },
+  { id: "MOZ-REQ", name: "Mozart Requiem" },
+]; // TODO: from db
 score.get("/checkouts", (req: any, res: any) =>
   res.render("checkouts", {
+    signatures,
     filter: { signature: "", checkedOut: true },
     checkouts: undefined,
   })

@@ -10,7 +10,16 @@
   <form action="/score/checkouts" method="POST" id="formFilter">
     <h3>Filter</h3>
     <label>Noten Signatur</label>
-    <input type="text" name="signature" value="<%= filter.signature %>" class="w3-input signature">
+
+    <select class="w3-select" name="signature">
+      <option value="" disabled selected>Choose your option</option>
+      <% for (const signature of signatures) { %>
+        <% const selected = signature.id === filter.signature ? "selected" : "" %>
+        <option value="<%= signature.id %>" <%= selected %>><%= signature.name %></option>
+      <% } %>
+    </select>
+
+    <!-- <input type="text" name="signature" value="<%= filter.signature %>" class="w3-input signature"> -->
     <label>Nur offene</label>
     <input type="checkbox" name="checkedOut" value="true" <%= filter.checkedOut ? "checked" : "" %> class="w3-check checkedOut">
     <p></p>
@@ -28,12 +37,16 @@
       <th>Ausgeliehen am</th>
       <th>Rückgabe am</th>
     </tr>
-    <% checkouts.forEach(checkout => { %>
+    <% 
+    checkouts.forEach(checkout => { 
+      const checkoutTimestamp = checkout.checkoutTimestamp ? checkout.checkoutTimestamp.toLocaleString("de-DE") : "";
+      const checkinTimestamp = checkout.checkinTimestamp ? checkout.checkinTimestamp.toLocaleString("de-DE") : "";
+    %>
     <tr>
       <td><%= checkout.scoreId %></td>
       <td><%= checkout.userId %></td>
-      <td><%= checkout.checkoutTimestamp %></td>
-      <td><%= checkout.checkinTimestamp %></td>
+      <td><%= checkoutTimestamp %></td>
+      <td><%= checkinTimestamp %></td>
     </tr>
     <% }); %>
   </table>

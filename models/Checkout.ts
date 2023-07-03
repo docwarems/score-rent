@@ -7,9 +7,9 @@ require("dotenv").config();
 export interface ICheckout {
   userId: string;
   scoreId: string;
-  checkoutTimestamp: string;
+  checkoutTimestamp: Date;
   checkoutComment: string;
-  checkinTimestamp: string;
+  checkinTimestamp: Date;
   checkinComment: string;
 }
 
@@ -25,7 +25,7 @@ export const checkoutSchema = new Schema<ICheckout, CheckoutModel>({
     required: true,
   },
   checkoutTimestamp: {
-    type: String,
+    type: Date,
     required: false,
   },
   checkoutComment: {
@@ -33,7 +33,7 @@ export const checkoutSchema = new Schema<ICheckout, CheckoutModel>({
     required: false,
   },
   checkinTimestamp: {
-    type: String,
+    type: Date,
     required: false,
   },
   checkinComment: {
