@@ -354,7 +354,7 @@ module.exports.checkout_post = async (req: any, res: any) => {
           }
         } else {
           res.status(400).json({
-            errors: `User with Id ${userId} has aleady checked out score Id ${existingScoreOfCurrentType.id}. To allow another checkout check checkbox and specify reason in comment field.`,
+            errors: `User with Id ${userId} has already checked out score Id ${existingScoreOfCurrentType.id}. To allow another checkout check checkbox and specify reason in comment field.`,
           });
         }
       }
@@ -380,7 +380,7 @@ module.exports.checkout_post = async (req: any, res: any) => {
       if (user) {
         res.status(201).json({ checkoutUser: user });
       } else {
-        res.status(400).json({ errors: "User not found" });
+        res.status(400).json({ errors: `User with Id ${userId} not found` });
       }
     }
   } catch (error) {

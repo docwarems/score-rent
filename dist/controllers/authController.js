@@ -310,7 +310,7 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                 }
                 else {
                     res.status(400).json({
-                        errors: `User with Id ${userId} has aleady checked out score Id ${existingScoreOfCurrentType.id}. To allow another checkout check checkbox and specify reason in comment field.`,
+                        errors: `User with Id ${userId} has already checked out score Id ${existingScoreOfCurrentType.id}. To allow another checkout check checkbox and specify reason in comment field.`,
                     });
                 }
             }
@@ -339,7 +339,7 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                 res.status(201).json({ checkoutUser: user });
             }
             else {
-                res.status(400).json({ errors: "User not found" });
+                res.status(400).json({ errors: `User with Id ${userId} not found` });
             }
         }
     }

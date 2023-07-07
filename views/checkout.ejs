@@ -182,9 +182,10 @@
     console.log(result);
     if (btnScan.textContent == "User scannen") {
       scanner.clear();
-      await postCheckout(result, undefined);
-      btnScan.textContent = "Noten scannen";
-      divUser.style = "display: block";
+      if (await postCheckout(result, undefined)) {
+        btnScan.textContent = "Noten scannen";
+        divUser.style = "display: block";
+      }
     } else if (btnScan.textContent == "Noten scannen") {
       scanner.clear();
       if (await postCheckout(undefined, result)) {
