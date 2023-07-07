@@ -14,8 +14,8 @@
     <select class="w3-select" name="signature">
       <option value="" disabled selected>Choose your option</option>
       <% for (const signature of signatures) { %>
-        <% const selected = signature.id === filter.signature ? "selected" : "" %>
-        <option value="<%= signature.id %>" <%= selected %>><%= signature.name %></option>
+      <% const selected = signature.id === filter.signature ? "selected" : "" %>
+      <option value="<%= signature.id %>" <%= selected %>><%= signature.name %></option>
       <% } %>
     </select>
 
@@ -30,21 +30,26 @@
 
 <% if (checkouts) { %>
 <div class="w3-responsive">
-  <table class="w3-table-all">
+
+  <input class="w3-input w3-border w3-padding" type="text" placeholder="Suche nach Benutzer.." id="searchUserInput" onkeyup="filterUser()">
+  <p></p>
+  <table class="w3-table-all" id="checkoutsTable">
     <tr>
       <th>Noten Id</th>
-      <th>User Id</th>
+      <th>Benutzer</th>
       <th>Ausgeliehen am</th>
       <th>Rückgabe am</th>
     </tr>
     <% 
-    checkouts.forEach(checkout => { 
+    checkouts.forEach(checkoutWithUser => { 
+      const checkout = checkoutWithUser.checkout;
+      const user = checkoutWithUser.user;
       const checkoutTimestamp = checkout.checkoutTimestamp ? checkout.checkoutTimestamp.toLocaleString("de-DE") : "";
       const checkinTimestamp = checkout.checkinTimestamp ? checkout.checkinTimestamp.toLocaleString("de-DE") : "";
     %>
     <tr>
       <td><%= checkout.scoreId %></td>
-      <td><%= checkout.userId %></td>
+      <td><%= user ? user.firstName + " " + user.lastName : checkout.userId %></td>
       <td><%= checkoutTimestamp %></td>
       <td><%= checkinTimestamp %></td>
     </tr>
@@ -54,3 +59,24 @@
 <% } %>
 
 <%- include('partials/footer'); -%>
+
+<script>
+  function filterUser() {
+    var input, filter, table, tr, td, i;
+    input = document.getElementById("searchUserInput");
+    filter = input.value.toUpperCase();
+    table = document.getElementById("checkoutsTable");
+    tr = table.getElementsByTagName("tr");
+    for (i = 0; i < tr.length; i++) {
+      td = tr[i].getElementsByTagName("td")[1];
+      if (td) {
+        txtValue = td.textContent || td.innerText;
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+          tr[i].style.display = "";
+        } else {
+          tr[i].style.display = "none";
+        }
+      }
+    }
+  }
+</script>

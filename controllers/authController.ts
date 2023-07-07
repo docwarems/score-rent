@@ -7,6 +7,7 @@ import nodemailer from "nodemailer";
 var QRCode = require("qrcode");
 import { v4 as uuidv4 } from "uuid";
 import { score } from "../routes/authRoutes";
+import mongoose from "mongoose";
 
 // handle errors
 const handleErrors = (err: any, type: string) => {
@@ -462,15 +463,29 @@ module.exports.checkouts_post = async (req: any, res: any) => {
   const { signature, checkedOut } = req.body;
   const filter = signature ? { signature } : {};
   try {
-    const scores = await Score.find(filter, "checkouts")
+    const scores = await Score.find(filter, "checkouts") // return only checkouts property
       .populate("checkouts")
       .exec(); // TODO: when exec and when not?
-    // const scores = await Score.find({ }).populate('checkouts').exec(); // TODO: when exec and when not?
+
+    const userIds = [];  // TODO: Set
+    for (const score of scores) {
+      for (const checkout of score.checkouts) {
+        userIds.push(checkout.userId);
+      }
+    }
+    const userObjectIds = userIds.map(
+      (userId) => new mongoose.Types.ObjectId(userId)
+    );
+
+    const userMap = await (
+      await User.find({ _id: { $in: userObjectIds } })
+    ).reduce((map, user) => map.set(user._id.toString(), user), new Map());
 
     let checkouts = [];
     for (const score of scores) {
       for (const checkout of score.checkouts) {
-        checkouts.push(checkout);
+        const user = userMap.get(checkout.userId);
+        checkouts.push({ checkout, user });
       }
     }
 
@@ -480,7 +495,6 @@ module.exports.checkouts_post = async (req: any, res: any) => {
         (checkout: any) => !checkout.checkinTimestamp
       ); // TODO: or filter by checkedOutByUser
     }
-    // console.log("checkouts=" + checkouts.length);
 
     const signatures = [
       { id: "VERD-REQ", name: "Verdi Requiem" },
