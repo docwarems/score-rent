@@ -20,6 +20,7 @@ require("dotenv").config();
 const nodemailer_1 = __importDefault(require("nodemailer"));
 var QRCode = require("qrcode");
 const uuid_1 = require("uuid");
+const mongoose_1 = __importDefault(require("mongoose"));
 // handle errors
 const handleErrors = (err, type) => {
     console.log(err.message, err.code);
@@ -424,21 +425,28 @@ module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, 
     const { signature, checkedOut } = req.body;
     const filter = signature ? { signature } : {};
     try {
-        const scores = yield Score_1.Score.find(filter, "checkouts")
+        const scores = yield Score_1.Score.find(filter, "checkouts") // return only checkouts property
             .populate("checkouts")
             .exec(); // TODO: when exec and when not?
-        // const scores = await Score.find({ }).populate('checkouts').exec(); // TODO: when exec and when not?
+        const userIds = []; // TODO: Set
+        for (const score of scores) {
+            for (const checkout of score.checkouts) {
+                userIds.push(checkout.userId);
+            }
+        }
+        const userObjectIds = userIds.map((userId) => new mongoose_1.default.Types.ObjectId(userId));
+        const userMap = yield (yield User_1.User.find({ _id: { $in: userObjectIds } })).reduce((map, user) => map.set(user._id.toString(), user), new Map());
         let checkouts = [];
         for (const score of scores) {
             for (const checkout of score.checkouts) {
-                checkouts.push(checkout);
+                const user = userMap.get(checkout.userId);
+                checkouts.push({ checkout, user });
             }
         }
         const onlyCheckedOut = checkedOut == "true";
         if (onlyCheckedOut) {
             checkouts = checkouts.filter((checkout) => !checkout.checkinTimestamp); // TODO: or filter by checkedOutByUser
         }
-        // console.log("checkouts=" + checkouts.length);
         const signatures = [
             { id: "VERD-REQ", name: "Verdi Requiem" },
             { id: "MOZ-REQ", name: "Mozart Requiem" },
