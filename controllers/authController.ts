@@ -455,13 +455,12 @@ module.exports.checkouts_post = async (req: any, res: any) => {
   const { signature, checkedOut } = req.body;
   let filter = signature && signature !== "ALL" ? { signature } : {};
   try {
-    console.log(signature);
     let error = undefined;
     if (!signature) {
       error = "Bitte Signatur auswählen";
     }
 
-    let checkouts = [];
+    let checkoutsWithUser = [];
     if (signature) {
       const scores = await Score.find(filter, "checkouts") // return only checkouts property
         .populate("checkouts")
@@ -484,16 +483,18 @@ module.exports.checkouts_post = async (req: any, res: any) => {
       for (const score of scores) {
         for (const checkout of score.checkouts) {
           const user = userMap.get(checkout.userId);
-          checkouts.push({ checkout, user });
+          checkoutsWithUser.push({ checkout, user });
         }
       }
     }
 
     const onlyCheckedOut = checkedOut == "true";
     if (onlyCheckedOut) {
-      checkouts = checkouts.filter(
-        (checkout: any) => !checkout.checkinTimestamp
-      ); // TODO: or filter by checkedOutByUser
+      checkoutsWithUser = checkoutsWithUser.filter(
+        (checkoutWithUser: any) => { 
+          return  !checkoutWithUser.checkout.checkinTimestamp 
+        }
+      );
     }
 
     const signatures = [
@@ -505,7 +506,7 @@ module.exports.checkouts_post = async (req: any, res: any) => {
     res.render("checkouts", {
       signatures,
       filter: { signature, checkedOut: onlyCheckedOut },
-      checkouts,
+      checkouts: checkoutsWithUser,
       error,
     });
   } catch (error) {

@@ -8,6 +8,7 @@
 - format timestamps
 - replace home page by menu?
 - responsive side bar?
+- toggle e-mails with informational purpose
 
 ### User registration
 
@@ -24,7 +25,7 @@
 
 ### Checkouts
 
-- listbox for signature
+- signatures from db
 
 #### Administration
 

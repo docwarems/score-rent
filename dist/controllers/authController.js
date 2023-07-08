@@ -418,12 +418,11 @@ module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, 
     const { signature, checkedOut } = req.body;
     let filter = signature && signature !== "ALL" ? { signature } : {};
     try {
-        console.log(signature);
         let error = undefined;
         if (!signature) {
             error = "Bitte Signatur auswählen";
         }
-        let checkouts = [];
+        let checkoutsWithUser = [];
         if (signature) {
             const scores = yield Score_1.Score.find(filter, "checkouts") // return only checkouts property
                 .populate("checkouts")
@@ -439,13 +438,15 @@ module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, 
             for (const score of scores) {
                 for (const checkout of score.checkouts) {
                     const user = userMap.get(checkout.userId);
-                    checkouts.push({ checkout, user });
+                    checkoutsWithUser.push({ checkout, user });
                 }
             }
         }
         const onlyCheckedOut = checkedOut == "true";
         if (onlyCheckedOut) {
-            checkouts = checkouts.filter((checkout) => !checkout.checkinTimestamp); // TODO: or filter by checkedOutByUser
+            checkoutsWithUser = checkoutsWithUser.filter((checkoutWithUser) => {
+                return !checkoutWithUser.checkout.checkinTimestamp;
+            });
         }
         const signatures = [
             { id: "ALL", name: "Alle" },
@@ -455,7 +456,7 @@ module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, 
         res.render("checkouts", {
             signatures,
             filter: { signature, checkedOut: onlyCheckedOut },
-            checkouts,
+            checkouts: checkoutsWithUser,
             error,
         });
     }
