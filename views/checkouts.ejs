@@ -2,9 +2,11 @@
 
 <h1>Ausleihen</h1>
 
-<div class="w3-panel w3-red divError" style="display: none">
-  <p class="pError">Fehler</p>
+<% if (error) { %>
+<div class="w3-panel w3-red divError">
+  <p class="pError"><%= error %></p>
 </div>
+<% } %>
 
 <div class="w3-panel w3-border divScore">
   <form action="/score/checkouts" method="POST" id="formFilter">

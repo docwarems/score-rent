@@ -57,6 +57,7 @@ score.get("/checkouts", (req: any, res: any) =>
     signatures,
     filter: { signature: "", checkedOut: true },
     checkouts: undefined,
+    error: undefined,
   })
 );
 score.post("/checkouts", authController.checkouts_post);

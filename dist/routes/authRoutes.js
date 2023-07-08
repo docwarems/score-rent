@@ -40,5 +40,6 @@ exports.score.get("/checkouts", (req, res) => res.render("checkouts", {
     signatures,
     filter: { signature: "", checkedOut: true },
     checkouts: undefined,
+    error: undefined,
 }));
 exports.score.post("/checkouts", authController.checkouts_post);
