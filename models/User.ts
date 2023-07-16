@@ -26,10 +26,10 @@ interface UserModel extends Model<IUser> {
 const userSchema = new Schema<IUser, UserModel>({
   email: {
     type: String,
-    required: [true, "Bitte E-Mail angeben"],
-    unique: true,
+    // required: [true, "Bitte E-Mail angeben"],  // normal schon; aber nicht alle haben eine; für manuelle Registrierung
+    // unique: true,
     lowercase: true,
-    validate: [isEmail, "Bitte eine gültige E-Mail-Adresse angeben"],
+    // validate: [isEmail, "Bitte eine gültige E-Mail-Adresse angeben"],  TODO: Validierung nur wenn nicht leer
   },
   password: {
     type: String,

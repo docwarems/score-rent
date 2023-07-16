@@ -57,9 +57,7 @@ async function importCsv() {
             email: record.email,
           });
 
-          const email = record.email
-            ? record.email
-            : process.env.FALLBACK_EMAIL;
+          const email = record.email ? record.email : undefined;
           try {
             const user = await User.create({
               email,
