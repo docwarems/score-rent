@@ -490,11 +490,9 @@ module.exports.checkouts_post = async (req: any, res: any) => {
 
     const onlyCheckedOut = checkedOut == "true";
     if (onlyCheckedOut) {
-      checkoutsWithUser = checkoutsWithUser.filter(
-        (checkoutWithUser: any) => { 
-          return  !checkoutWithUser.checkout.checkinTimestamp 
-        }
-      );
+      checkoutsWithUser = checkoutsWithUser.filter((checkoutWithUser: any) => {
+        return !checkoutWithUser.checkout.checkinTimestamp;
+      });
     }
 
     const signatures = [
