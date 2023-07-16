@@ -16,6 +16,7 @@ interface IUser {
   isVerified: boolean;
   verificationToken: String | undefined;
   isAdmin: boolean;
+  isManuallyRegistered: boolean;
 }
 
 interface UserModel extends Model<IUser> {
@@ -49,6 +50,10 @@ const userSchema = new Schema<IUser, UserModel>({
   },
   verificationToken: String,
   isAdmin: {
+    type: Boolean,
+    default: false,
+  },
+  isManuallyRegistered: {
     type: Boolean,
     default: false,
   },

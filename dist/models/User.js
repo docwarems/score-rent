@@ -49,6 +49,10 @@ const userSchema = new mongoose_1.Schema({
         type: Boolean,
         default: false,
     },
+    isManuallyRegistered: {
+        type: Boolean,
+        default: false,
+    },
 });
 userSchema.static("login", function login(email, password) {
     return __awaiter(this, void 0, void 0, function* () {
