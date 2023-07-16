@@ -15,6 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const csv_parse_1 = require("csv-parse");
 const User_1 = require("./models/User");
+const Score_1 = require("./models/Score");
+const Checkout_1 = require("./models/Checkout");
 const uuid_1 = require("uuid");
 const mongoose_1 = __importDefault(require("mongoose"));
 // database connection
@@ -61,6 +63,26 @@ function importCsv() {
                                 password: (0, uuid_1.v4)(),
                                 isManuallyRegistered: true,
                             });
+                            // console.log(user._id);
+                            const signature = "ORFF-COM";
+                            const scoreId = signature + "-" + (0, uuid_1.v4)();
+                            const checkout = new Checkout_1.Checkout({
+                                userId: user._id.toString(),
+                                scoreId,
+                                checkoutTimestamp: new Date("2020-01-01"),
+                            });
+                            const checkouts = [];
+                            checkouts.push(checkout);
+                            const score = yield Score_1.Score.create({
+                                signature,
+                                id: scoreId,
+                                extId: record.scoreId,
+                                checkedOutByUserId: user._id.toString(),
+                                checkouts,
+                            });
+                            console.log(score._id);
+                            // score.checkouts.push(checkout);
+                            // await score.save();
                         }
                         catch (e) {
                             console.error(e);

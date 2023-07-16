@@ -38,6 +38,7 @@
   <table class="w3-table-all" id="checkoutsTable">
     <tr>
       <th>Noten Id</th>
+      <th>Noten ext. Id</th>
       <th>Benutzer</th>
       <th>Ausgeliehen am</th>
       <th>Rückgabe am</th>
@@ -48,9 +49,11 @@
       const user = checkoutWithUser.user;
       const checkoutTimestamp = checkout.checkoutTimestamp ? checkout.checkoutTimestamp.toLocaleString("de-DE") : "";
       const checkinTimestamp = checkout.checkinTimestamp ? checkout.checkinTimestamp.toLocaleString("de-DE") : "";
+      const scoreExtId = checkoutWithUser.scoreExtId;
     %>
     <tr>
       <td><%= checkout.scoreId %></td>
+      <td><%= scoreExtId %></td>
       <td><%= user ? user.firstName + " " + user.lastName : checkout.userId %></td>
       <td><%= checkoutTimestamp %></td>
       <td><%= checkinTimestamp %></td>

@@ -1,6 +1,8 @@
 import fs from "fs";
 import { parse } from "csv-parse";
 import { User } from "./models/User";
+import { Score } from "./models/Score";
+import { Checkout, checkoutSchema } from "./models/Checkout";
 import { v4 as uuidv4 } from "uuid";
 import mongoose from "mongoose";
 
@@ -66,6 +68,31 @@ async function importCsv() {
               password: uuidv4(),
               isManuallyRegistered: true,
             });
+
+            // console.log(user._id);
+
+            const signature = "ORFF-COM";
+            const scoreId = signature + "-" + uuidv4();
+
+            const checkout = new Checkout({
+              userId: user._id.toString(),
+              scoreId,
+              checkoutTimestamp: new Date("2020-01-01"),
+            });
+            const checkouts = [];
+            checkouts.push(checkout);
+
+            const score = await Score.create({
+              signature,
+              id: scoreId,
+              extId: record.scoreId,
+              checkedOutByUserId: user._id.toString(),
+              checkouts,
+            });
+            console.log(score._id);
+
+            // score.checkouts.push(checkout);
+            // await score.save();
           } catch (e) {
             console.error(e);
           }

@@ -33,6 +33,7 @@ exports.score.get("/checkin", (req, res) => res.render("checkin", {
 exports.score.post("/checkin", authController.checkin_post);
 // score.get("/checkouts", authController.checkouts_get);
 const signatures = [
+    { id: "ORFF-COM", name: "Orff De temporum finde comoedia" },
     { id: "VERD-REQ", name: "Verdi Requiem" },
     { id: "MOZ-REQ", name: "Mozart Requiem" },
 ]; // TODO: from db
