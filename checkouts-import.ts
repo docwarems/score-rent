@@ -1,0 +1,13 @@
+import fs from "fs";
+import { parse } from "csv-parse";
+
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+// const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const parser = parse({ delimiter: ";" }, function (err, data) {
+  console.log(data);
+});
+
+// fs.createReadStream(__dirname+'/fs_read.csv').pipe(parser);
+fs.createReadStream("fs_read.csv").pipe(parser);
