@@ -81,6 +81,7 @@ async function importCsv() {
             userId: user._id.toString(),
             scoreId,
             checkoutTimestamp: new Date("2020-01-01"),
+            checkinComment: record.comment,
           });
           const checkouts = [];
           checkouts.push(checkout);
