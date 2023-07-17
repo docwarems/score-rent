@@ -363,11 +363,22 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
                         });
                     }
                     else {
+                        const checkedOutByUserId = score.checkedOutByUserId;
+                        const user = yield User_1.User.findOne({ _id: checkedOutByUserId });
+                        if (user) {
+                            res.status(200).json({ checkinScore: score, checkinUser: user });
+                        }
+                        else {
+                            res.status(400).json({
+                                errors: `Score ${scoreId} checked out by user Id ${checkedOutByUserId}, but no user found this id`,
+                            });
+                        }
                         score.checkedOutByUserId = "";
                         checkout.checkinTimestamp = new Date();
                         checkout.checkinComment = comment;
                         score = yield score.save();
                         if (score) {
+                            yield sendCheckinConfirmationEmail(user, scoreId, score.extId, comment, process.env.EMAIL_TEST_RECIPIENT);
                             res.status(201).json({ checkinScore: score });
                         }
                         else {
@@ -462,5 +473,29 @@ module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, 
     }
     catch (error) {
         res.status(500).json({ error });
+    }
+});
+const sendCheckinConfirmationEmail = (user, scoreId, extScoreId, checkinComment, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const email = testRecipient ? testRecipient : user.email;
+        const subject = "HSC Noten Rückgabe erfolgreich";
+        checkinComment = checkinComment
+            ? `<br>Kommentar zur Rückgabe war: '${checkinComment}'`
+            : "";
+        const html = `Die Noten mit Nummer ${extScoreId} wurden erfolgreich zurückgegeben. Vielen Dank!` +
+            checkinComment;
+        const mailOptions = {
+            from: process.env.SMTP_FROM,
+            to: email,
+            subject,
+            html,
+        };
+        const result = yield transporter.sendMail(mailOptions);
+        if (transporter.logger) {
+            console.log("Score checkin confirmation e-mail:", result);
+        }
+    }
+    catch (err) {
+        console.error(err);
     }
 });
