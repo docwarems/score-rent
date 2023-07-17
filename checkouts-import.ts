@@ -49,53 +49,52 @@ async function importCsv() {
       for (const record of records) {
         console.log(record);
         let user = userMap.get(record.lastName);
-        if (user) {
-          console.log("Duplet: ", record);
-        } else {
-          userMap.set(record.lastName, {
-            firstName: record.firstName,
-            lastName: record.lastName,
-            singGroup: record.singGroup,
-            email: record.email,
-          });
 
-          const email = record.email ? record.email : undefined;
-          try {
-            const user = await User.create({
+        userMap.set(record.lastName, {
+          firstName: record.firstName,
+          lastName: record.lastName,
+          singGroup: record.singGroup,
+          email: record.email,
+        });
+
+        const email = record.email ? record.email : undefined;
+        try {
+          let user = record.email
+            ? await User.findOne({ email: record.email })
+            : await User.findOne({ lastName: record.lastName });
+          if (user) {
+            console.log("Duplet: ", user.lastName);
+          } else {
+            user = await User.create({
               email,
               firstName: record.firstName,
               lastName: record.lastName,
               password: uuidv4(),
               isManuallyRegistered: true,
             });
-
-            // console.log(user._id);
-
-            const signature = "ORFF-COM";
-            const scoreId = signature + "-" + uuidv4();
-
-            const checkout = new Checkout({
-              userId: user._id.toString(),
-              scoreId,
-              checkoutTimestamp: new Date("2020-01-01"),
-            });
-            const checkouts = [];
-            checkouts.push(checkout);
-
-            const score = await Score.create({
-              signature,
-              id: scoreId,
-              extId: record.scoreId,
-              checkedOutByUserId: user._id.toString(),
-              checkouts,
-            });
-            console.log(score._id);
-
-            // score.checkouts.push(checkout);
-            // await score.save();
-          } catch (e) {
-            console.error(e);
           }
+
+          const signature = "ORFF-COM";
+          const scoreId = signature + "-" + uuidv4();
+
+          const checkout = new Checkout({
+            userId: user._id.toString(),
+            scoreId,
+            checkoutTimestamp: new Date("2020-01-01"),
+          });
+          const checkouts = [];
+          checkouts.push(checkout);
+
+          const score = await Score.create({
+            signature,
+            id: scoreId,
+            extId: record.scoreId,
+            checkedOutByUserId: user._id.toString(),
+            checkouts,
+          });
+          console.log(score._id);
+        } catch (e) {
+          console.error(e);
         }
       }
     }
