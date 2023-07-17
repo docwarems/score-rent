@@ -41,7 +41,10 @@
       <th>Noten ext. Id</th>
       <th>Benutzer</th>
       <th>Ausgeliehen am</th>
+      <th>Kommentar Ausleihe</th>
+      <th></th>
       <th>Rückgabe am</th>
+      <th>Kommentar Rückgabe</th>
     </tr>
     <% 
     checkouts.forEach(checkoutWithUser => { 
@@ -56,16 +59,65 @@
       <td><%= scoreExtId %></td>
       <td><%= user ? user.firstName + " " + user.lastName : checkout.userId %></td>
       <td><%= checkoutTimestamp %></td>
+      <td><%= checkout.checkoutComment %></td>
+      <td>
+        <% if (!checkinTimestamp) { %>
+        <button onclick="confirmCheckin('<%= checkout.scoreId %>', '<%= checkout.userId %>')" class="w3-button">Rückgabe</button>
+        <% } %>
+      </td>
       <td><%= checkinTimestamp %></td>
+      <td><%= checkout.checkinComment %></td>
     </tr>
     <% }); %>
   </table>
 </div>
 <% } %>
 
+<!-- The Modal -->
+<div id="id01" class="w3-modal">
+  <div class="w3-modal-content">
+    <div class="w3-container">
+      <span onclick="document.getElementById('id01').style.display='none'" class="w3-button w3-display-topright">&times;</span>
+
+      <div class="w3-panel w3-green divSuccess" style="display: none">
+        <p class="pSuccess">Rückgabe erfolgreich:</p>
+      </div>
+      <div class="w3-panel w3-red divError" style="display: none">
+        <p class="pError">Rückgabe Fehler</p>
+      </div>
+
+      <p class="p1">Some text in the Modal..</p>
+      <p class="p2">Some text in the Modal..</p>
+
+
+      <form action="/checkin" id="formCheckin">
+        <input type="hidden" name="scoreId" value="" class="scoreId">
+        <label>Kommentar Rückgabe</label>
+        <input type="text" name="comment" class="comment">
+        <p></p>
+        <button class="w3-button w3-black btnCheckin">OK</button>
+      </form>
+
+      <P></P>
+
+    </div>
+  </div>
+</div>
+
 <%- include('partials/footer'); -%>
 
 <script>
+  formCheckin.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    // divError.style = "display: none";
+
+    const inputScoreId = document.querySelector('.scoreId');
+    const inputComment = document.querySelector('.comment');
+    await postCheckin(inputScoreId.value, inputComment.value);
+  });
+
+
+
   function filterUser() {
     var input, filter, table, tr, td, i;
     input = document.getElementById("searchUserInput");
@@ -73,7 +125,7 @@
     table = document.getElementById("checkoutsTable");
     tr = table.getElementsByTagName("tr");
     for (i = 0; i < tr.length; i++) {
-      td = tr[i].getElementsByTagName("td")[2];  // lastName field
+      td = tr[i].getElementsByTagName("td")[2]; // lastName field
       if (td) {
         txtValue = td.textContent || td.innerText;
         if (txtValue.toUpperCase().indexOf(filter) > -1) {
@@ -82,6 +134,57 @@
           tr[i].style.display = "none";
         }
       }
+    }
+  }
+
+  function confirmCheckin(scoreId, userId) {
+    const inputScoreId = document.querySelector('.scoreId');
+    const inputComment = document.querySelector('.comment');
+    inputScoreId.value = scoreId;
+
+    const p1 = document.querySelector('.p1');
+    const p2 = document.querySelector('.p2');
+    p1.textContent = `Rückgabe von Noten Id ${scoreId}`;
+    p2.textContent = `durch Benutzer ${userId}?`;
+    document.getElementById('id01').style.display = 'block';
+  }
+
+  async function postCheckin(scoreId, comment) {
+    try {
+      const res = await fetch('/score/checkin', {
+        method: 'POST',
+        body: JSON.stringify({
+          scoreId,
+          comment,
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await res.json();
+      console.log("data=", data);
+      if (data.errors) {
+        divError.style = "display: block";
+        const pError = document.querySelector('.pError');
+        pError.textContent = data.errors;
+        return false;
+      }
+      if (data.checkinScore) {
+        // successfull checkin
+        // console.log(data.checkinScore);
+
+        const btnCheckin = document.querySelector('.btnCheckin');
+        btnCheckin.remove();
+        const divSuccess = document.querySelector('.divSuccess');
+        divSuccess.style = "display: block";
+        // divError.style = "display: none";
+      }
+      return true;
+    } catch (err) {
+      console.log("err=", err);
+      divError.style = "display: block";
+      const pError = document.querySelector('.pError');
+      pError.textContent = err.message;
     }
   }
 </script>
