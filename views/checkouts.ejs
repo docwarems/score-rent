@@ -33,7 +33,7 @@
 <% if (checkouts) { %>
 <div class="w3-responsive">
 
-  <input class="w3-input w3-border w3-padding" type="text" placeholder="Filtern nach Benutzer.." id="searchUserInput" onkeyup="filterUser()">
+  <!-- <input class="w3-input w3-border w3-padding" type="text" placeholder="Filtern nach Benutzer.." id="searchUserInput" onkeyup="filterUser()"> -->
   <p></p>
   <table class="w3-table-all" id="checkoutsTable">
     <tr>
@@ -45,6 +45,16 @@
       <th></th>
       <th>Rückgabe am</th>
       <th>Kommentar Rückgabe</th>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <th><input class="w3-input w3-border w3-padding" type="text" placeholder="Filtern.." id="searchScoreExtIdInput" onkeyup="filterScoreExtId('searchScoreExtIdInput', 1)"></th>
+      <th><input class="w3-input w3-border w3-padding" type="text" placeholder="Filtern.." id="searchUserInput" onkeyup="filterCheckoutsTableBy('searchUserInput', 2)"></th>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
     </tr>
     <% 
     checkouts.forEach(checkoutWithUser => { 
@@ -107,12 +117,12 @@
 <%- include('partials/footer'); -%>
 
 <script>
-const divModalSuccess = document.querySelector('.divModalSuccess');
-const divModalError = document.querySelector('.divModalError');
-const pModalSuccess = document.querySelector('.pModalSuccess');
-const pModalError = document.querySelector('.pModalError');
+  const divModalSuccess = document.querySelector('.divModalSuccess');
+  const divModalError = document.querySelector('.divModalError');
+  const pModalSuccess = document.querySelector('.pModalSuccess');
+  const pModalError = document.querySelector('.pModalError');
 
-formCheckin.addEventListener('submit', async (e) => {
+  formCheckin.addEventListener('submit', async (e) => {
     e.preventDefault();
     // divError.style = "display: none";
 
@@ -122,15 +132,15 @@ formCheckin.addEventListener('submit', async (e) => {
   });
 
 
-
-  function filterUser() {
+  function filterCheckoutsTableBy(input, fieldIdx) {
     var input, filter, table, tr, td, i;
-    input = document.getElementById("searchUserInput");
+    input = document.getElementById(input);
     filter = input.value.toUpperCase();
     table = document.getElementById("checkoutsTable");
     tr = table.getElementsByTagName("tr");
-    for (i = 0; i < tr.length; i++) {
-      td = tr[i].getElementsByTagName("td")[2]; // lastName field
+    tr[1].style.display = ""; // the row with the input fields
+    for (i = 2; i < tr.length; i++) {
+      td = tr[i].getElementsByTagName("td")[fieldIdx];
       if (td) {
         txtValue = td.textContent || td.innerText;
         if (txtValue.toUpperCase().indexOf(filter) > -1) {
