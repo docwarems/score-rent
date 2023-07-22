@@ -1,5 +1,5 @@
 import { User } from "../models/User";
-import { Score, ScoreType } from "../models/Score";
+import { Score, ScoreType, IScore } from "../models/Score";
 import { Checkout, checkoutSchema } from "../models/Checkout";
 import jwt from "jsonwebtoken";
 require("dotenv").config();
@@ -124,10 +124,10 @@ async function createEspassFile(token: string) {
       "main.json",
       `{"accentColor":"#ff0000ff","app":"passandroid","barCode":{"format":"QR_CODE","message":"${token}"},"description":"HSC Benutzer","fields":[],"id":"${id}","locations":[],"type":"EVENT","validTimespans":[]}`
     );
-    const imageData = fs.readFileSync(
-      __dirname + "/../resources/hsc-logo-black.png"
-    );
-    zip.file("logo.png", imageData);
+    // const imageData = fs.readFileSync(
+    //   __dirname + "/../resources/hsc-logo-black.png"  // TODO: geht nicht auch cyclic
+    // );
+    // zip.file("logo.png", imageData);
     // ... and other manipulations
 
     zip
@@ -393,45 +393,44 @@ module.exports.checkin_post = async (req: any, res: any) => {
   const { scoreId, comment } = req.body;
 
   try {
-    if (scoreId && comment) {
+    if (scoreId && (comment != undefined)) {
       let score = await Score.findOne({ id: scoreId });
       if (score) {
         if (score.checkedOutByUserId) {
           // current checkout record should last element of array
           const checkout = score.checkouts[score.checkouts.length - 1];
           if (checkout.checkinTimestamp) {
+            // that's an error because last checkout record is not an open checkout
             res.status(400).json({
               errors: `Checkout record not found for score with Id ${scoreId}`,
             });
           } else {
+            // we hava true checkout record
             const checkedOutByUserId = score.checkedOutByUserId;
             const user = await User.findOne({ _id: checkedOutByUserId });
             if (user) {
-              res.status(200).json({ checkinScore: score, checkinUser: user });
+              // res.status(200).json({ checkinScore: score, checkinUser: user });
+              score.checkedOutByUserId = "";  // mark this score as "not checked out"
+              checkout.checkinTimestamp = new Date();
+              checkout.checkinComment = comment;
+  
+              score = await score.save();
+              if (score) {
+                await sendCheckinConfirmationEmail(
+                  user,
+                  score,
+                  process.env.EMAIL_TEST_RECIPIENT
+                );
+                res.status(201).json({ checkinScore: score });
+              } else {
+                res
+                  .status(400)
+                  .json({ errors: "Update score with checkout record failed" });
+              }
             } else {
               res.status(400).json({
                 errors: `Score ${scoreId} checked out by user Id ${checkedOutByUserId}, but no user found this id`,
               });
-            }
-
-            score.checkedOutByUserId = "";
-            checkout.checkinTimestamp = new Date();
-            checkout.checkinComment = comment;
-
-            score = await score.save();
-            if (score) {
-              await sendCheckinConfirmationEmail(
-                user,
-                scoreId,
-                score.extId,
-                comment,
-                process.env.EMAIL_TEST_RECIPIENT
-              );
-              res.status(201).json({ checkinScore: score });
-            } else {
-              res
-                .status(400)
-                .json({ errors: "Update score with checkout record failed" });
             }
           }
         }
@@ -531,20 +530,25 @@ module.exports.checkouts_post = async (req: any, res: any) => {
 
 const sendCheckinConfirmationEmail = async (
   user: any,
-  scoreId: string,
-  extScoreId: string,
-  checkinComment: string,
+  score: IScore,
   testRecipient?: string
 ) => {
   try {
     const email = testRecipient ? testRecipient : user.email;
-    const subject = "HSC Noten Rückgabe erfolgreich";
-    checkinComment = checkinComment
-      ? `<br>Kommentar zur Rückgabe war: '${checkinComment}'`
-      : "";
+    const subject = "Hans-Sachs-Chor Noten Rückgabe erfolgreich";
+
+    // TODO: not sure if we should send this info to users as it may be internal
+    // checkinComment = checkinComment
+    //   ? `<br>Kommentar zur Rückgabe: '${checkinComment}'`
+    //   : "";
+    // const html =
+    //   `Die Noten mit Nummer ${extScoreId} wurden erfolgreich zurückgegeben. Vielen Dank!` +
+    //   checkinComment;
+
+    // TODO: clear text rather than signature
     const html =
-      `Die Noten mit Nummer ${extScoreId} wurden erfolgreich zurückgegeben. Vielen Dank!` +
-      checkinComment;
+    `Die Noten ${score.signature} mit Nummer ${score.extId} wurden erfolgreich zurückgegeben. Vielen Dank!<br>
+    Diese E-Mail wurde automatisch versendet!`;
 
     const mailOptions = {
       from: process.env.SMTP_FROM,
@@ -552,12 +556,12 @@ const sendCheckinConfirmationEmail = async (
       subject,
       html,
     };
-
+    
     const result = await transporter.sendMail(mailOptions);
     if (transporter.logger) {
       console.log("Score checkin confirmation e-mail:", result);
     }
-  } catch (err) {
+} catch (err) {
     console.error(err);
   }
 };

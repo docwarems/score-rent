@@ -74,16 +74,16 @@
 <% } %>
 
 <!-- The Modal -->
-<div id="id01" class="w3-modal">
+<div id="checkinModal" class="w3-modal">
   <div class="w3-modal-content">
     <div class="w3-container">
-      <span onclick="document.getElementById('id01').style.display='none'" class="w3-button w3-display-topright">&times;</span>
+      <span onclick="document.getElementById('checkinModal').style.display='none'" class="w3-button w3-display-topright">&times;</span>
 
-      <div class="w3-panel w3-green divSuccess" style="display: none">
-        <p class="pSuccess">Rückgabe erfolgreich:</p>
+      <div class="w3-panel w3-green divModalSuccess" style="display: none">
+        <p class="pModalSuccess">Rückgabe erfolgreich:</p>
       </div>
-      <div class="w3-panel w3-red divError" style="display: none">
-        <p class="pError">Rückgabe Fehler</p>
+      <div class="w3-panel w3-red divModalError" style="display: none">
+        <p class="pModalError">Rückgabe Fehler</p>
       </div>
 
       <p class="p1">Some text in the Modal..</p>
@@ -107,7 +107,12 @@
 <%- include('partials/footer'); -%>
 
 <script>
-  formCheckin.addEventListener('submit', async (e) => {
+const divModalSuccess = document.querySelector('.divModalSuccess');
+const divModalError = document.querySelector('.divModalError');
+const pModalSuccess = document.querySelector('.pModalSuccess');
+const pModalError = document.querySelector('.pModalError');
+
+formCheckin.addEventListener('submit', async (e) => {
     e.preventDefault();
     // divError.style = "display: none";
 
@@ -146,7 +151,11 @@
     const p2 = document.querySelector('.p2');
     p1.textContent = `Rückgabe von Noten Id ${scoreId}`;
     p2.textContent = `durch Benutzer ${userId}?`;
-    document.getElementById('id01').style.display = 'block';
+
+
+    divModalSuccess.style = "display: none";
+    divModalError.style = "display: none";
+    document.getElementById('checkinModal').style.display = 'block';
   }
 
   async function postCheckin(scoreId, comment) {
@@ -164,9 +173,8 @@
       const data = await res.json();
       console.log("data=", data);
       if (data.errors) {
-        divError.style = "display: block";
-        const pError = document.querySelector('.pError');
-        pError.textContent = data.errors;
+        divModalError.style = "display: block";
+        pModalError.textContent = data.errors;
         return false;
       }
       if (data.checkinScore) {
@@ -174,17 +182,15 @@
         // console.log(data.checkinScore);
 
         const btnCheckin = document.querySelector('.btnCheckin');
-        btnCheckin.remove();
-        const divSuccess = document.querySelector('.divSuccess');
-        divSuccess.style = "display: block";
-        // divError.style = "display: none";
+        divModalSuccess.style = "display: block";
+
+        // TODO: update filtered checkouts list
       }
       return true;
     } catch (err) {
       console.log("err=", err);
-      divError.style = "display: block";
-      const pError = document.querySelector('.pError');
-      pError.textContent = err.message;
+      divModalError.style = "display: block";
+      pModalError.textContent = err.message;
     }
   }
 </script>

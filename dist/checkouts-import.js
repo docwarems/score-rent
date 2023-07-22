@@ -19,6 +19,7 @@ const Score_1 = require("./models/Score");
 const Checkout_1 = require("./models/Checkout");
 const uuid_1 = require("uuid");
 const mongoose_1 = __importDefault(require("mongoose"));
+require("dotenv").config();
 // database connection
 const dbURI = process.env.MONGODB_URL;
 mongoose_1.default.set("strictQuery", false);
@@ -39,7 +40,7 @@ function importCsv() {
         ];
         const parser = (0, csv_parse_1.parse)({ delimiter: ";", columns: headers }, function (err, records) {
             return __awaiter(this, void 0, void 0, function* () {
-                //   console.log(records);
+                // console.log(records);
                 const userMap = new Map();
                 for (const record of records) {
                     console.log(record);
@@ -90,8 +91,9 @@ function importCsv() {
                         console.error(e);
                     }
                 }
+                process.exit(0);
             });
         });
-        fs_1.default.createReadStream("orff-noten.csv").pipe(parser);
+        fs_1.default.createReadStream(process.env.CHECKOUTS_IMPORT_FILE).pipe(parser);
     });
 }

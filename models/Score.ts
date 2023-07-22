@@ -36,7 +36,7 @@ const scoreTypeSchema = new Schema<IScoreType, ScoreTypeModel>({
   },
 });
 
-interface IScore {
+export interface IScore {
   signature: string;
   id: string; // <signature>-<#>
   extId: string;

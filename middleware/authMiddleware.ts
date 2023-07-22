@@ -12,7 +12,7 @@ const requireAuth = (req: any, res: any, next: any) => {
         console.log(err.message);
         res.redirect("/login");
       } else {
-        console.log(decodedToken);
+        // console.log(decodedToken);
         next();
       }
     });
@@ -34,6 +34,7 @@ const checkUser = (req: any, res: any, next: Function) => {
           next();
         } else {
           let user = await User.findById(decodedToken.id);
+          // TODO: verify user validated by e-mail
           res.locals.user = user;
           next();
         }

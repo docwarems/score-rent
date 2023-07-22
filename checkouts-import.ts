@@ -5,6 +5,7 @@ import { Score } from "./models/Score";
 import { Checkout, checkoutSchema } from "./models/Checkout";
 import { v4 as uuidv4 } from "uuid";
 import mongoose from "mongoose";
+require("dotenv").config();
 
 // database connection
 const dbURI = process.env.MONGODB_URL as string;
@@ -43,7 +44,7 @@ async function importCsv() {
   const parser = parse(
     { delimiter: ";", columns: headers },
     async function (err, records: CheckoutRecord[]) {
-      //   console.log(records);
+        // console.log(records);
 
       const userMap = new Map<string, User>();
       for (const record of records) {
@@ -98,8 +99,10 @@ async function importCsv() {
           console.error(e);
         }
       }
+
+      process.exit(0);
     }
   );
 
-  fs.createReadStream("orff-noten.csv").pipe(parser);
+  fs.createReadStream(process.env.CHECKOUTS_IMPORT_FILE!).pipe(parser);
 }

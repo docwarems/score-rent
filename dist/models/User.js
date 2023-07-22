@@ -70,9 +70,10 @@ userSchema.static("login", function login(email, password) {
 // fire a function before doc saved to db
 userSchema.pre("save", function (next) {
     return __awaiter(this, void 0, void 0, function* () {
-        const salt = yield bcrypt_1.default.genSalt();
+        // TODO: we must ensure that e-mail doesn't exist because we have no longer a unique constraint on email field because we need to be able to manually register users without email
         // we must ensure that the password will only be hashed if it is not already hashed
         // we doesn't have a safe criteria for this right now
+        const salt = yield bcrypt_1.default.genSalt();
         if (!this.isVerified) {
             this.password = yield bcrypt_1.default.hash(this.password, salt);
         }

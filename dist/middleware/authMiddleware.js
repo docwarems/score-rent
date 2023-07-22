@@ -22,7 +22,7 @@ const requireAuth = (req, res, next) => {
                 res.redirect("/login");
             }
             else {
-                console.log(decodedToken);
+                // console.log(decodedToken);
                 next();
             }
         });
@@ -42,6 +42,7 @@ const checkUser = (req, res, next) => {
             }
             else {
                 let user = yield User_1.User.findById(decodedToken.id);
+                // TODO: verify user validated by e-mail
                 res.locals.user = user;
                 next();
             }

@@ -115,4 +115,5 @@ out
 .yarn/install-state.gz
 .pnp.*
 
-orff-noten.csv
+# import files
+*.csv

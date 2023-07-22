@@ -115,8 +115,10 @@ function createEspassFile(token) {
             const id = (0, uuid_1.v4)();
             var zip = new JSZip();
             zip.file("main.json", `{"accentColor":"#ff0000ff","app":"passandroid","barCode":{"format":"QR_CODE","message":"${token}"},"description":"HSC Benutzer","fields":[],"id":"${id}","locations":[],"type":"EVENT","validTimespans":[]}`);
-            const imageData = fs.readFileSync(__dirname + "/../resources/hsc-logo-black.png");
-            zip.file("logo.png", imageData);
+            // const imageData = fs.readFileSync(
+            //   __dirname + "/../resources/hsc-logo-black.png"  // TODO: geht nicht auch cyclic
+            // );
+            // zip.file("logo.png", imageData);
             // ... and other manipulations
             zip
                 .generateNodeStream({ type: "nodebuffer", streamFiles: true })
@@ -351,40 +353,42 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
 module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { scoreId, comment } = req.body;
     try {
-        if (scoreId && comment) {
+        if (scoreId && (comment != undefined)) {
             let score = yield Score_1.Score.findOne({ id: scoreId });
             if (score) {
                 if (score.checkedOutByUserId) {
                     // current checkout record should last element of array
                     const checkout = score.checkouts[score.checkouts.length - 1];
                     if (checkout.checkinTimestamp) {
+                        // that's an error because last checkout record is not an open checkout
                         res.status(400).json({
                             errors: `Checkout record not found for score with Id ${scoreId}`,
                         });
                     }
                     else {
+                        // we hava true checkout record
                         const checkedOutByUserId = score.checkedOutByUserId;
                         const user = yield User_1.User.findOne({ _id: checkedOutByUserId });
                         if (user) {
-                            res.status(200).json({ checkinScore: score, checkinUser: user });
+                            // res.status(200).json({ checkinScore: score, checkinUser: user });
+                            score.checkedOutByUserId = ""; // mark this score as "not checked out"
+                            checkout.checkinTimestamp = new Date();
+                            checkout.checkinComment = comment;
+                            score = yield score.save();
+                            if (score) {
+                                yield sendCheckinConfirmationEmail(user, score, process.env.EMAIL_TEST_RECIPIENT);
+                                res.status(201).json({ checkinScore: score });
+                            }
+                            else {
+                                res
+                                    .status(400)
+                                    .json({ errors: "Update score with checkout record failed" });
+                            }
                         }
                         else {
                             res.status(400).json({
                                 errors: `Score ${scoreId} checked out by user Id ${checkedOutByUserId}, but no user found this id`,
                             });
-                        }
-                        score.checkedOutByUserId = "";
-                        checkout.checkinTimestamp = new Date();
-                        checkout.checkinComment = comment;
-                        score = yield score.save();
-                        if (score) {
-                            yield sendCheckinConfirmationEmail(user, scoreId, score.extId, comment, process.env.EMAIL_TEST_RECIPIENT);
-                            res.status(201).json({ checkinScore: score });
-                        }
-                        else {
-                            res
-                                .status(400)
-                                .json({ errors: "Update score with checkout record failed" });
                         }
                     }
                 }
@@ -475,15 +479,20 @@ module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, 
         res.status(500).json({ error });
     }
 });
-const sendCheckinConfirmationEmail = (user, scoreId, extScoreId, checkinComment, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
+const sendCheckinConfirmationEmail = (user, score, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const email = testRecipient ? testRecipient : user.email;
-        const subject = "HSC Noten Rückgabe erfolgreich";
-        checkinComment = checkinComment
-            ? `<br>Kommentar zur Rückgabe war: '${checkinComment}'`
-            : "";
-        const html = `Die Noten mit Nummer ${extScoreId} wurden erfolgreich zurückgegeben. Vielen Dank!` +
-            checkinComment;
+        const subject = "Hans-Sachs-Chor Noten Rückgabe erfolgreich";
+        // TODO: not sure if we should send this info to users as it may be internal
+        // checkinComment = checkinComment
+        //   ? `<br>Kommentar zur Rückgabe: '${checkinComment}'`
+        //   : "";
+        // const html =
+        //   `Die Noten mit Nummer ${extScoreId} wurden erfolgreich zurückgegeben. Vielen Dank!` +
+        //   checkinComment;
+        // TODO: clear text rather than signature
+        const html = `Die Noten ${score.signature} mit Nummer ${score.extId} wurden erfolgreich zurückgegeben. Vielen Dank!<br>
+    Diese E-Mail wurde automatisch versendet!`;
         const mailOptions = {
             from: process.env.SMTP_FROM,
             to: email,
