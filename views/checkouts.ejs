@@ -60,6 +60,7 @@
     checkouts.forEach(checkoutWithUser => { 
       const checkout = checkoutWithUser.checkout;
       const user = checkoutWithUser.user;
+      const userName = user ? (user.firstName + " " + user.lastName) : checkout.userId;
       const checkoutTimestamp = checkout.checkoutTimestamp ? checkout.checkoutTimestamp.toLocaleString("de-DE") : "";
       const checkinTimestamp = checkout.checkinTimestamp ? checkout.checkinTimestamp.toLocaleString("de-DE") : "";
       const scoreExtId = checkoutWithUser.scoreExtId;
@@ -67,7 +68,10 @@
     <tr>
       <td><%= checkout.scoreId %></td>
       <td><%= scoreExtId %></td>
-      <td><%= user ? user.firstName + " " + user.lastName : checkout.userId %></td>
+      <td>
+        <button onclick="userDetails('<%= userName %>', '<%= user.email %>')" class="w3-button"><%= userName %></button>
+      </td>
+      <!-- <td><%= user ? user.firstName + " " + user.lastName : checkout.userId %></td> -->
       <td><%= checkoutTimestamp %></td>
       <td><%= checkout.checkoutComment %></td>
       <td>
@@ -83,7 +87,7 @@
 </div>
 <% } %>
 
-<!-- The Modal -->
+<!-- The checkin modal -->
 <div id="checkinModal" class="w3-modal">
   <div class="w3-modal-content">
     <div class="w3-container">
@@ -109,6 +113,31 @@
       </form>
 
       <P></P>
+
+    </div>
+  </div>
+</div>
+
+<!-- The user details modal -->
+<div id="userDetailsModal" class="w3-modal">
+  <div class="w3-modal-content">
+    <div class="w3-container">
+      <span onclick="document.getElementById('userDetailsModal').style.display='none'" class="w3-button w3-display-topright">&times;</span>
+
+      <p class="userp2">Some text in the Modal..</p>
+
+      <table class="w3-table-all" id="checkoutsTable">
+        <tr>
+          <th>E-Mail</th>
+          <th>Registriert am</th>
+        </tr>
+        <tr>
+          <td class="userDetailsEmail"></td>
+          <td class="userDetailsRegisterDate"></td>
+        </tr>
+      </table>
+
+      <p></p>
 
     </div>
   </div>
@@ -154,8 +183,9 @@
 
   function confirmCheckin(scoreId, userId) {
     const inputScoreId = document.querySelector('.scoreId');
-    const inputComment = document.querySelector('.comment');
     inputScoreId.value = scoreId;
+    const inputComment = document.querySelector('.comment');
+    inputComment.value = "";
 
     const p1 = document.querySelector('.p1');
     const p2 = document.querySelector('.p2');
@@ -202,5 +232,20 @@
       divModalError.style = "display: block";
       pModalError.textContent = err.message;
     }
+  }
+
+  // TODO: couldn't manage to transfer user object
+  function userDetails(userName, email) {
+    console.log(email);
+
+    const p2 = document.querySelector('.userp2');
+    p2.textContent = `Benutzerdaten von ${userName}?`;
+
+    const tdEmail = document.querySelector('.userDetailsEmail');
+    tdEmail.textContent = email;
+    const tdRegisterDate = document.querySelector('.userDetailsRegisterDate');
+    tdRegisterDate.textContent = "TODO";
+
+    document.getElementById('userDetailsModal').style.display = 'block';
   }
 </script>
