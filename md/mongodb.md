@@ -10,7 +10,7 @@ With the free plan of Mongodb Atlas a backup/restore must be done using the cmd 
 
 ## Cmd line line tools
 
-Installed on Windows from ZIP
+https://www.mongodb.com/docs/database-tools/
 
 ### mongodump
 
@@ -30,6 +30,8 @@ At the beginning I didn't know what the database was, because it didn't appear i
 So far I've had no other database rather than "test". That's why probably the database could be omitted in the URI. It seems that the database is somehow like a namespace. So unless there are collections of the same name in different databases, one seem to be able to omit the database in the URI. At least this is my understanding. But of course specifying the database in the URI is much more clearer, and from now on I used it in my env variable.
 
 mongodump will by default backup all collections (here: users, scores, ...) into a folder "dump/\<database\>" within the current directory.
+
+I created a shell script mongobackup.sh which runs mongodump and copies the backup to a backuped folder
 
 ### mongorestore
 

@@ -117,3 +117,6 @@ out
 
 # import files
 *.csv
+
+# mongodb backups
+dump
