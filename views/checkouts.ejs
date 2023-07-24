@@ -14,7 +14,7 @@
     <label>Noten Signatur</label>
 
     <select class="w3-select" name="signature">
-      <option value="" disabled selected>Choose your option</option>
+      <option value="" disabled selected>Noten auswählen</option>
       <% for (const signature of signatures) { %>
       <% const selected = signature.id === filter.signature ? "selected" : "" %>
       <option value="<%= signature.id %>" <%= selected %>><%= signature.name %></option>
@@ -73,7 +73,7 @@
       </td>
       <!-- <td><%= user ? user.firstName + " " + user.lastName : checkout.userId %></td> -->
       <td><%= checkoutTimestamp %></td>
-      <td><%= checkout.checkoutComment %></td>
+      <td><button onclick="editCheckout('<%= checkout.scoreId %>', '<%= checkout._id %>')" class="w3-button"><%= checkout.checkoutComment %></button></td>
       <td>
         <% if (!checkinTimestamp) { %>
         <button onclick="confirmCheckin('<%= checkout.scoreId %>', '<%= checkout.userId %>')" class="w3-button">Rückgabe</button>
@@ -142,6 +142,41 @@
     </div>
   </div>
 </div>
+
+<!-- edit checkout modal -->
+<div id="editCheckoutModal" class="w3-modal">
+  <div class="w3-modal-content">
+    <div class="w3-container">
+      <span onclick="document.getElementById('editCheckoutModal').style.display='none'" class="w3-button w3-display-topright">&times;</span>
+
+      <div class="w3-panel w3-green divModalSuccess" style="display: none">
+        <p class="pModalSuccess">Rückgabe erfolgreich:</p>
+      </div>
+      <div class="w3-panel w3-red divModalError" style="display: none">
+        <p class="pModalError">Rückgabe Fehler</p>
+      </div>
+
+      <p class="p1">Score id..</p>
+      <p class="p2">Checkout Id..</p>
+
+      <form action="/updateCheckout" id="formEditCheckout">
+        <input type="hidden" name="scoreId" value="" class="scoreId">
+        <label>Ext. Id</label>
+        <input type="text" name="extId" class="editExtId">
+        <label>Kommentar Ausleihe</label>
+        <input type="text" name="comment" class="editCheckoutComment">
+        <label>Kommentar Rückgabe</label>
+        <input type="text" name="comment" class="editCheckinComment">
+        <p></p>
+        <button class="w3-button w3-black btnUpdateCheckout">OK</button>
+      </form>
+
+      <P></P>
+
+    </div>
+  </div>
+</div>
+
 
 <%- include('partials/footer'); -%>
 
@@ -248,4 +283,76 @@
 
     document.getElementById('userDetailsModal').style.display = 'block';
   }
+
+  function editCheckout(scoreId, checkoutId) {
+    console.log(checkoutId);
+
+    // const inputScoreId = document.querySelector('.scoreId');
+    // inputScoreId.value = scoreId;
+    // const inputComment = document.querySelector('.comment');
+    // inputComment.value = "";
+
+    const p1 = document.querySelector('.p1');
+    const p2 = document.querySelector('.p2');
+    p1.textContent = `${scoreId}`;
+    p2.textContent = `${checkoutId}`;
+
+    divModalSuccess.style = "display: none";
+    divModalError.style = "display: none";
+    document.getElementById('editCheckoutModal').style.display = 'block';
+  }
+
+  formEditCheckout.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    // divError.style = "display: none";
+
+    const p1 = document.querySelector('.p1');
+    const scoreId = p1.textContent;
+    const p2 = document.querySelector('.p2');
+    const checkoutId = p2.textContent;
+    const inputExtId = document.querySelector('.editExtId');
+    const inputCheckoutComment = document.querySelector('.editCheckoutComment');
+    const inputCheckinComment = document.querySelector('.editCheckinComment');
+    await postUpdateCheckout(scoreId, checkoutId, inputExtId.value, inputCheckoutComment.value, inputCheckinComment.value);
+  });
+
+  async function postUpdateCheckout(scoreId, checkoutId, extId, checkoutComment, checkinComment) {
+    try {
+      console.log(scoreId, checkoutId);
+
+      const res = await fetch('/score/updateCheckout', {
+        method: 'POST',
+        body: JSON.stringify({
+          scoreId,
+          checkoutId,
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await res.json();
+      console.log("data=", data);
+      if (data.errors) {
+        divModalError.style = "display: block";
+        pModalError.textContent = data.errors;
+        return false;
+      }
+      if (data.checkout) {
+        // successfull checkin
+        // console.log(data.checkinScore);
+
+        const btnCheckin = document.querySelector('.btnCheckin');
+        divModalSuccess.style = "display: block";
+
+        // TODO: update filtered checkouts list
+      }
+      return true;
+    } catch (err) {
+      console.log("err=", err);
+      divModalError.style = "display: block";
+      pModalError.textContent = err.message;
+    }
+  }
+
+
 </script>

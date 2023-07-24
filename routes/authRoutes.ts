@@ -23,6 +23,7 @@ router.get("/verify-email", authController.verify_email_get);
 
 export const score = Router();
 
+// wildcard for all get/post actions
 score.get("*", checkUser, requireAuth, requireAdmin);
 score.post("*", checkUser, requireAuth, requireAdmin);
 
@@ -38,6 +39,7 @@ score.get("/checkout", (req: any, res: any) =>
   })
 );
 score.post("/checkout", authController.checkout_post);
+score.post("/updateCheckout", authController.updateCheckout_post);
 
 score.get("/checkin", (req: any, res: any) =>
   res.render("checkin", {

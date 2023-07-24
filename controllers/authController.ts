@@ -405,7 +405,7 @@ module.exports.checkin_post = async (req: any, res: any) => {
               errors: `Checkout record not found for score with Id ${scoreId}`,
             });
           } else {
-            // we hava true checkout record
+            // we have a true checkout record
             const checkedOutByUserId = score.checkedOutByUserId;
             const user = await User.findOne({ _id: checkedOutByUserId });
             if (user) {
@@ -565,3 +565,86 @@ const sendCheckinConfirmationEmail = async (
     console.error(err);
   }
 };
+
+
+module.exports.updateCheckout_post = async (req: any, res: any) => {
+  const { scoreId, checkoutId } = req.body;
+  console.log(scoreId, checkoutId);
+
+  const score = await Score.findOne({ id: scoreId });
+  if (score) {
+    for (const checkout of score.checkouts) {
+      // Working with Mongoose ObjectId is the horror :-(
+      if ((checkout as unknown as { _id: mongoose.Types.ObjectId })._id == checkoutId) {  // type conversion; === would not work
+        console.log("checkout found");
+      } else {
+        return res.status(500).json({ message: `checkout not found with Id ${checkoutId}` });  // TODO: 4xx error
+      }
+    }
+  } else {
+    return res.status(500).json({ message: `score not found with Id ${scoreId}` });  // TODO: 4xx error
+  }
+
+  res.status(201).json({ checkout: {} });
+
+  // search checkout by id in score's checkouts array
+
+  // let filter = signature && signature !== "ALL" ? { signature } : {};
+  // try {
+  //   let error = undefined;
+  //   if (!signature) {
+  //     error = "Bitte Signatur auswählen";
+  //   }
+
+  //   let checkoutsWithUser = [];
+  //   if (signature) {
+  //     // const scores = await Score.find(filter, "checkouts") // return only checkouts property
+  //     const scores = await Score.find(filter).populate("checkouts").exec(); // TODO: when exec and when not?
+
+  //     const userIds = []; // TODO: Set
+  //     for (const score of scores) {
+  //       for (const checkout of score.checkouts) {
+  //         userIds.push(checkout.userId);
+  //       }
+  //     }
+  //     const userObjectIds = userIds.map(
+  //       (userId) => new mongoose.Types.ObjectId(userId)
+  //     );
+
+  //     const userMap = await (
+  //       await User.find({ _id: { $in: userObjectIds } })
+  //     ).reduce((map, user) => map.set(user._id.toString(), user), new Map());
+
+  //     for (const score of scores) {
+  //       for (const checkout of score.checkouts) {
+  //         const user = userMap.get(checkout.userId);
+  //         checkoutsWithUser.push({ checkout, user, scoreExtId: score.extId });
+  //       }
+  //     }
+  //   }
+
+  //   const onlyCheckedOut = checkedOut == "true";
+  //   if (onlyCheckedOut) {
+  //     checkoutsWithUser = checkoutsWithUser.filter((checkoutWithUser: any) => {
+  //       return !checkoutWithUser.checkout.checkinTimestamp;
+  //     });
+  //   }
+
+  //   const signatures = [
+  //     { id: "ALL", name: "Alle" },
+  //     { id: "ORFF-COM", name: "Orff De temporum finde comoedia" },
+  //     { id: "VERD-REQ", name: "Verdi Requiem" },
+  //     { id: "MOZ-REQ", name: "Mozart Requiem" },
+  //   ]; // TODO: from db
+
+  //   res.render("checkouts", {
+  //     signatures,
+  //     filter: { signature, checkedOut: onlyCheckedOut },
+  //     checkouts: checkoutsWithUser,
+  //     error,
+  //   });
+  // } catch (error) {
+  //   res.status(500).json({ error });
+  // }
+};
+
