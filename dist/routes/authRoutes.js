@@ -18,6 +18,7 @@ exports.router.get("/verify-email", authController.verify_email_get);
 // router.get("/checkout", authController.checkout_get);
 // router.post("/checkout", requireAuth, requireAdmin, authController.checkout_post);
 exports.score = Router();
+// wildcard for all get/post actions
 exports.score.get("*", checkUser, requireAuth, requireAdmin);
 exports.score.post("*", checkUser, requireAuth, requireAdmin);
 exports.score.get("/register", (req, res) => res.render("register-score", { scoreType: res.locals.scoreType }));
@@ -27,6 +28,7 @@ exports.score.get("/checkout", (req, res) => res.render("checkout", {
     checkoutScore: res.locals.checkoutScore,
 }));
 exports.score.post("/checkout", authController.checkout_post);
+exports.score.post("/updateCheckout", authController.updateCheckout_post);
 exports.score.get("/checkin", (req, res) => res.render("checkin", {
     checkinScore: res.locals.checkinScore,
 }));

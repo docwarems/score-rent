@@ -353,7 +353,7 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
 module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { scoreId, comment } = req.body;
     try {
-        if (scoreId && (comment != undefined)) {
+        if (scoreId && comment != undefined) {
             let score = yield Score_1.Score.findOne({ id: scoreId });
             if (score) {
                 if (score.checkedOutByUserId) {
@@ -366,7 +366,7 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
                         });
                     }
                     else {
-                        // we hava true checkout record
+                        // we have a true checkout record
                         const checkedOutByUserId = score.checkedOutByUserId;
                         const user = yield User_1.User.findOne({ _id: checkedOutByUserId });
                         if (user) {
@@ -440,7 +440,7 @@ module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, 
         let checkoutsWithUser = [];
         if (signature) {
             // const scores = await Score.find(filter, "checkouts") // return only checkouts property
-            const scores = yield Score_1.Score.find(filter).populate("checkouts").exec(); // TODO: when exec and when not?
+            const scores = yield Score_1.Score.find(filter).populate("checkouts").exec(); // TODO: when exec and when not? // TODO: is populate() correct? See https://mongoosejs.com/docs/subdocs.html
             const userIds = []; // TODO: Set
             for (const score of scores) {
                 for (const checkout of score.checkouts) {
@@ -506,5 +506,35 @@ const sendCheckinConfirmationEmail = (user, score, testRecipient) => __awaiter(v
     }
     catch (err) {
         console.error(err);
+    }
+});
+module.exports.updateCheckout_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { scoreId, checkoutId, checkoutComment, checkinComment } = req.body;
+    // console.log(scoreId, checkoutId, checkoutComment, checkinComment);
+    let score = yield Score_1.Score.findOne({ id: scoreId });
+    // const score = await Score.findOne({ "checkouts._id" : checkoutId });  // interesting to find a score just by the _id of one of it's checkouts
+    if (score) {
+        console.log("score found");
+        // TODO: works, but question is if we can do a query which just returns the checkout without returning the whole score first
+        const checkout = score.checkouts.find((checkout) => checkout._id == checkoutId);
+        if (checkout) {
+            console.log("checkout found");
+            checkout.checkoutComment = checkoutComment;
+            checkout.checkinComment = checkinComment;
+            score = yield score.save();
+            if (score) {
+                res.status(201).json({ updateScore: score });
+            }
+        }
+        else {
+            return res.status(500).json({
+                message: `checkout Id ${checkoutId} not found for score with Id ${scoreId}`,
+            }); // TODO: 4xx error
+        }
+    }
+    else {
+        return res
+            .status(500)
+            .json({ message: `score not found with Id ${scoreId}` }); // TODO: 4xx error
     }
 });

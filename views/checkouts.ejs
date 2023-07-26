@@ -42,7 +42,7 @@
       <th>Benutzer</th>
       <th>Ausgeliehen am</th>
       <th>Kommentar Ausleihe</th>
-      <th></th>
+      <th></th> <!-- Schalter Rückgabe -->
       <th>Rückgabe am</th>
       <th>Kommentar Rückgabe</th>
     </tr>
@@ -72,8 +72,8 @@
         <button onclick="userDetails('<%= userName %>', '<%= user.email %>')" class="w3-button"><%= userName %></button>
       </td>
       <!-- <td><%= user ? user.firstName + " " + user.lastName : checkout.userId %></td> -->
-      <td><%= checkoutTimestamp %></td>
-      <td><button onclick="editCheckout('<%= checkout.scoreId %>', '<%= checkout._id %>')" class="w3-button"><%= checkout.checkoutComment %></button></td>
+      <td><button onclick="editCheckout('<%= checkout.scoreId %>','<%= checkout._id %>','<%= checkout.checkoutComment %>','<%= checkout.checkinComment %>')" class="w3-button"><%= checkoutTimestamp %></button></td>
+      <td><%= checkout.checkoutComment %></td>
       <td>
         <% if (!checkinTimestamp) { %>
         <button onclick="confirmCheckin('<%= checkout.scoreId %>', '<%= checkout.userId %>')" class="w3-button">Rückgabe</button>
@@ -148,25 +148,31 @@
   <div class="w3-modal-content">
     <div class="w3-container">
       <span onclick="document.getElementById('editCheckoutModal').style.display='none'" class="w3-button w3-display-topright">&times;</span>
+      <h3>Ausleihe bearbeiten</h3>
 
-      <div class="w3-panel w3-green divModalSuccess" style="display: none">
-        <p class="pModalSuccess">Rückgabe erfolgreich:</p>
+      <div class="w3-panel w3-green divEditCheckoutModalSuccess" style="display: none">
+        <p class="pEditCheckoutModalSuccess">Bearbeitung erfolgreich:</p>
       </div>
-      <div class="w3-panel w3-red divModalError" style="display: none">
-        <p class="pModalError">Rückgabe Fehler</p>
+      <div class="w3-panel w3-red divEditCheckoutModalError" style="display: none">
+        <p class="pEditCheckoutModalError">Bearbeitung Fehler</p>
       </div>
 
-      <p class="p1">Score id..</p>
-      <p class="p2">Checkout Id..</p>
+      <p class="editCheckoutP1">Score id..</p>
+      <p class="editCheckoutP2">Checkout Id..</p>
 
       <form action="/updateCheckout" id="formEditCheckout">
-        <input type="hidden" name="scoreId" value="" class="scoreId">
-        <label>Ext. Id</label>
-        <input type="text" name="extId" class="editExtId">
-        <label>Kommentar Ausleihe</label>
-        <input type="text" name="comment" class="editCheckoutComment">
-        <label>Kommentar Rückgabe</label>
-        <input type="text" name="comment" class="editCheckinComment">
+        <input type="hidden" name="editCheckoutScoreId" value="" class="editCheckoutScoreId">
+        <input type="hidden" name="editCheckoutCheckoutId" value="" class="editCheckoutCheckoutId">
+        <table class="w3-table-all" id="editCheckoutTable">
+          <tr>
+            <th>Kommentar Ausleihe</th>
+            <th>Kommentar Rückgabe</th>
+          </tr>
+          <tr>
+            <td><input type="text" name="editCheckoutComment" class="w3-input editCheckoutCommentCheckout"></td>
+            <td><input type="text" name="editCheckinComment" class="w3-input editCheckoutCommentCheckin"></td>
+          </tr>
+        </table>  
         <p></p>
         <button class="w3-button w3-black btnUpdateCheckout">OK</button>
       </form>
@@ -185,6 +191,9 @@
   const divModalError = document.querySelector('.divModalError');
   const pModalSuccess = document.querySelector('.pModalSuccess');
   const pModalError = document.querySelector('.pModalError');
+
+  const divEditCheckoutModalSuccess = document.querySelector('.divEditCheckoutModalSuccess');
+  const divEditCheckoutModalError = document.querySelector('.divEditCheckoutModalError');
 
   formCheckin.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -284,18 +293,27 @@
     document.getElementById('userDetailsModal').style.display = 'block';
   }
 
-  function editCheckout(scoreId, checkoutId) {
-    console.log(checkoutId);
+  function editCheckout(scoreId, checkoutId, checkoutComment, checkinComment) {
+    // console.log(checkoutId);
 
     // const inputScoreId = document.querySelector('.scoreId');
     // inputScoreId.value = scoreId;
     // const inputComment = document.querySelector('.comment');
     // inputComment.value = "";
 
-    const p1 = document.querySelector('.p1');
-    const p2 = document.querySelector('.p2');
-    p1.textContent = `${scoreId}`;
-    p2.textContent = `${checkoutId}`;
+    const p1 = document.querySelector('.editCheckoutP1');
+    const p2 = document.querySelector('.editCheckoutP2');
+    p1.textContent = `Noten: ${scoreId}`;
+    p2.textContent = `Checkout Id: ${checkoutId}`;
+
+    const inputScoreId = document.querySelector('.editCheckoutScoreId');
+    inputScoreId.value = scoreId;
+    const inputCheckoutId = document.querySelector('.editCheckoutCheckoutId');
+    inputCheckoutId.value = checkoutId;
+    const inputCheckoutComment = document.querySelector('.editCheckoutCommentCheckout');
+    inputCheckoutComment.value = checkoutComment;
+    const inputCheckinComment = document.querySelector('.editCheckoutCommentCheckin');
+    inputCheckinComment.value = checkinComment;
 
     divModalSuccess.style = "display: none";
     divModalError.style = "display: none";
@@ -306,25 +324,25 @@
     e.preventDefault();
     // divError.style = "display: none";
 
-    const p1 = document.querySelector('.p1');
-    const scoreId = p1.textContent;
-    const p2 = document.querySelector('.p2');
-    const checkoutId = p2.textContent;
-    const inputExtId = document.querySelector('.editExtId');
-    const inputCheckoutComment = document.querySelector('.editCheckoutComment');
-    const inputCheckinComment = document.querySelector('.editCheckinComment');
-    await postUpdateCheckout(scoreId, checkoutId, inputExtId.value, inputCheckoutComment.value, inputCheckinComment.value);
+    const inputScoreId = document.querySelector('.editCheckoutScoreId');
+    const inputCheckoutId = document.querySelector('.editCheckoutCheckoutId');
+    const inputCommentCheckout = document.querySelector('.editCheckoutCommentCheckout');
+    const inputCommentCheckin = document.querySelector('.editCheckoutCommentCheckin');
+
+    await postUpdateCheckout(inputScoreId.value, inputCheckoutId.value, inputCommentCheckout.value, inputCommentCheckin.value);
   });
 
-  async function postUpdateCheckout(scoreId, checkoutId, extId, checkoutComment, checkinComment) {
+  async function postUpdateCheckout(scoreId, checkoutId, checkoutComment, checkinComment) {
     try {
-      console.log(scoreId, checkoutId);
+      console.log(scoreId, checkoutId, checkoutComment, checkinComment);
 
       const res = await fetch('/score/updateCheckout', {
         method: 'POST',
         body: JSON.stringify({
           scoreId,
           checkoutId,
+          checkoutComment,
+          checkinComment
         }),
         headers: {
           'Content-Type': 'application/json'
@@ -333,16 +351,16 @@
       const data = await res.json();
       console.log("data=", data);
       if (data.errors) {
-        divModalError.style = "display: block";
-        pModalError.textContent = data.errors;
+        divEditCheckoutModalError.style = "display: block";
+        pEditCheckoutModalError.textContent = data.errors;
         return false;
       }
-      if (data.checkout) {
+      if (data.updateScore) {
         // successfull checkin
         // console.log(data.checkinScore);
 
-        const btnCheckin = document.querySelector('.btnCheckin');
-        divModalSuccess.style = "display: block";
+        // const btnEditCheckoutCheckin = document.querySelector('.btnCheckin');
+        divEditCheckoutModalSuccess.style = "display: block";
 
         // TODO: update filtered checkouts list
       }

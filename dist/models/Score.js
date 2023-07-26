@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Score = exports.ScoreType = void 0;
+exports.ScoreType = exports.Score = void 0;
 const mongoose_1 = require("mongoose");
 const Checkout_1 = require("./Checkout");
 require("dotenv").config();
@@ -50,5 +50,5 @@ const scoreSchema = new mongoose_1.Schema({
         type: [Checkout_1.checkoutSchema],
     },
 });
-exports.ScoreType = (0, mongoose_1.model)("ScoreType", scoreTypeSchema);
 exports.Score = (0, mongoose_1.model)("Score", scoreSchema);
+exports.ScoreType = (0, mongoose_1.model)("ScoreType", scoreTypeSchema);

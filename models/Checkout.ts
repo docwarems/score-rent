@@ -13,9 +13,7 @@ export interface ICheckout {
   checkinComment: string;
 }
 
-interface CheckoutModel extends Model<ICheckout> {}
-
-export const checkoutSchema = new Schema<ICheckout, CheckoutModel>({
+export const checkoutSchema = new Schema<ICheckout>({
   userId: {
     type: String,
     required: true,

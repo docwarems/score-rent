@@ -393,7 +393,7 @@ module.exports.checkin_post = async (req: any, res: any) => {
   const { scoreId, comment } = req.body;
 
   try {
-    if (scoreId && (comment != undefined)) {
+    if (scoreId && comment != undefined) {
       let score = await Score.findOne({ id: scoreId });
       if (score) {
         if (score.checkedOutByUserId) {
@@ -410,10 +410,10 @@ module.exports.checkin_post = async (req: any, res: any) => {
             const user = await User.findOne({ _id: checkedOutByUserId });
             if (user) {
               // res.status(200).json({ checkinScore: score, checkinUser: user });
-              score.checkedOutByUserId = "";  // mark this score as "not checked out"
+              score.checkedOutByUserId = ""; // mark this score as "not checked out"
               checkout.checkinTimestamp = new Date();
               checkout.checkinComment = comment;
-  
+
               score = await score.save();
               if (score) {
                 await sendCheckinConfirmationEmail(
@@ -479,7 +479,7 @@ module.exports.checkouts_post = async (req: any, res: any) => {
     let checkoutsWithUser = [];
     if (signature) {
       // const scores = await Score.find(filter, "checkouts") // return only checkouts property
-      const scores = await Score.find(filter).populate("checkouts").exec(); // TODO: when exec and when not?
+      const scores = await Score.find(filter).populate("checkouts").exec(); // TODO: when exec and when not? // TODO: is populate() correct? See https://mongoosejs.com/docs/subdocs.html
 
       const userIds = []; // TODO: Set
       for (const score of scores) {
@@ -546,8 +546,7 @@ const sendCheckinConfirmationEmail = async (
     //   checkinComment;
 
     // TODO: clear text rather than signature
-    const html =
-    `Die Noten ${score.signature} mit Nummer ${score.extId} wurden erfolgreich zurückgegeben. Vielen Dank!<br>
+    const html = `Die Noten ${score.signature} mit Nummer ${score.extId} wurden erfolgreich zurückgegeben. Vielen Dank!<br>
     Diese E-Mail wurde automatisch versendet!`;
 
     const mailOptions = {
@@ -556,95 +555,45 @@ const sendCheckinConfirmationEmail = async (
       subject,
       html,
     };
-    
+
     const result = await transporter.sendMail(mailOptions);
     if (transporter.logger) {
       console.log("Score checkin confirmation e-mail:", result);
     }
-} catch (err) {
+  } catch (err) {
     console.error(err);
   }
 };
 
-
 module.exports.updateCheckout_post = async (req: any, res: any) => {
-  const { scoreId, checkoutId } = req.body;
-  console.log(scoreId, checkoutId);
+  const { scoreId, checkoutId, checkoutComment, checkinComment } = req.body;
+  // console.log(scoreId, checkoutId, checkoutComment, checkinComment);
 
-  const score = await Score.findOne({ id: scoreId });
+  let score = await Score.findOne({ id: scoreId });
+  // const score = await Score.findOne({ "checkouts._id" : checkoutId });  // interesting to find a score just by the _id of one of it's checkouts
   if (score) {
-    for (const checkout of score.checkouts) {
-      // Working with Mongoose ObjectId is the horror :-(
-      if ((checkout as unknown as { _id: mongoose.Types.ObjectId })._id == checkoutId) {  // type conversion; === would not work
-        console.log("checkout found");
-      } else {
-        return res.status(500).json({ message: `checkout not found with Id ${checkoutId}` });  // TODO: 4xx error
+    console.log("score found");
+
+    // TODO: works, but question is if we can do a query which just returns the checkout without returning the whole score first
+    const checkout = score.checkouts.find(
+      (checkout: any) => checkout._id == checkoutId
+    );
+    if (checkout) {
+      console.log("checkout found");
+      checkout.checkoutComment = checkoutComment;
+      checkout.checkinComment = checkinComment;
+      score = await score.save();
+      if (score) {
+        res.status(201).json({ updateScore: score });
       }
+    } else {
+      return res.status(500).json({
+        message: `checkout Id ${checkoutId} not found for score with Id ${scoreId}`,
+      }); // TODO: 4xx error
     }
   } else {
-    return res.status(500).json({ message: `score not found with Id ${scoreId}` });  // TODO: 4xx error
+    return res
+      .status(500)
+      .json({ message: `score not found with Id ${scoreId}` }); // TODO: 4xx error
   }
-
-  res.status(201).json({ checkout: {} });
-
-  // search checkout by id in score's checkouts array
-
-  // let filter = signature && signature !== "ALL" ? { signature } : {};
-  // try {
-  //   let error = undefined;
-  //   if (!signature) {
-  //     error = "Bitte Signatur auswählen";
-  //   }
-
-  //   let checkoutsWithUser = [];
-  //   if (signature) {
-  //     // const scores = await Score.find(filter, "checkouts") // return only checkouts property
-  //     const scores = await Score.find(filter).populate("checkouts").exec(); // TODO: when exec and when not?
-
-  //     const userIds = []; // TODO: Set
-  //     for (const score of scores) {
-  //       for (const checkout of score.checkouts) {
-  //         userIds.push(checkout.userId);
-  //       }
-  //     }
-  //     const userObjectIds = userIds.map(
-  //       (userId) => new mongoose.Types.ObjectId(userId)
-  //     );
-
-  //     const userMap = await (
-  //       await User.find({ _id: { $in: userObjectIds } })
-  //     ).reduce((map, user) => map.set(user._id.toString(), user), new Map());
-
-  //     for (const score of scores) {
-  //       for (const checkout of score.checkouts) {
-  //         const user = userMap.get(checkout.userId);
-  //         checkoutsWithUser.push({ checkout, user, scoreExtId: score.extId });
-  //       }
-  //     }
-  //   }
-
-  //   const onlyCheckedOut = checkedOut == "true";
-  //   if (onlyCheckedOut) {
-  //     checkoutsWithUser = checkoutsWithUser.filter((checkoutWithUser: any) => {
-  //       return !checkoutWithUser.checkout.checkinTimestamp;
-  //     });
-  //   }
-
-  //   const signatures = [
-  //     { id: "ALL", name: "Alle" },
-  //     { id: "ORFF-COM", name: "Orff De temporum finde comoedia" },
-  //     { id: "VERD-REQ", name: "Verdi Requiem" },
-  //     { id: "MOZ-REQ", name: "Mozart Requiem" },
-  //   ]; // TODO: from db
-
-  //   res.render("checkouts", {
-  //     signatures,
-  //     filter: { signature, checkedOut: onlyCheckedOut },
-  //     checkouts: checkoutsWithUser,
-  //     error,
-  //   });
-  // } catch (error) {
-  //   res.status(500).json({ error });
-  // }
 };
-

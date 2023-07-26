@@ -45,9 +45,7 @@ export interface IScore {
   checkouts: [ICheckout];
 }
 
-interface ScoreModel extends Model<IScore> {}
-
-const scoreSchema = new Schema<IScore, ScoreModel>({
+const scoreSchema = new Schema<IScore>({
   signature: {
     type: String,
     required: [true, "Bitte Signatur angeben"],
@@ -73,8 +71,9 @@ const scoreSchema = new Schema<IScore, ScoreModel>({
   },
 });
 
+export const Score = model<IScore>("Score", scoreSchema);
+
 export const ScoreType = model<IScoreType, ScoreTypeModel>(
   "ScoreType",
   scoreTypeSchema
 );
-export const Score = model<IScore, ScoreModel>("Score", scoreSchema);

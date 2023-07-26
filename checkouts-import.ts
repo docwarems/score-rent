@@ -44,7 +44,7 @@ async function importCsv() {
   const parser = parse(
     { delimiter: ";", columns: headers },
     async function (err, records: CheckoutRecord[]) {
-        // console.log(records);
+      // console.log(records);
 
       const userMap = new Map<string, User>();
       for (const record of records) {
