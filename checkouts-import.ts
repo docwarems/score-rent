@@ -7,6 +7,8 @@ import { v4 as uuidv4 } from "uuid";
 import mongoose from "mongoose";
 require("dotenv").config();
 
+// Ausfühhrung mit: ts-node checkouts-import.ts
+
 // database connection
 const dbURI = process.env.MONGODB_URL as string;
 mongoose.set("strictQuery", false);
@@ -79,7 +81,7 @@ async function importCsv() {
           const scoreId = signature + "-" + uuidv4();
 
           const checkout = new Checkout({
-            userId: user._id.toString(),
+            userId: user.id.toString(),
             scoreId,
             checkoutTimestamp: new Date("2020-01-01"),
             checkoutComment: record.comment,

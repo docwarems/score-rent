@@ -20,10 +20,18 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 require("dotenv").config();
 const userSchema = new mongoose_1.Schema({
+    id: {
+        // vv.nnnnnn z.B. mi.suedka; wird als Referenz zu anderen Objekten verwendet, damit diese sprechend ist
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true,
+    },
     email: {
         type: String,
         // required: [true, "Bitte E-Mail angeben"],  // normal schon; aber nicht alle haben eine; für manuelle Registrierung
-        // unique: true,
+        unique: true,
+        sparse: true,
         lowercase: true,
         // validate: [isEmail, "Bitte eine gültige E-Mail-Adresse angeben"],  TODO: Validierung nur wenn nicht leer
     },
@@ -34,7 +42,7 @@ const userSchema = new mongoose_1.Schema({
     },
     firstName: {
         type: String,
-        required: false,
+        required: [true, "Bitte Vornamen angeben"], // damit vv.nnnnnn User Id gebildet werden kann.
     },
     lastName: {
         type: String,

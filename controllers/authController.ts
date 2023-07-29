@@ -10,9 +10,10 @@ import { score } from "../routes/authRoutes";
 import mongoose from "mongoose";
 
 // handle errors
-const handleErrors = (err: any, type: string) => {
+const handleSaveErrors = (err: any, type: string) => {
   console.log(err.message, err.code);
   let errors = {
+    userId: "",
     email: "",
     password: "",
     passwordRepeat: "",
@@ -40,6 +41,8 @@ const handleErrors = (err: any, type: string) => {
       errors.email = "Diese E-Mail Adresse ist bereits in Verwendung";
     } else if (type == "signature") {
       errors.signature = "Diese Notensignatur ist bereits in Verwendung";
+    } else if (type == "userId") {
+      errors.signature = "Diese User Id ist bereits in Verwendung";
     }
     return errors;
   }
@@ -232,7 +235,7 @@ module.exports.signup_post = async (req: any, res: any) => {
     email,
     password,
     passwordRepeat,
-    firstName,
+    firstName, // TODO: Mindestlänge 2 wg. User Id
     lastName,
     verificationToken,
   } = req.body;
@@ -242,8 +245,21 @@ module.exports.signup_post = async (req: any, res: any) => {
       throw new Error("repeated password wrong");
     }
 
-    const verificationToken = Math.random().toString(36).substr(2);
+    const userId = generateUserId(firstName, lastName);
+    const regexp = new RegExp("^[a-z]{2}.[a-z]{2,6}$");
+    if (!userId.match(regexp)) {
+      console.error("User Id does not match regexp: ", userId);
+      res
+        .status(400)
+        .json({
+          status:
+            "Interner Fehler bei Bildung der User id. Bitte den HSC kontaktieren!",
+        });
+    }
+
+    const verificationToken = Math.random().toString(36).substring(2);
     const user = await User.create({
+      id: userId,
       email,
       password,
       firstName,
@@ -252,10 +268,30 @@ module.exports.signup_post = async (req: any, res: any) => {
     });
     res.status(201).json({ user: user._id });
   } catch (err) {
-    const errors = handleErrors(err, "email");
+    const errors = handleSaveErrors(err, "email");
     res.status(400).json({ errors });
   }
 };
+
+function convertToGermanCharacterRules(name: string): string {
+  // Replace umlauts and special characters with their German equivalents
+  const germanRulesMap: { [key: string]: string } = {
+    ä: "ae",
+    ö: "oe",
+    ü: "ue",
+    ß: "ss",
+  };
+
+  return name
+    .toLowerCase()
+    .replace(/[äöüß]/g, (match) => germanRulesMap[match] || "");
+}
+
+function generateUserId(firstName: string, lastName: string): string {
+  firstName = convertToGermanCharacterRules(firstName);
+  lastName = convertToGermanCharacterRules(lastName).replace(" ", "");
+  return firstName.substring(0, 2) + "." + lastName.substring(0, 6);
+}
 
 module.exports.login_post = async (req: any, res: any) => {
   const { email, password } = req.body;
@@ -266,7 +302,7 @@ module.exports.login_post = async (req: any, res: any) => {
     res.cookie("jwt", token, { httpOnly: true, maxAge: maxAge * 1000 });
     res.status(200).json({ user: user._id });
   } catch (err) {
-    const errors = handleErrors(err, "email");
+    const errors = handleSaveErrors(err, "email");
     res.status(400).json({ errors });
   }
 };
@@ -306,7 +342,7 @@ module.exports.register_score_post = async (req: any, res: any) => {
 
     res.status(201).json({ scoreType: scoreType._id });
   } catch (err) {
-    const errors = handleErrors(err, "signature");
+    const errors = handleSaveErrors(err, "signature");
     res.status(400).json({ errors });
   }
 };
@@ -487,13 +523,10 @@ module.exports.checkouts_post = async (req: any, res: any) => {
           userIds.push(checkout.userId);
         }
       }
-      const userObjectIds = userIds.map(
-        (userId) => new mongoose.Types.ObjectId(userId)
-      );
 
       const userMap = await (
-        await User.find({ _id: { $in: userObjectIds } })
-      ).reduce((map, user) => map.set(user._id.toString(), user), new Map());
+        await User.find({ id: { $in: userIds } })
+      ).reduce((map, user) => map.set(user.id, user), new Map());
 
       for (const score of scores) {
         for (const checkout of score.checkouts) {

@@ -20,6 +20,7 @@ const Checkout_1 = require("./models/Checkout");
 const uuid_1 = require("uuid");
 const mongoose_1 = __importDefault(require("mongoose"));
 require("dotenv").config();
+// Ausfühhrung mit: ts-node checkouts-import.ts
 // database connection
 const dbURI = process.env.MONGODB_URL;
 mongoose_1.default.set("strictQuery", false);
@@ -71,7 +72,7 @@ function importCsv() {
                         const signature = "ORFF-COM";
                         const scoreId = signature + "-" + (0, uuid_1.v4)();
                         const checkout = new Checkout_1.Checkout({
-                            userId: user._id.toString(),
+                            userId: user.id.toString(),
                             scoreId,
                             checkoutTimestamp: new Date("2020-01-01"),
                             checkoutComment: record.comment,

@@ -8,7 +8,8 @@ require("dotenv").config();
 // the adding of a static User Method from the JS code had to be rewritten according to
 // https://mongoosejs.com/docs/typescript/statics-and-methods.html
 
-interface IUser {
+export interface IUser {
+  id: string;
   email: string;
   password: string;
   firstName: string;
@@ -24,10 +25,18 @@ interface UserModel extends Model<IUser> {
 }
 
 const userSchema = new Schema<IUser, UserModel>({
+  id: {
+    // vv.nnnnnn z.B. mi.suedka; wird als Referenz zu anderen Objekten verwendet, damit diese sprechend ist
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+  },
   email: {
     type: String,
     // required: [true, "Bitte E-Mail angeben"],  // normal schon; aber nicht alle haben eine; für manuelle Registrierung
-    // unique: true,
+    unique: true, // wenn vorhanden
+    sparse: true, // mehrere null Werte erlaubt
     lowercase: true,
     // validate: [isEmail, "Bitte eine gültige E-Mail-Adresse angeben"],  TODO: Validierung nur wenn nicht leer
   },
@@ -38,7 +47,7 @@ const userSchema = new Schema<IUser, UserModel>({
   },
   firstName: {
     type: String,
-    required: false,
+    required: [true, "Bitte Vornamen angeben"], // damit vv.nnnnnn User Id gebildet werden kann.
   },
   lastName: {
     type: String,

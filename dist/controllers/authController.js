@@ -20,11 +20,11 @@ require("dotenv").config();
 const nodemailer_1 = __importDefault(require("nodemailer"));
 var QRCode = require("qrcode");
 const uuid_1 = require("uuid");
-const mongoose_1 = __importDefault(require("mongoose"));
 // handle errors
-const handleErrors = (err, type) => {
+const handleSaveErrors = (err, type) => {
     console.log(err.message, err.code);
     let errors = {
+        userId: "",
         email: "",
         password: "",
         passwordRepeat: "",
@@ -49,6 +49,9 @@ const handleErrors = (err, type) => {
         }
         else if (type == "signature") {
             errors.signature = "Diese Notensignatur ist bereits in Verwendung";
+        }
+        else if (type == "userId") {
+            errors.signature = "Diese User Id ist bereits in Verwendung";
         }
         return errors;
     }
@@ -208,13 +211,25 @@ module.exports.verify_email_get = (req, res) => __awaiter(void 0, void 0, void 0
     });
 });
 module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { email, password, passwordRepeat, firstName, lastName, verificationToken, } = req.body;
+    const { email, password, passwordRepeat, firstName, // TODO: Mindestlänge 2 wg. User Id
+    lastName, verificationToken, } = req.body;
     try {
         if (password !== passwordRepeat) {
             throw new Error("repeated password wrong");
         }
-        const verificationToken = Math.random().toString(36).substr(2);
+        const userId = generateUserId(firstName, lastName);
+        const regexp = new RegExp("^[a-z]{2}.[a-z]{2,6}$");
+        if (!userId.match(regexp)) {
+            console.error("User Id does not match regexp: ", userId);
+            res
+                .status(400)
+                .json({
+                status: "Interner Fehler bei Bildung der User id. Bitte den HSC kontaktieren!",
+            });
+        }
+        const verificationToken = Math.random().toString(36).substring(2);
         const user = yield User_1.User.create({
+            id: userId,
             email,
             password,
             firstName,
@@ -224,10 +239,27 @@ module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, fun
         res.status(201).json({ user: user._id });
     }
     catch (err) {
-        const errors = handleErrors(err, "email");
+        const errors = handleSaveErrors(err, "email");
         res.status(400).json({ errors });
     }
 });
+function convertToGermanCharacterRules(name) {
+    // Replace umlauts and special characters with their German equivalents
+    const germanRulesMap = {
+        ä: "ae",
+        ö: "oe",
+        ü: "ue",
+        ß: "ss",
+    };
+    return name
+        .toLowerCase()
+        .replace(/[äöüß]/g, (match) => germanRulesMap[match] || "");
+}
+function generateUserId(firstName, lastName) {
+    firstName = convertToGermanCharacterRules(firstName);
+    lastName = convertToGermanCharacterRules(lastName).replace(" ", "");
+    return firstName.substring(0, 2) + "." + lastName.substring(0, 6);
+}
 module.exports.login_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;
     try {
@@ -237,7 +269,7 @@ module.exports.login_post = (req, res) => __awaiter(void 0, void 0, void 0, func
         res.status(200).json({ user: user._id });
     }
     catch (err) {
-        const errors = handleErrors(err, "email");
+        const errors = handleSaveErrors(err, "email");
         res.status(400).json({ errors });
     }
 });
@@ -273,7 +305,7 @@ module.exports.register_score_post = (req, res) => __awaiter(void 0, void 0, voi
         res.status(201).json({ scoreType: scoreType._id });
     }
     catch (err) {
-        const errors = handleErrors(err, "signature");
+        const errors = handleSaveErrors(err, "signature");
         res.status(400).json({ errors });
     }
 });
@@ -447,8 +479,7 @@ module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, 
                     userIds.push(checkout.userId);
                 }
             }
-            const userObjectIds = userIds.map((userId) => new mongoose_1.default.Types.ObjectId(userId));
-            const userMap = yield (yield User_1.User.find({ _id: { $in: userObjectIds } })).reduce((map, user) => map.set(user._id.toString(), user), new Map());
+            const userMap = yield (yield User_1.User.find({ id: { $in: userIds } })).reduce((map, user) => map.set(user.id, user), new Map());
             for (const score of scores) {
                 for (const checkout of score.checkouts) {
                     const user = userMap.get(checkout.userId);
