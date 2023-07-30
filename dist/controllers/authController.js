@@ -140,9 +140,11 @@ function createEspassFile(token) {
 // Send email to the user after successful registration and verification
 const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void 0, function* () {
     // we encode the user data into a JWT in order to prohibit manual QRCode creation outside the app
-    const token = jsonwebtoken_1.default.sign({ userId: user._id, email: user.email }, process.env.EMAIL_VERIFICATION_SECRET, { expiresIn: "5y" } // TODO: check in "y" valid
+    const token = jsonwebtoken_1.default.sign({ userId: user._id, email: user.email }, // TODO: using id rather _id will not shorten the QRCode because a JWT always has the same lenght; use anothe way of signature
+    process.env.EMAIL_VERIFICATION_SECRET, { expiresIn: "5y" } // TODO: check in "y" valid
     );
-    yield createEspassFile(token); // TODO: in Memory statt speichern
+    // das sparen wir uns vorerst mal
+    // await createEspassFile(token); // TODO: in Memory statt speichern
     try {
         // const text = "userId=" + user._id + "&email=" + user.email;
         const url = yield QRCode.toDataURL(token);
@@ -161,7 +163,8 @@ const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void
             to: email,
             subject,
             html,
-            attachments: [{ path: url }, { path: "/tmp/hsc-noten.espass" }],
+            // attachments: [{ path: url }, { path: "/tmp/hsc-noten.espass" }],
+            attachments: [{ path: url }],
         };
         const result = yield transporter.sendMail(mailOptions);
         if (transporter.logger) {
@@ -239,6 +242,7 @@ module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, fun
         res.status(201).json({ user: user._id });
     }
     catch (err) {
+        // TODO: handle user id collision
         const errors = handleSaveErrors(err, "email");
         res.status(400).json({ errors });
     }
