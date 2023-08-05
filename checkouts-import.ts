@@ -81,7 +81,7 @@ async function importCsv() {
           const scoreId = signature + "-" + uuidv4();
 
           const checkout = new Checkout({
-            userId: user.id.toString(),
+            userId: user.id,
             scoreId,
             checkoutTimestamp: new Date("2020-01-01"),
             checkoutComment: record.comment,
@@ -93,7 +93,7 @@ async function importCsv() {
             signature,
             id: scoreId,
             extId: record.scoreId,
-            checkedOutByUserId: user._id.toString(),
+            checkedOutByUserId: user.id,
             checkouts,
           });
           console.log(score._id);

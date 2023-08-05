@@ -72,7 +72,7 @@ function importCsv() {
                         const signature = "ORFF-COM";
                         const scoreId = signature + "-" + (0, uuid_1.v4)();
                         const checkout = new Checkout_1.Checkout({
-                            userId: user.id.toString(),
+                            userId: user.id,
                             scoreId,
                             checkoutTimestamp: new Date("2020-01-01"),
                             checkoutComment: record.comment,
@@ -83,7 +83,7 @@ function importCsv() {
                             signature,
                             id: scoreId,
                             extId: record.scoreId,
-                            checkedOutByUserId: user._id.toString(),
+                            checkedOutByUserId: user.id,
                             checkouts,
                         });
                         console.log(score._id);

@@ -21,6 +21,7 @@
   <input type="password" name="passwordRepeat" value="" class="w3-input" required>
   <label>Nachname*</label>
   <input type="text" name="lastName" value="" class="w3-input" required>
+  <div class="w3-red userId error"></div>
   <label>Vorname</label>
   <input type="text" name="firstName" value="" class="w3-input">
   <p>
@@ -37,6 +38,7 @@
   const form = document.querySelector('form');
   const emailError = document.querySelector('.email.error');
   const passwordError = document.querySelector('.password.error');
+  const userIdError = document.querySelector('.userId.error');
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -44,6 +46,7 @@
     // reset errors
     emailError.textContent = '';
     passwordError.textContent = '';
+    userIdError.textContent = '';
 
     // get values
     const email = form.email.value;
@@ -73,7 +76,8 @@
         console.log("errors", data.errors);
         emailError.textContent = data.errors.email;
         passwordError.textContent = data.errors.password;
-        console.log(emailError, passwordError);
+        userIdError.textContent = data.errors.userId;
+        // console.log(emailError, passwordError);
       }
       if (data.user) {
         location.assign('/signup-success');

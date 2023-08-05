@@ -44,14 +44,16 @@ const handleSaveErrors = (err, type) => {
             "Passwort und Passwort Wiederholung stimmen nicht überein";
     }
     if (err.code === 11000) {
-        if (type == "email") {
+        if (!type) {
+        }
+        else if (type == "email") {
             errors.email = "Diese E-Mail Adresse ist bereits in Verwendung";
         }
         else if (type == "signature") {
             errors.signature = "Diese Notensignatur ist bereits in Verwendung";
         }
         else if (type == "userId") {
-            errors.signature = "Diese User Id ist bereits in Verwendung";
+            errors.userId = "Die aus Vor- und Nachnamen gebildete User Id ist bereits in Verwendung. Bitte HSC kontaktieren!";
         }
         return errors;
     }
@@ -242,8 +244,22 @@ module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, fun
         res.status(201).json({ user: user._id });
     }
     catch (err) {
-        // TODO: handle user id collision
-        const errors = handleSaveErrors(err, "email");
+        let type = undefined;
+        if (err.keyValue.id) {
+            type = "userId";
+        }
+        else if (err.keyValue.email) {
+            type = "email";
+        }
+        // let key = 'id';
+        // if (key in err.keyvalue) {
+        //   type = "userId";
+        // } 
+        // key = 'email';
+        // if (key in err.keyvalue) {
+        //   type = "email";
+        // }
+        const errors = handleSaveErrors(err, type);
         res.status(400).json({ errors });
     }
 });
@@ -404,7 +420,7 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
                     else {
                         // we have a true checkout record
                         const checkedOutByUserId = score.checkedOutByUserId;
-                        const user = yield User_1.User.findOne({ _id: checkedOutByUserId });
+                        const user = yield User_1.User.findOne({ id: checkedOutByUserId });
                         if (user) {
                             // res.status(200).json({ checkinScore: score, checkinUser: user });
                             score.checkedOutByUserId = ""; // mark this score as "not checked out"

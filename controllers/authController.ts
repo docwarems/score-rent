@@ -10,7 +10,7 @@ import { score } from "../routes/authRoutes";
 import mongoose from "mongoose";
 
 // handle errors
-const handleSaveErrors = (err: any, type: string) => {
+const handleSaveErrors = (err: any, type: string|undefined) => {
   console.log(err.message, err.code);
   let errors = {
     userId: "",
@@ -37,12 +37,13 @@ const handleSaveErrors = (err: any, type: string) => {
   }
 
   if (err.code === 11000) {
-    if (type == "email") {
+    if (!type) {
+    } else if (type == "email") {
       errors.email = "Diese E-Mail Adresse ist bereits in Verwendung";
     } else if (type == "signature") {
       errors.signature = "Diese Notensignatur ist bereits in Verwendung";
     } else if (type == "userId") {
-      errors.signature = "Diese User Id ist bereits in Verwendung";
+      errors.userId = "Die aus Vor- und Nachnamen gebildete User Id ist bereits in Verwendung. Bitte HSC kontaktieren!";
     }
     return errors;
   }
@@ -269,9 +270,22 @@ module.exports.signup_post = async (req: any, res: any) => {
       verificationToken,
     });
     res.status(201).json({ user: user._id });
-  } catch (err) {
-    // TODO: handle user id collision
-    const errors = handleSaveErrors(err, "email");
+  } catch (err: any) {
+    let type: string|undefined = undefined;
+    if (err.keyValue.id) {
+      type = "userId";
+    } else if (err.keyValue.email) {
+      type = "email";
+    }
+    // let key = 'id';
+    // if (key in err.keyvalue) {
+    //   type = "userId";
+    // } 
+    // key = 'email';
+    // if (key in err.keyvalue) {
+    //   type = "email";
+    // }
+    const errors = handleSaveErrors(err, type);
     res.status(400).json({ errors });
   }
 };
@@ -446,7 +460,7 @@ module.exports.checkin_post = async (req: any, res: any) => {
           } else {
             // we have a true checkout record
             const checkedOutByUserId = score.checkedOutByUserId;
-            const user = await User.findOne({ _id: checkedOutByUserId });
+            const user = await User.findOne({ id: checkedOutByUserId });
             if (user) {
               // res.status(200).json({ checkinScore: score, checkinUser: user });
               score.checkedOutByUserId = ""; // mark this score as "not checked out"
