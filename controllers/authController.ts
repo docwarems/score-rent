@@ -440,8 +440,6 @@ module.exports.checkout_post = async (req: any, res: any) => {
       // case-insensitive search at beginning
       const users = await User.find({ lastName: { $regex: `^${userLastName}`, $options: 'i' } });
       // console.log(users);
-      // res.status(201).json({ users });
-
       res.render("checkout", {
         users,
       });

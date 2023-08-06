@@ -22,14 +22,11 @@
     <th></th>
   </tr>
 
-  <% 
-      users.forEach(user => { 
-        console.log("User", user);
-        %>
+  <% users.forEach(user => { %>
   <tr>
     <td class="userName"><%= user.firstName %>&nbsp;<%= user.lastName %></td>
     <td class="userEmail"><%= user.email %></td>
-    <td><button onclick="document.querySelector('.userTable').style = 'display: none'; postCheckout('<%= user.id %>');" class="w3-button">Auswählen</button></td>
+    <td><button onclick="document.querySelector('.userTable').style = 'display: none'; postCheckout({ userId: '<%= user.id %>' });" class="w3-button">Auswählen</button></td>
   </tr>
   <% }); %>
 </table>
@@ -83,9 +80,9 @@
     <label>ID</label>
     <input type="text" name="scoreId" value="" class="w3-input scoreId" readonly>
     <label>Ext. ID</label>
-    <input type="text" name="scoreExtId" value="" class="w3-input scoreExtId" readonly>
+    <input type="text" name="scoreExtId" value="" class="w3-input scoreExtId">
     <label>Zustand</label>
-    <input type="text" name="state" value="" class="w3-input state" readonly>
+    <input type="text" name="state" value="" class="w3-input state">
     <label>Kommentar</label>
     <input type="text" name="comment" value="" class="w3-input comment">
     <label>Doppelte Ausleihe erlauben</label>
@@ -136,14 +133,28 @@
 
     const inputUserId = document.querySelector('.userId');
     const inputScoreId = document.querySelector('.scoreId');
+    const inputScoreExtId = document.querySelector('.scoreExtId');
+    const inputState = document.querySelector('.state');
     const inputComment = document.querySelector('.comment');
     const inputAllowDoubleCheckout = document.querySelector('.allowDoubleCheckout');
-    console.log("inputAllowDoubleCheckout", inputAllowDoubleCheckout, inputAllowDoubleCheckout.value);
-    await postCheckout(inputUserId.value, "", inputScoreId.value, inputComment.value, inputAllowDoubleCheckout.value);
+    // console.log("inputAllowDoubleCheckout", inputAllowDoubleCheckout, inputAllowDoubleCheckout.value);
+    await postCheckout({
+      userId: inputUserId.value,
+      scoreId: inputScoreId.value,
+      comment: inputComment.value,
+      allowDoubleCheckout: inputAllowDoubleCheckout.value
+    });
   });
 
-  async function postCheckout(userId, userLastName, scoreId, comment, allowDoubleCheckout) {
-    console.log("submitScanResult: userId=" + userId + ", lastName=" + userLastName + ", scoreId=" + scoreId, ", allowDoubleCheckout=", allowDoubleCheckout);
+  async function postCheckout(input) {
+    const {
+      userId,
+      userLastName,
+      scoreId,
+      comment,
+      allowDoubleCheckout
+    } = input;
+    // console.log("submitScanResult: userId=" + userId + ", lastName=" + userLastName + ", scoreId=" + scoreId, ", allowDoubleCheckout=", allowDoubleCheckout);
     try {
       const res = await fetch('/score/checkout', {
         method: 'POST',
@@ -201,9 +212,6 @@
           console.log("We should not be here");
         }
       }
-      // if (data.users) {
-      //   console.log(data.users);
-      // }
       return true;
     } catch (err) {
       console.log("err=", err);
@@ -217,13 +225,17 @@
     console.log(result);
     if (btnScan.textContent == "User scannen") {
       scanner.clear();
-      if (await postCheckout(result, undefined)) {
+      if (await postCheckout({
+          userId: result
+        })) {
         btnScan.textContent = "Noten scannen";
         divUser.style = "display: block";
       }
     } else if (btnScan.textContent == "Noten scannen") {
       scanner.clear();
-      if (await postCheckout(undefined, undefined, result)) {
+      if (await postCheckout({
+          scoreId: result
+        })) {
         document.getElementById('reader').remove();
         divScore.style = "display: block";
         btnScan.remove();

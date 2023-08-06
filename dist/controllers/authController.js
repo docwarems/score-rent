@@ -401,7 +401,6 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
             // case-insensitive search at beginning
             const users = yield User_1.User.find({ lastName: { $regex: `^${userLastName}`, $options: 'i' } });
             // console.log(users);
-            // res.status(201).json({ users });
             res.render("checkout", {
                 users,
             });
