@@ -77,6 +77,11 @@ const createToken = (id) => {
 module.exports.signup_get = (req, res) => {
     res.render("signup");
 };
+module.exports.signup_user_get = (req, res) => {
+    res.render("signup", {
+        admin: true,
+    });
+};
 module.exports.signup_success_get = (req, res) => {
     res.render("signup-success");
 };
@@ -216,11 +221,20 @@ module.exports.verify_email_get = (req, res) => __awaiter(void 0, void 0, void 0
     });
 });
 module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { email, password, passwordRepeat, firstName, // TODO: Mindestlänge 2 wg. User Id
-    lastName, verificationToken, } = req.body;
+    let { email, password, passwordRepeat, firstName, // TODO: Mindestlänge 2 wg. User Id
+    lastName, } = req.body;
     try {
-        if (password !== passwordRepeat) {
-            throw new Error("repeated password wrong");
+        const byAdmin = !password;
+        let isManuallyRegistered;
+        if (byAdmin) {
+            password = "jdj849kddwerß02340wasdölad";
+            isManuallyRegistered = true;
+        }
+        else {
+            if (password !== passwordRepeat) {
+                throw new Error("repeated password wrong");
+            }
+            isManuallyRegistered = false;
         }
         const userId = generateUserId(firstName, lastName);
         const regexp = new RegExp("^[a-z]{2}.[a-z]{2,6}$");
@@ -232,7 +246,7 @@ module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 status: "Interner Fehler bei Bildung der User id. Bitte den HSC kontaktieren!",
             });
         }
-        const verificationToken = Math.random().toString(36).substring(2);
+        const verificationToken = byAdmin ? undefined : Math.random().toString(36).substring(2);
         const user = yield User_1.User.create({
             id: userId,
             email,
@@ -240,6 +254,7 @@ module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, fun
             firstName,
             lastName,
             verificationToken,
+            isManuallyRegistered,
         });
         res.status(201).json({ user: user._id });
     }

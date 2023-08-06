@@ -77,6 +77,12 @@ module.exports.signup_get = (req: any, res: any) => {
   res.render("signup");
 };
 
+module.exports.signup_user_get = (req: any, res: any) => {
+  res.render("signup", {
+    admin: true,
+  });
+};
+
 module.exports.signup_success_get = (req: any, res: any) => {
   res.render("signup-success");
 };
@@ -234,18 +240,26 @@ module.exports.verify_email_get = async (req: any, res: any) => {
 };
 
 module.exports.signup_post = async (req: any, res: any) => {
-  const {
+  let {
     email,
     password,
     passwordRepeat,
     firstName, // TODO: Mindestlänge 2 wg. User Id
     lastName,
-    verificationToken,
   } = req.body;
 
   try {
-    if (password !== passwordRepeat) {
-      throw new Error("repeated password wrong");
+    const byAdmin = !password;
+
+    let isManuallyRegistered;
+    if (byAdmin) {
+      password = "jdj849kddwerß02340wasdölad";
+      isManuallyRegistered = true;
+    } else {
+      if (password !== passwordRepeat) {
+          throw new Error("repeated password wrong");  
+      }
+      isManuallyRegistered = false;
     }
 
     const userId = generateUserId(firstName, lastName);
@@ -260,7 +274,7 @@ module.exports.signup_post = async (req: any, res: any) => {
         });
     }
 
-    const verificationToken = Math.random().toString(36).substring(2);
+    const verificationToken = byAdmin ? undefined : Math.random().toString(36).substring(2);
     const user = await User.create({
       id: userId,
       email,
@@ -268,6 +282,7 @@ module.exports.signup_post = async (req: any, res: any) => {
       firstName,
       lastName,
       verificationToken,
+      isManuallyRegistered,
     });
     res.status(201).json({ user: user._id });
   } catch (err: any) {

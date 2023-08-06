@@ -15,11 +15,14 @@
     <h2>Aktionen</h2>
   </li>
   <% if (user.isAdmin) { %>
+    <h3>Noten</h3>
     <li><a href="/score/register" class="w3-button w3-black">Leihnoten registrieren</a></li>
     <li><a href="/score/checkout" class="w3-button w3-black">Noten Ausleihe</a></li>
     <li><a href="/score/checkin" class="w3-button w3-black">Noten Rückgabe</a></li>
     <li><a href="/score/checkouts" class="w3-button w3-black">Ausleihen anzeigen</a></li>
     <li><a href="/list-score" class="w3-button w3-black">Leihnoten Liste</a></li>
+    <h3>Benutzer</h3>
+    <li><a href="/signup-user" class="w3-button w3-black">Benutzer anlegen</a></li>
     <li><a href="/list-user" class="w3-button w3-black">Benutzer Liste</a></li>
     <li><a href="/user" class="w3-button w3-black">Benutzer anzeigen</a></li>
   <% } else { %>  

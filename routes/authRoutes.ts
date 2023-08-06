@@ -12,14 +12,12 @@ router.post("*", checkUser);
 router.get("/signup", authController.signup_get);
 router.post("/signup", authController.signup_post);
 router.get("/signup-success", authController.signup_success_get);
+router.get("/signup-user", requireAuth, requireAdmin, authController.signup_user_get);
+router.post("/signup-user", authController.signup_post);
 router.get("/login", authController.login_get);
 router.post("/login", authController.login_post);
 router.get("/logout", authController.logout_get);
 router.get("/verify-email", authController.verify_email_get);
-// router.get("/register-score", authController.register_score_get);
-// router.post("/register-score", authController.register_score_post);
-// router.get("/checkout", authController.checkout_get);
-// router.post("/checkout", requireAuth, requireAdmin, authController.checkout_post);
 
 export const score = Router();
 

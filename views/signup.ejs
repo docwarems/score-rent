@@ -1,6 +1,6 @@
 <%- include('partials/header'); -%>
 
-<h1>Registrierung</h1>
+<h1><%= admin ? "Registrierung durch Admin" : "Registrierung" %></h1>
 
 <% if (typeof status != 'undefined') { %>
 <div class="w3-panel w3-red">
@@ -11,14 +11,20 @@
 
 <form action="/signup">
 
-  <label>Email*</label>
-  <input type="text" name="email" value="" class="w3-input" required>
+  <label><%= admin ? "Email" : "Email*" %></label>
+  <input type="text" name="email" value="" class="w3-input" <%= admin ? "" : "required" %>>
   <div class="w3-red email error"></div>
-  <label>Passwort*</label>
-  <input type="password" name="password" value="" class="w3-input" required>
-  <div class="w3-red password error"></div>
-  <label>Passwort (Wiederholung)*</label>
-  <input type="password" name="passwordRepeat" value="" class="w3-input" required>
+  <% if (admin) { %>
+    <input type="hidden" name="password" value="">
+    <input type="hidden" name="passwordRepeat" value="">
+    <div class="w3-red password error"></div>
+  <% } else { %>
+    <label>Passwort*</label>
+    <input type="password" name="password" value="" class="w3-input" required>
+    <div class="w3-red password error"></div>
+    <label>Passwort (Wiederholung)*</label>
+    <input type="password" name="passwordRepeat" value="" class="w3-input" required>
+  <% } %>  
   <label>Nachname*</label>
   <input type="text" name="lastName" value="" class="w3-input" required>
   <div class="w3-red userId error"></div>
