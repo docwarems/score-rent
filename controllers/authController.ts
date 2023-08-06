@@ -369,7 +369,7 @@ module.exports.checkout_get = (req: any, res: any) => {
 };
 
 module.exports.checkout_post = async (req: any, res: any) => {
-  const { userId, userLastName, scoreId, comment, allowDoubleCheckout } = req.body;
+  const { userId, userLastName, scoreId, scoreExtId, state, comment, allowDoubleCheckout } = req.body;
 
   try {
     if (userId && scoreId) {
@@ -397,6 +397,8 @@ module.exports.checkout_post = async (req: any, res: any) => {
             checkoutTimestamp: new Date(),
           });
           score.checkedOutByUserId = userId;
+          score.extId = scoreExtId; // this is primilarly useful for the post-checkout from rental receipt usecase
+          score.state = state;
           score.checkouts.push(checkout);
           score = await score.save();
           if (score) {

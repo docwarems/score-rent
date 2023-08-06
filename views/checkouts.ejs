@@ -61,8 +61,8 @@
       const checkout = checkoutWithUser.checkout;
       const user = checkoutWithUser.user;
       const userName = user ? (user.firstName + " " + user.lastName) : checkout.userId;
-      const checkoutTimestamp = checkout.checkoutTimestamp ? checkout.checkoutTimestamp.toLocaleString("de-DE") : "";
-      const checkinTimestamp = checkout.checkinTimestamp ? checkout.checkinTimestamp.toLocaleString("de-DE") : "";
+      const checkoutTimestamp = checkout.checkoutTimestamp ? checkout.checkoutTimestamp.toLocaleDateString("de-DE") : "";
+      const checkinTimestamp = checkout.checkinTimestamp ? checkout.checkinTimestamp.toLocaleDateString("de-DE") : "";
       const scoreExtId = checkoutWithUser.scoreExtId;
     %>
     <tr>

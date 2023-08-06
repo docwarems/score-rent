@@ -141,6 +141,8 @@
     await postCheckout({
       userId: inputUserId.value,
       scoreId: inputScoreId.value,
+      scoreExtId: inputScoreExtId.value,
+      state: inputState.value,
       comment: inputComment.value,
       allowDoubleCheckout: inputAllowDoubleCheckout.value
     });
@@ -151,6 +153,8 @@
       userId,
       userLastName,
       scoreId,
+      scoreExtId,
+      state,
       comment,
       allowDoubleCheckout
     } = input;
@@ -162,6 +166,8 @@
           userId,
           userLastName,
           scoreId,
+          scoreExtId,
+          state,
           comment,
           allowDoubleCheckout
         }),
