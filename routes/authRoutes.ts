@@ -36,6 +36,7 @@ score.get("/checkout", (req: any, res: any) =>
   res.render("checkout", {
     checkoutUser: res.locals.checkoutUser,
     checkoutScore: res.locals.checkoutScore,
+    users: undefined,
   })
 );
 score.post("/checkout", authController.checkout_post);
@@ -52,8 +53,7 @@ score.post("/checkin", authController.checkin_post);
 
 const signatures = [
   { id: "ORFF-COM", name: "Orff De temporum finde comoedia" },
-  { id: "VERD-REQ", name: "Verdi Requiem" },
-  { id: "MOZ-REQ", name: "Mozart Requiem" },
+  { id: "BRFS-AD", name: "Braunfels Advent" },
 ]; // TODO: from db
 score.get("/checkouts", (req: any, res: any) =>
   res.render("checkouts", {

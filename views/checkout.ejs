@@ -12,6 +12,35 @@
 <form action="/checkout" id="formScan">
   <button class="w3-button w3-black btnScan">User scannen</button>
 </form>
+<p></p>
+
+<% if (users) { %>
+<table class="w3-table-all userTable" id="userTable">
+  <tr>
+    <th>Name</th>
+    <th>E-Mail</th>
+    <th></th>
+  </tr>
+
+  <% 
+      users.forEach(user => { 
+        console.log("User", user);
+        %>
+  <tr>
+    <td class="userName"><%= user.firstName %>&nbsp;<%= user.lastName %></td>
+    <td class="userEmail"><%= user.email %></td>
+    <td><button onclick="document.querySelector('.userTable').style = 'display: none'; postCheckout('<%= user.id %>');" class="w3-button">Auswählen</button></td>
+  </tr>
+  <% }); %>
+</table>
+<% } else { %>
+<form action="/score/checkout" id="formUserSearch" method="post">
+  <label>Nachname</label>
+  <input type="text" name="userLastName" value="" class="w3-input userSearchLastName" required>
+  <p></p>
+  <button class="w3-button w3-black btnUserSearch">User über Namen suchen</button>
+</form>
+<% } %>
 
 
 <!-- <script src="./node_modules/html5-qrcode/html5-qrcode.min.js"></script> -->
@@ -42,10 +71,10 @@
   <h3>Benutzer</h3>
   <label>ID</label>
   <input type="text" name="userId" value="" class="w3-input userId" readonly>
-  <label>Nachname</label>
-  <input type="text" name="lastName" value="" class="w3-input lastName" readonly>
-  <label>Vorname</label>
-  <input type="text" name="firstName" value="" class="w3-input firstName" readonly>
+  <label>Name</label>
+  <input type="text" name="name" value="" class="w3-input name" readonly>
+  <label>Email</label>
+  <input type="text" name="email" value="" class="w3-input email" readonly>
 </div>
 
 <div class="w3-panel w3-border divScore" style="display: none">
@@ -110,16 +139,17 @@
     const inputComment = document.querySelector('.comment');
     const inputAllowDoubleCheckout = document.querySelector('.allowDoubleCheckout');
     console.log("inputAllowDoubleCheckout", inputAllowDoubleCheckout, inputAllowDoubleCheckout.value);
-    await postCheckout(inputUserId.value, inputScoreId.value, inputComment.value, inputAllowDoubleCheckout.value);
+    await postCheckout(inputUserId.value, "", inputScoreId.value, inputComment.value, inputAllowDoubleCheckout.value);
   });
 
-  async function postCheckout(userId, scoreId, comment, allowDoubleCheckout) {
-    console.log("submitScanResult: userId=" + userId + ", scoreId=" + scoreId, ", allowDoubleCheckout=", allowDoubleCheckout);
+  async function postCheckout(userId, userLastName, scoreId, comment, allowDoubleCheckout) {
+    console.log("submitScanResult: userId=" + userId + ", lastName=" + userLastName + ", scoreId=" + scoreId, ", allowDoubleCheckout=", allowDoubleCheckout);
     try {
       const res = await fetch('/score/checkout', {
         method: 'POST',
         body: JSON.stringify({
           userId,
+          userLastName,
           scoreId,
           comment,
           allowDoubleCheckout
@@ -138,12 +168,14 @@
       }
       if (userId && data.checkoutUser) {
         // User which is about to checkout found
+        btnScan.textContent = "Noten scannen";
+        divUser.style = "display: block";
         const inputUserId = document.querySelector('.userId');
-        const inputFirstName = document.querySelector('.firstName');
-        const inputLastName = document.querySelector('.lastName');
-        inputUserId.value = data.checkoutUser._id;
-        inputFirstName.value = data.checkoutUser.firstName ? data.checkoutUser.firstName : "";
-        inputLastName.value = data.checkoutUser.lastName;
+        const inputName = document.querySelector('.name');
+        const inputEmail = document.querySelector('.email');
+        inputUserId.value = data.checkoutUser.id;
+        inputName.value = data.checkoutUser.firstName + " " + data.checkoutUser.lastName;
+        inputEmail.value = data.checkoutUser.email;
       }
 
       if (data.checkoutScore) {
@@ -169,6 +201,9 @@
           console.log("We should not be here");
         }
       }
+      // if (data.users) {
+      //   console.log(data.users);
+      // }
       return true;
     } catch (err) {
       console.log("err=", err);
@@ -188,7 +223,7 @@
       }
     } else if (btnScan.textContent == "Noten scannen") {
       scanner.clear();
-      if (await postCheckout(undefined, result)) {
+      if (await postCheckout(undefined, undefined, result)) {
         document.getElementById('reader').remove();
         divScore.style = "display: block";
         btnScan.remove();

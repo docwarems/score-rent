@@ -333,7 +333,7 @@ module.exports.checkout_get = (req, res) => {
     res.redirect("/checkout");
 };
 module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { userId, scoreId, comment, allowDoubleCheckout } = req.body;
+    const { userId, userLastName, scoreId, comment, allowDoubleCheckout } = req.body;
     try {
         if (userId && scoreId) {
             let score = yield Score_1.Score.findOne({ id: scoreId });
@@ -389,13 +389,22 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
             }
         }
         else if (userId) {
-            const user = yield User_1.User.findOne({ _id: userId });
+            const user = yield User_1.User.findOne({ id: userId });
             if (user) {
                 res.status(201).json({ checkoutUser: user });
             }
             else {
                 res.status(400).json({ errors: `User with Id ${userId} not found` });
             }
+        }
+        else if (userLastName) {
+            // case-insensitive search at beginning
+            const users = yield User_1.User.find({ lastName: { $regex: `^${userLastName}`, $options: 'i' } });
+            // console.log(users);
+            // res.status(201).json({ users });
+            res.render("checkout", {
+                users,
+            });
         }
     }
     catch (error) {
@@ -516,8 +525,7 @@ module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, 
         const signatures = [
             { id: "ALL", name: "Alle" },
             { id: "ORFF-COM", name: "Orff De temporum finde comoedia" },
-            { id: "VERD-REQ", name: "Verdi Requiem" },
-            { id: "MOZ-REQ", name: "Mozart Requiem" },
+            { id: "BRFS-AD", name: "Braunfels Advent" },
         ]; // TODO: from db
         res.render("checkouts", {
             signatures,

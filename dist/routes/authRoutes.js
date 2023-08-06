@@ -26,6 +26,7 @@ exports.score.post("/register", authController.register_score_post);
 exports.score.get("/checkout", (req, res) => res.render("checkout", {
     checkoutUser: res.locals.checkoutUser,
     checkoutScore: res.locals.checkoutScore,
+    users: undefined,
 }));
 exports.score.post("/checkout", authController.checkout_post);
 exports.score.post("/updateCheckout", authController.updateCheckout_post);
@@ -36,8 +37,7 @@ exports.score.post("/checkin", authController.checkin_post);
 // score.get("/checkouts", authController.checkouts_get);
 const signatures = [
     { id: "ORFF-COM", name: "Orff De temporum finde comoedia" },
-    { id: "VERD-REQ", name: "Verdi Requiem" },
-    { id: "MOZ-REQ", name: "Mozart Requiem" },
+    { id: "BRFS-AD", name: "Braunfels Advent" },
 ]; // TODO: from db
 exports.score.get("/checkouts", (req, res) => res.render("checkouts", {
     signatures,
