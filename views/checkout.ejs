@@ -83,6 +83,8 @@
     <input type="text" name="scoreExtId" value="" class="w3-input scoreExtId">
     <label>Zustand</label>
     <input type="text" name="state" value="" class="w3-input state">
+    <label>Datum</label>
+    <input type="date" name="date" value="" class="w3-input date">
     <label>Kommentar</label>
     <input type="text" name="comment" value="" class="w3-input comment">
     <label>Doppelte Ausleihe erlauben</label>
@@ -135,6 +137,7 @@
     const inputScoreId = document.querySelector('.scoreId');
     const inputScoreExtId = document.querySelector('.scoreExtId');
     const inputState = document.querySelector('.state');
+    const inputDate = document.querySelector('.date');
     const inputComment = document.querySelector('.comment');
     const inputAllowDoubleCheckout = document.querySelector('.allowDoubleCheckout');
     // console.log("inputAllowDoubleCheckout", inputAllowDoubleCheckout, inputAllowDoubleCheckout.value);
@@ -143,6 +146,7 @@
       scoreId: inputScoreId.value,
       scoreExtId: inputScoreExtId.value,
       state: inputState.value,
+      date: inputDate.value,
       comment: inputComment.value,
       allowDoubleCheckout: inputAllowDoubleCheckout.value
     });
@@ -155,6 +159,7 @@
       scoreId,
       scoreExtId,
       state,
+      date,
       comment,
       allowDoubleCheckout
     } = input;
@@ -168,6 +173,7 @@
           scoreId,
           scoreExtId,
           state,
+          date,
           comment,
           allowDoubleCheckout
         }),

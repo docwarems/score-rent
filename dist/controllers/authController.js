@@ -350,7 +350,7 @@ module.exports.checkout_get = (req, res) => {
     res.redirect("/checkout");
 };
 module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { userId, userLastName, scoreId, scoreExtId, state, comment, allowDoubleCheckout } = req.body;
+    const { userId, userLastName, scoreId, scoreExtId, state, date, comment, allowDoubleCheckout } = req.body;
     try {
         if (userId && scoreId) {
             let score = yield Score_1.Score.findOne({ id: scoreId });
@@ -366,7 +366,7 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                         userId,
                         scoreId,
                         checkoutComment: comment,
-                        checkoutTimestamp: new Date(),
+                        checkoutTimestamp: date ? date : new Date(),
                     });
                     score.checkedOutByUserId = userId;
                     score.extId = scoreExtId; // this is primilarly useful for the post-checkout from rental receipt usecase

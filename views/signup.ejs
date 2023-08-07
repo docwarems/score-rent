@@ -28,15 +28,17 @@
   <label>Nachname*</label>
   <input type="text" name="lastName" value="" class="w3-input" required>
   <div class="w3-red userId error"></div>
-  <label>Vorname</label>
-  <input type="text" name="firstName" value="" class="w3-input">
+  <label>Vorname*</label>
+  <input type="text" name="firstName" value="" class="w3-input" required>
   <p>
   <input class="w3-button w3-black" type="submit" value="Senden">
 </form>
 
+<% if (!admin) { %>
 <p class="w3">oder</p>
 <p></p>
 <a href="/login" class="w3-button w3-black">Login</a>
+<% } %>  
 
 <%- include('partials/footer'); -%>
 
