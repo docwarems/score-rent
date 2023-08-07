@@ -74,7 +74,9 @@ const createToken = (id: string) => {
 
 // controller actions
 module.exports.signup_get = (req: any, res: any) => {
-  res.render("signup");
+  res.render("signup", {
+    admin: false,
+  });
 };
 
 module.exports.signup_user_get = (req: any, res: any) => {
