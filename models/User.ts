@@ -20,11 +20,16 @@ export interface IUser {
   isManuallyRegistered: boolean;
 }
 
-interface UserModel extends Model<IUser> {
-  login(email: string, password: string): any;
+export interface IUserMethods {
+  fullName(): string;
 }
 
-const userSchema = new Schema<IUser, UserModel>({
+interface UserModel extends Model<IUser> {
+  login(email: string, password: string): any;
+  generateUserId(firstName: string, lastName: string): string;
+}
+
+const userSchema = new Schema<IUser, UserModel, IUserMethods>({
   id: {
     // vv.nnnnnn z.B. mi.suedka; wird als Referenz zu anderen Objekten verwendet, damit diese sprechend ist
     type: String,
@@ -67,6 +72,9 @@ const userSchema = new Schema<IUser, UserModel>({
     default: false,
   },
 });
+userSchema.method('fullName', function fullName() {
+  return this.firstName + ' ' + this.lastName;
+});
 userSchema.static(
   "login",
   async function login(email: string, password: string) {
@@ -81,6 +89,19 @@ userSchema.static(
     throw Error("incorrect email");
   }
 );
+userSchema.static('generateUserId', function generateUserId(firstName: string, lastName: string) {
+  firstName = convertToGermanCharacterRules(firstName);
+  lastName = convertToGermanCharacterRules(lastName).replace(" ", "");
+  let userId = firstName.substring(0, 2) + "." + lastName.substring(0, 6);
+
+  const regexp = new RegExp("^[a-z]{2}.[a-z]{2,6}$");
+  if (!userId.match(regexp)) {
+    console.error("User Id does not match regexp: ", userId);
+    userId = "";
+  }
+
+  return userId;
+});
 
 // fire a function before doc saved to db
 userSchema.pre("save", async function (next: any) {
@@ -133,8 +154,11 @@ async function sendVerificationEmail(user: any) {
   );
   const verificationUrl = `${process.env.CYCLIC_URL}/verify-email?token=${token}`;
   const email = user.email;
-  const subject = "Email Verification";
-  const html = `Please click on the following link to verify your email address: <a href="${verificationUrl}">${verificationUrl}</a>`;
+  const subject = "Email Überprüfung";
+  const html = `
+  Du hast diese Mail erhalten weil du dich bei der Notenverwaltung des Hans-Sachs-Chor registriert hast.<br>
+  Bitte klicke auf den folgenden Link um die E-Mail Adresse zu bestätigen: <a href="${verificationUrl}">${verificationUrl}</a>
+  `;
   const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
 
   const result = await transporter.sendMail(mailOptions);
@@ -142,6 +166,20 @@ async function sendVerificationEmail(user: any) {
   if (transporter.logger) {
     console.log("Verification e-mail:", result);
   }
+}
+
+function convertToGermanCharacterRules(name: string): string {
+  // Replace umlauts and special characters with their German equivalents
+  const germanRulesMap: { [key: string]: string } = {
+    ä: "ae",
+    ö: "oe",
+    ü: "ue",
+    ß: "ss",
+  };
+
+  return name
+    .toLowerCase()
+    .replace(/[äöüß]/g, (match) => germanRulesMap[match] || "");
 }
 
 export const User = model<IUser, UserModel>("User", userSchema);

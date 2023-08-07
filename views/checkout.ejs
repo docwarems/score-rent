@@ -154,6 +154,7 @@
 
   async function postCheckout(input) {
     const {
+      userJwt,
       userId,
       userLastName,
       scoreId,
@@ -168,6 +169,7 @@
       const res = await fetch('/score/checkout', {
         method: 'POST',
         body: JSON.stringify({
+          userJwt,
           userId,
           userLastName,
           scoreId,
@@ -189,7 +191,7 @@
         pError.textContent = data.errors;
         return false;
       }
-      if (userId && data.checkoutUser) {
+      if ((userId && data.checkoutUser) || (userJwt && data.checkoutUser)) {
         // User which is about to checkout found
         btnScan.textContent = "Noten scannen";
         divUser.style = "display: block";
@@ -238,7 +240,7 @@
     if (btnScan.textContent == "User scannen") {
       scanner.clear();
       if (await postCheckout({
-          userId: result
+          userJwt: result
         })) {
         btnScan.textContent = "Noten scannen";
         divUser.style = "display: block";

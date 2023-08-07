@@ -158,8 +158,8 @@ async function createEspassFile(token: string) {
 const sendVerificationSuccessfulEmail = async (user: any) => {
   // we encode the user data into a JWT in order to prohibit manual QRCode creation outside the app
   const token = jwt.sign(
-    { userId: user._id, email: user.email },  // TODO: using id rather _id will not shorten the QRCode because a JWT always has the same lenght; use anothe way of signature
-    process.env.EMAIL_VERIFICATION_SECRET!,
+    { id: user.id, email: user.email },
+    process.env.JWT_SECRET!,
     { expiresIn: "5y" } // TODO: check in "y" valid
   );
 
@@ -173,10 +173,11 @@ const sendVerificationSuccessfulEmail = async (user: any) => {
     const email = user.email;
     const subject = "Registrierung erfolgreich";
     const html = `
-    Bitte speichern Sie den folgenden QRCode. Er wird für das Ausleihen von Noten benötigt.
+    Du wurdest erfolgreich in der Noten Ausleihe Datenbank des Hans-Sachs-Chor registriert.<br>
+    Bitte speichere den folgenden QR Code. Er vereinfacht das künftige Ausleihen von Noten (kein Leihzettel mehr nötig).
     <p></p>
     E-Mail: ${user.email}<br>
-    Name: ${user.firstName}&nbsp;${user.lastName}
+    Name: ${user.fullName()}
     <p></p>      
     QR Code: <img src="${url}"/>    
   `;
@@ -264,15 +265,15 @@ module.exports.signup_post = async (req: any, res: any) => {
       isManuallyRegistered = false;
     }
 
-    const userId = generateUserId(firstName, lastName);
-    const regexp = new RegExp("^[a-z]{2}.[a-z]{2,6}$");
-    if (!userId.match(regexp)) {
-      console.error("User Id does not match regexp: ", userId);
+    firstName = firstName.trim();
+    lastName = lastName.trim();
+    const userId = User.generateUserId(firstName, lastName);
+    if (!userId) {
       res
         .status(400)
         .json({
           status:
-            "Interner Fehler bei Bildung der User id. Bitte den HSC kontaktieren!",
+            `Interner Fehler bei Bildung der User id. Bitte den HSC kontaktieren unter ${process.env.SMTP_FROM}!`,
         });
     }
 
@@ -306,26 +307,6 @@ module.exports.signup_post = async (req: any, res: any) => {
     res.status(400).json({ errors });
   }
 };
-
-function convertToGermanCharacterRules(name: string): string {
-  // Replace umlauts and special characters with their German equivalents
-  const germanRulesMap: { [key: string]: string } = {
-    ä: "ae",
-    ö: "oe",
-    ü: "ue",
-    ß: "ss",
-  };
-
-  return name
-    .toLowerCase()
-    .replace(/[äöüß]/g, (match) => germanRulesMap[match] || "");
-}
-
-function generateUserId(firstName: string, lastName: string): string {
-  firstName = convertToGermanCharacterRules(firstName);
-  lastName = convertToGermanCharacterRules(lastName).replace(" ", "");
-  return firstName.substring(0, 2) + "." + lastName.substring(0, 6);
-}
 
 module.exports.login_post = async (req: any, res: any) => {
   const { email, password } = req.body;
@@ -386,7 +367,7 @@ module.exports.checkout_get = (req: any, res: any) => {
 };
 
 module.exports.checkout_post = async (req: any, res: any) => {
-  const { userId, userLastName, scoreId, scoreExtId, state, date, comment, allowDoubleCheckout } = req.body;
+  const { userJwt, userId, userLastName, scoreId, scoreExtId, state, date, comment, allowDoubleCheckout } = req.body;
 
   try {
     if (userId && scoreId) {
@@ -447,6 +428,23 @@ module.exports.checkout_post = async (req: any, res: any) => {
       } else {
         res.status(400).json({ errors: `Score with Id ${scoreId} not found` });
       }
+    } else if (userJwt) {
+      // decode JWT and look up user
+      jwt.verify(
+        userJwt,
+        process.env.JWT_SECRET!,
+        async (err: any, decodedToken: any) => {
+          if (err) {
+            res.status(400).json({ errors: `User JWT not valid` });
+          } else {
+            let user = await User.findOne({ id: decodedToken.id });
+            if (user) {
+              res.status(201).json({ checkoutUser: user });
+            } else {
+              res.status(400).json({ errors: `User with Id ${userId} not found` });
+            }                }
+        }
+      );  
     } else if (userId) {
       const user = await User.findOne({ id: userId });
 

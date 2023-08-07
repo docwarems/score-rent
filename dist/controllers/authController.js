@@ -149,8 +149,7 @@ function createEspassFile(token) {
 // Send email to the user after successful registration and verification
 const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void 0, function* () {
     // we encode the user data into a JWT in order to prohibit manual QRCode creation outside the app
-    const token = jsonwebtoken_1.default.sign({ userId: user._id, email: user.email }, // TODO: using id rather _id will not shorten the QRCode because a JWT always has the same lenght; use anothe way of signature
-    process.env.EMAIL_VERIFICATION_SECRET, { expiresIn: "5y" } // TODO: check in "y" valid
+    const token = jsonwebtoken_1.default.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "5y" } // TODO: check in "y" valid
     );
     // das sparen wir uns vorerst mal
     // await createEspassFile(token); // TODO: in Memory statt speichern
@@ -160,10 +159,11 @@ const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void
         const email = user.email;
         const subject = "Registrierung erfolgreich";
         const html = `
-    Bitte speichern Sie den folgenden QRCode. Er wird für das Ausleihen von Noten benötigt.
+    Du wurdest erfolgreich in der Noten Ausleihe Datenbank des Hans-Sachs-Chor registriert.<br>
+    Bitte speichere den folgenden QR Code. Er vereinfacht das künftige Ausleihen von Noten (kein Leihzettel mehr nötig).
     <p></p>
     E-Mail: ${user.email}<br>
-    Name: ${user.firstName}&nbsp;${user.lastName}
+    Name: ${user.fullName()}
     <p></p>      
     QR Code: <img src="${url}"/>    
   `;
@@ -238,14 +238,14 @@ module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, fun
             }
             isManuallyRegistered = false;
         }
-        const userId = generateUserId(firstName, lastName);
-        const regexp = new RegExp("^[a-z]{2}.[a-z]{2,6}$");
-        if (!userId.match(regexp)) {
-            console.error("User Id does not match regexp: ", userId);
+        firstName = firstName.trim();
+        lastName = lastName.trim();
+        const userId = User_1.User.generateUserId(firstName, lastName);
+        if (!userId) {
             res
                 .status(400)
                 .json({
-                status: "Interner Fehler bei Bildung der User id. Bitte den HSC kontaktieren!",
+                status: `Interner Fehler bei Bildung der User id. Bitte den HSC kontaktieren unter ${process.env.SMTP_FROM}!`,
             });
         }
         const verificationToken = byAdmin ? undefined : Math.random().toString(36).substring(2);
@@ -280,23 +280,6 @@ module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, fun
         res.status(400).json({ errors });
     }
 });
-function convertToGermanCharacterRules(name) {
-    // Replace umlauts and special characters with their German equivalents
-    const germanRulesMap = {
-        ä: "ae",
-        ö: "oe",
-        ü: "ue",
-        ß: "ss",
-    };
-    return name
-        .toLowerCase()
-        .replace(/[äöüß]/g, (match) => germanRulesMap[match] || "");
-}
-function generateUserId(firstName, lastName) {
-    firstName = convertToGermanCharacterRules(firstName);
-    lastName = convertToGermanCharacterRules(lastName).replace(" ", "");
-    return firstName.substring(0, 2) + "." + lastName.substring(0, 6);
-}
 module.exports.login_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;
     try {
@@ -350,7 +333,7 @@ module.exports.checkout_get = (req, res) => {
     res.redirect("/checkout");
 };
 module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { userId, userLastName, scoreId, scoreExtId, state, date, comment, allowDoubleCheckout } = req.body;
+    const { userJwt, userId, userLastName, scoreId, scoreExtId, state, date, comment, allowDoubleCheckout } = req.body;
     try {
         if (userId && scoreId) {
             let score = yield Score_1.Score.findOne({ id: scoreId });
@@ -406,6 +389,23 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
             else {
                 res.status(400).json({ errors: `Score with Id ${scoreId} not found` });
             }
+        }
+        else if (userJwt) {
+            // decode JWT and look up user
+            jsonwebtoken_1.default.verify(userJwt, process.env.JWT_SECRET, (err, decodedToken) => __awaiter(void 0, void 0, void 0, function* () {
+                if (err) {
+                    res.status(400).json({ errors: `User JWT not valid` });
+                }
+                else {
+                    let user = yield User_1.User.findOne({ id: decodedToken.id });
+                    if (user) {
+                        res.status(201).json({ checkoutUser: user });
+                    }
+                    else {
+                        res.status(400).json({ errors: `User with Id ${userId} not found` });
+                    }
+                }
+            }));
         }
         else if (userId) {
             const user = yield User_1.User.findOne({ id: userId });

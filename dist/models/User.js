@@ -62,6 +62,9 @@ const userSchema = new mongoose_1.Schema({
         default: false,
     },
 });
+userSchema.method('fullName', function fullName() {
+    return this.firstName + ' ' + this.lastName;
+});
 userSchema.static("login", function login(email, password) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = yield this.findOne({ email });
@@ -74,6 +77,17 @@ userSchema.static("login", function login(email, password) {
         }
         throw Error("incorrect email");
     });
+});
+userSchema.static('generateUserId', function generateUserId(firstName, lastName) {
+    firstName = convertToGermanCharacterRules(firstName);
+    lastName = convertToGermanCharacterRules(lastName).replace(" ", "");
+    let userId = firstName.substring(0, 2) + "." + lastName.substring(0, 6);
+    const regexp = new RegExp("^[a-z]{2}.[a-z]{2,6}$");
+    if (!userId.match(regexp)) {
+        console.error("User Id does not match regexp: ", userId);
+        userId = "";
+    }
+    return userId;
 });
 // fire a function before doc saved to db
 userSchema.pre("save", function (next) {
@@ -123,8 +137,11 @@ function sendVerificationEmail(user) {
         const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.EMAIL_VERIFICATION_SECRET, { expiresIn: "1h" });
         const verificationUrl = `${process.env.CYCLIC_URL}/verify-email?token=${token}`;
         const email = user.email;
-        const subject = "Email Verification";
-        const html = `Please click on the following link to verify your email address: <a href="${verificationUrl}">${verificationUrl}</a>`;
+        const subject = "Email Überprüfung";
+        const html = `
+  Du hast diese Mail erhalten weil du dich bei der Notenverwaltung des Hans-Sachs-Chor registriert hast.<br>
+  Bitte klicke auf den folgenden Link um die E-Mail Adresse zu bestätigen: <a href="${verificationUrl}">${verificationUrl}</a>
+  `;
         const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
         const result = yield transporter.sendMail(mailOptions);
         // const smtpDebug = process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
@@ -132,5 +149,17 @@ function sendVerificationEmail(user) {
             console.log("Verification e-mail:", result);
         }
     });
+}
+function convertToGermanCharacterRules(name) {
+    // Replace umlauts and special characters with their German equivalents
+    const germanRulesMap = {
+        ä: "ae",
+        ö: "oe",
+        ü: "ue",
+        ß: "ss",
+    };
+    return name
+        .toLowerCase()
+        .replace(/[äöüß]/g, (match) => germanRulesMap[match] || "");
 }
 exports.User = (0, mongoose_1.model)("User", userSchema);
