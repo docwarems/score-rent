@@ -509,7 +509,7 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { signature, checkedOut } = req.body;
+    const { signature, checkedOut, route, userId } = req.body; // TODO: gibt es keine andere Lösung die route zu übergeben?
     let filter = signature && signature !== "ALL" ? { signature } : {};
     try {
         let error = undefined;
@@ -520,17 +520,30 @@ module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, 
         if (signature) {
             // const scores = await Score.find(filter, "checkouts") // return only checkouts property
             const scores = yield Score_1.Score.find(filter).populate("checkouts").exec(); // TODO: when exec and when not? // TODO: is populate() correct? See https://mongoosejs.com/docs/subdocs.html
-            const userIds = []; // TODO: Set
-            for (const score of scores) {
-                for (const checkout of score.checkouts) {
-                    userIds.push(checkout.userId);
+            if (userId) {
+                // show only checkouts of this user
+                for (const score of scores) {
+                    for (const checkout of score.checkouts) {
+                        if (checkout.userId == userId) {
+                            const user = yield User_1.User.findOne({ id: userId });
+                            checkoutsWithUser.push({ checkout, user, scoreExtId: score.extId });
+                        }
+                    }
                 }
             }
-            const userMap = yield (yield User_1.User.find({ id: { $in: userIds } })).reduce((map, user) => map.set(user.id, user), new Map());
-            for (const score of scores) {
-                for (const checkout of score.checkouts) {
-                    const user = userMap.get(checkout.userId);
-                    checkoutsWithUser.push({ checkout, user, scoreExtId: score.extId });
+            else {
+                const userIds = []; // TODO: Set
+                for (const score of scores) {
+                    for (const checkout of score.checkouts) {
+                        userIds.push(checkout.userId);
+                    }
+                }
+                const userMap = yield (yield User_1.User.find({ id: { $in: userIds } })).reduce((map, user) => map.set(user.id, user), new Map());
+                for (const score of scores) {
+                    for (const checkout of score.checkouts) {
+                        const user = userMap.get(checkout.userId);
+                        checkoutsWithUser.push({ checkout, user, scoreExtId: score.extId });
+                    }
                 }
             }
         }
@@ -546,6 +559,7 @@ module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, 
             { id: "BRFS-AD", name: "Braunfels Advent" },
         ]; // TODO: from db
         res.render("checkouts", {
+            route: route,
             signatures,
             filter: { signature, checkedOut: onlyCheckedOut },
             checkouts: checkoutsWithUser,

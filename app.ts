@@ -1,6 +1,6 @@
 const express = require("express");
 import mongoose from "mongoose";
-const { router, score } = require("./routes/authRoutes");
+const { router, score, user } = require("./routes/authRoutes");
 const cookieParser = require("cookie-parser");
 const {
   requireAuth,
@@ -38,6 +38,7 @@ app.get("/", requireAuth, (req: any, res: any) =>
 );
 
 app.use("/score", score);
+app.use("/user", user);
 app.use(router);
 // app.use("/foo", authRoutes); // for http://localhost:3000/foo/checkout the route handler method gets called
 // app.use("/", authRoutes); // this seems to make no difference to app.use(authRoutes)

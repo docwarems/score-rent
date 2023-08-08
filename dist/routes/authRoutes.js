@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.score = exports.router = void 0;
+exports.user = exports.score = exports.router = void 0;
 const { Router } = require("express");
 const authController = require("../controllers/authController");
 const { requireAuth, checkUser, requireAdmin, } = require("../middleware/authMiddleware");
@@ -38,9 +38,23 @@ const signatures = [
     { id: "BRFS-AD", name: "Braunfels Advent" },
 ]; // TODO: from db
 exports.score.get("/checkouts", (req, res) => res.render("checkouts", {
+    route: "score",
     signatures,
     filter: { signature: "", checkedOut: true },
     checkouts: undefined,
     error: undefined,
 }));
 exports.score.post("/checkouts", authController.checkouts_post);
+// end user routes
+exports.user = Router();
+// wildcard for all get/post actions
+exports.user.get("*", checkUser, requireAuth);
+exports.user.post("*", checkUser, requireAuth);
+exports.user.get("/checkouts", (req, res) => res.render("checkouts", {
+    route: "user",
+    signatures,
+    filter: { signature: "", checkedOut: true, user: res.locals.user },
+    checkouts: undefined,
+    error: undefined,
+}));
+exports.user.post("/checkouts", authController.checkouts_post);

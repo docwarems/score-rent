@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const mongoose_1 = __importDefault(require("mongoose"));
-const { router, score } = require("./routes/authRoutes");
+const { router, score, user } = require("./routes/authRoutes");
 const cookieParser = require("cookie-parser");
 const { requireAuth, checkUser, requireAdmin, } = require("./middleware/authMiddleware");
 require("dotenv").config();
@@ -30,6 +30,7 @@ mongoose_1.default
 app.get("*", checkUser);
 app.get("/", requireAuth, (req, res) => res.render("home", { user: res.locals.user }));
 app.use("/score", score);
+app.use("/user", user);
 app.use(router);
 // app.use("/foo", authRoutes); // for http://localhost:3000/foo/checkout the route handler method gets called
 // app.use("/", authRoutes); // this seems to make no difference to app.use(authRoutes)

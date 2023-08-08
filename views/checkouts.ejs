@@ -9,7 +9,11 @@
 <% } %>
 
 <div class="w3-panel w3-border divScore">
-  <form action="/score/checkouts" method="POST" id="formFilter">
+  <form action="/<%= route %>/checkouts" method="POST" id="formFilter">
+    <input type="hidden" name="route" value="<%= route %>">
+    <% if (route === 'user') { %>
+    <input type="hidden" name="userId" value="<%= user.id %>">
+    <% } %>
     <h3>Filter</h3>
     <label>Noten Signatur</label>
 
@@ -39,10 +43,14 @@
     <tr>
       <th>Noten Id</th>
       <th>Noten ext. Id</th>
+      <% if (route !== 'user') { %>
       <th>Benutzer</th>
+      <% } %>
       <th>Ausgeliehen am</th>
       <th>Kommentar Ausleihe</th>
+      <% if (route !== 'user') { %>
       <th></th> <!-- Schalter Rückgabe -->
+      <% } %>
       <th>Rückgabe am</th>
       <th>Kommentar Rückgabe</th>
     </tr>
@@ -68,14 +76,19 @@
     <tr>
       <td><%= checkout.scoreId %></td>
       <td><%= scoreExtId %></td>
+      <% if (route !== 'user') { %>
       <td>
         <button onclick="userDetails('<%= userName %>', '<%= user.email %>')" class="w3-button"><%= userName %></button>
       </td>
-      <!-- <td><%= user ? user.firstName + " " + user.lastName : checkout.userId %></td> -->
+      <% } %>
+      <% if (route == 'user') { %>
+      <td><%= checkoutTimestamp %></td>
+      <% } else { %>
       <td><button onclick="editCheckout('<%= checkout.scoreId %>','<%= checkout._id %>','<%= checkout.checkoutComment %>','<%= checkout.checkinComment %>')" class="w3-button"><%= checkoutTimestamp %></button></td>
+      <% } %>
       <td><%= checkout.checkoutComment %></td>
       <td>
-        <% if (!checkinTimestamp) { %>
+        <% if (!checkinTimestamp && route !== 'user') { %>
         <button onclick="confirmCheckin('<%= checkout.scoreId %>', '<%= checkout.userId %>')" class="w3-button">Rückgabe</button>
         <% } %>
       </td>
@@ -172,7 +185,7 @@
             <td><input type="text" name="editCheckoutComment" class="w3-input editCheckoutCommentCheckout"></td>
             <td><input type="text" name="editCheckinComment" class="w3-input editCheckoutCommentCheckin"></td>
           </tr>
-        </table>  
+        </table>
         <p></p>
         <button class="w3-button w3-black btnUpdateCheckout">OK</button>
       </form>
@@ -371,6 +384,4 @@
       pModalError.textContent = err.message;
     }
   }
-
-
 </script>

@@ -55,6 +55,7 @@ const signatures = [
 ]; // TODO: from db
 score.get("/checkouts", (req: any, res: any) =>
   res.render("checkouts", {
+    route: "score",
     signatures,
     filter: { signature: "", checkedOut: true },
     checkouts: undefined,
@@ -62,3 +63,21 @@ score.get("/checkouts", (req: any, res: any) =>
   })
 );
 score.post("/checkouts", authController.checkouts_post);
+
+// end user routes
+export const user = Router();
+
+// wildcard for all get/post actions
+user.get("*", checkUser, requireAuth);
+user.post("*", checkUser, requireAuth);
+
+user.get("/checkouts", (req: any, res: any) =>
+  res.render("checkouts", {
+    route: "user",
+    signatures,
+    filter: { signature: "", checkedOut: true, user: res.locals.user },
+    checkouts: undefined,
+    error: undefined,
+  })
+);
+user.post("/checkouts", authController.checkouts_post);
