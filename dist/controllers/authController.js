@@ -186,7 +186,8 @@ const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void
 });
 module.exports.verify_email_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const token = req.query.token;
-    const decodedToken = jsonwebtoken_1.default.verify(token, process.env.EMAIL_VERIFICATION_SECRET);
+    const decodedToken = jsonwebtoken_1.default.verify(// TODO: handle Exception if JWT expired
+    token, process.env.EMAIL_VERIFICATION_SECRET);
     let verificationResult;
     const user = yield User_1.User.findById(decodedToken.userId);
     if (!user) {
@@ -268,14 +269,6 @@ module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, fun
         else if (err.keyValue.email) {
             type = "email";
         }
-        // let key = 'id';
-        // if (key in err.keyvalue) {
-        //   type = "userId";
-        // } 
-        // key = 'email';
-        // if (key in err.keyvalue) {
-        //   type = "email";
-        // }
         const errors = handleSaveErrors(err, type);
         res.status(400).json({ errors });
     }
@@ -629,3 +622,100 @@ module.exports.updateCheckout_post = (req, res) => __awaiter(void 0, void 0, voi
             .json({ message: `score not found with Id ${scoreId}` }); // TODO: 4xx error
     }
 });
+module.exports.password_forgotten_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email } = req.body;
+    try {
+        const user = yield User_1.User.findOne({ email });
+        if (user) {
+            // E-Mail senden
+            yield sendPasswordResetEmail(user);
+            console.log("password reset successfully requested for: ", email);
+        }
+        else {
+            console.log("password reset requested for unknown: ", email);
+        }
+        res.status(201).json({});
+    }
+    catch (err) {
+    }
+});
+function sendPasswordResetEmail(user) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.EMAIL_VERIFICATION_SECRET, { expiresIn: "1h" });
+        const resetPasswordUrl = `${process.env.CYCLIC_URL}/verify-password-reset-email?token=${token}`;
+        const email = user.email;
+        const subject = "Passwort Zurücksetzen";
+        const html = `
+  Du hast diese Mail erhalten weil du bei der Notenverwaltung des Hans-Sachs-Chor ein Zurücksetzen des Passwort angefordert hast.<br>
+  Bitte klicke auf den folgenden Link um dein Passwort zurückzusetzen: <a href="${resetPasswordUrl}">${resetPasswordUrl}</a>
+  `;
+        const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
+        try {
+            const result = yield transporter.sendMail(mailOptions);
+            // const smtpDebug = process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
+            if (transporter.logger) {
+                console.log("Password reset e-mail:", result);
+            }
+        }
+        catch (e) {
+            console.error(e);
+            throw e;
+        }
+    });
+}
+module.exports.password_forgotten_success_get = (req, res) => {
+    res.render("password-forgotten-success");
+};
+module.exports.verify_password_reset_email_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const token = req.query.token;
+    const decodedToken = jsonwebtoken_1.default.verify(// TODO: handle Exception if JWT expired
+    token, process.env.EMAIL_VERIFICATION_SECRET);
+    let verificationResult;
+    const user = yield User_1.User.findById(decodedToken.userId);
+    if (user) {
+        verificationResult = {
+            userId: user.id,
+            status: EmailVerificationStatus.OK,
+            message: "Die E-Mail Adresse wurde erfolgreich verifiziert",
+        };
+    }
+    else {
+        verificationResult = {
+            userId: undefined,
+            status: EmailVerificationStatus.NOT_REGISTERED,
+            message: "Benutzer nicht gefunden",
+        };
+    }
+    res.render("password-reset", {
+        EmailVerificationStatus: EmailVerificationStatus,
+        verificationResult: verificationResult,
+    });
+});
+module.exports.password_reset_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let { userId, password, passwordRepeat, } = req.body;
+    try {
+        if (password !== passwordRepeat) {
+            throw new Error("repeated password wrong");
+        }
+        const user = yield User_1.User.findOne({ id: userId });
+        if (user) {
+            user.password = password;
+            user.isVerified = false;
+            yield user.save(); // in order that password will be hashed during save
+            user.isVerified = true;
+            yield user.save();
+            res.status(201).json({ user: user.id });
+        }
+        else {
+            res.status(400).json({ errors: `User with Id ${userId} not found` });
+        }
+    }
+    catch (err) {
+        let type = undefined;
+        const errors = handleSaveErrors(err, type);
+        res.status(400).json({ errors });
+    }
+});
+module.exports.password_reset_success_get = (req, res) => {
+    res.render("password-reset-success");
+};

@@ -18,6 +18,15 @@ router.get("/login", authController.login_get);
 router.post("/login", authController.login_post);
 router.get("/logout", authController.logout_get);
 router.get("/verify-email", authController.verify_email_get);
+router.get("/password-forgotten", (req: any, res: any) => {
+  res.render("password-forgotten", {
+  })
+});
+router.post("/password-forgotten", authController.password_forgotten_post);
+router.get("/password-forgotten-success", authController.password_forgotten_success_get);
+router.get("/verify-password-reset-email", authController.verify_password_reset_email_get);
+router.post("/password-reset", authController.password_reset_post);
+router.get("/password-reset-success", authController.password_reset_success_get);
 
 export const score = Router();
 

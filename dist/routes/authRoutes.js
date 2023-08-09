@@ -15,6 +15,14 @@ exports.router.get("/login", authController.login_get);
 exports.router.post("/login", authController.login_post);
 exports.router.get("/logout", authController.logout_get);
 exports.router.get("/verify-email", authController.verify_email_get);
+exports.router.get("/password-forgotten", (req, res) => {
+    res.render("password-forgotten", {});
+});
+exports.router.post("/password-forgotten", authController.password_forgotten_post);
+exports.router.get("/password-forgotten-success", authController.password_forgotten_success_get);
+exports.router.get("/verify-password-reset-email", authController.verify_password_reset_email_get);
+exports.router.post("/password-reset", authController.password_reset_post);
+exports.router.get("/password-reset-success", authController.password_reset_success_get);
 exports.score = Router();
 // wildcard for all get/post actions
 exports.score.get("*", checkUser, requireAuth, requireAdmin);

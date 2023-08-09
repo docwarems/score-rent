@@ -20,10 +20,12 @@ export interface IUser {
   isManuallyRegistered: boolean;
 }
 
+// methods
 export interface IUserMethods {
   fullName(): string;
 }
 
+// statics
 interface UserModel extends Model<IUser> {
   login(email: string, password: string): any;
   generateUserId(firstName: string, lastName: string): string;
@@ -144,6 +146,29 @@ transporter.verify(function (error, success) {
     console.log("SMTP server is ready to take our messages");
   }
 });
+
+async function createTransporter () {
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT!),
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    greetingTimeout: 1000 * 10,
+    logger:
+      !!process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
+  });
+  transporter.verify(function (error, success) {
+    if (error) {
+      console.log(error);
+    } else {
+      console.log("SMTP server is ready to take our messages");
+    }
+  });
+
+  return transporter;
+}
 
 // Send verification email to the user
 async function sendVerificationEmail(user: any) {
