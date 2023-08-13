@@ -1,0 +1,43 @@
+<%- include('partials/header'); -%>
+
+<h1>Benutzer nicht verifiziert</h1>
+
+Deine E-Mail Adresse wurde noch nicht veriziert. Du kannst dir hier einen neuen Link zur Verifizierung zusenden lassen.
+<p>
+
+<form action="/not-verified">
+  <button class="w3-button w3-black">Link senden</button>
+</form>
+
+<p class="w3">oder</p>
+<p></p>
+<a href="/signup" class="w3-button w3-black">Registrierung</a>
+
+<%- include('partials/footer'); -%>
+
+<script>
+  const form = document.querySelector('form');
+  const emailError = document.querySelector('.email.error');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await fetch('/not-verified', {
+        method: 'POST',
+        body: JSON.stringify({}),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await res.json();
+      console.log(data);
+      if (data.errors) {
+        // emailError.textContent = data.errors.email;
+      }
+      location.assign('/signup-success');
+    } catch (err) {
+      console.log(err);
+    }
+  });
+</script>

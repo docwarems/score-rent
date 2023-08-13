@@ -18,6 +18,7 @@ export interface IUser {
   verificationToken: String | undefined;
   isAdmin: boolean;
   isManuallyRegistered: boolean;
+  isPasswordHashed: boolean;
 }
 
 // methods
@@ -73,9 +74,13 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>({
     type: Boolean,
     default: false,
   },
+  isPasswordHashed: {
+    type: Boolean,
+    default: false,
+  },
 });
-userSchema.method('fullName', function fullName() {
-  return this.firstName + ' ' + this.lastName;
+userSchema.method("fullName", function fullName() {
+  return this.firstName + " " + this.lastName;
 });
 userSchema.static(
   "login",
@@ -91,29 +96,31 @@ userSchema.static(
     throw Error("incorrect email");
   }
 );
-userSchema.static('generateUserId', function generateUserId(firstName: string, lastName: string) {
-  firstName = convertToGermanCharacterRules(firstName);
-  lastName = convertToGermanCharacterRules(lastName).replace(" ", "");
-  let userId = firstName.substring(0, 2) + "." + lastName.substring(0, 6);
+userSchema.static(
+  "generateUserId",
+  function generateUserId(firstName: string, lastName: string) {
+    firstName = convertToGermanCharacterRules(firstName);
+    lastName = convertToGermanCharacterRules(lastName).replace(" ", "");
+    let userId = firstName.substring(0, 2) + "." + lastName.substring(0, 6);
 
-  const regexp = new RegExp("^[a-z]{2}.[a-z]{2,6}$");
-  if (!userId.match(regexp)) {
-    console.error("User Id does not match regexp: ", userId);
-    userId = "";
+    const regexp = new RegExp("^[a-z]{2}.[a-z]{2,6}$");
+    if (!userId.match(regexp)) {
+      console.error("User Id does not match regexp: ", userId);
+      userId = "";
+    }
+
+    return userId;
   }
-
-  return userId;
-});
+);
 
 // fire a function before doc saved to db
 userSchema.pre("save", async function (next: any) {
   // TODO: we must ensure that e-mail doesn't exist because we have no longer a unique constraint on email field because we need to be able to manually register users without email
 
-  // we must ensure that the password will only be hashed if it is not already hashed
-  // we doesn't have a safe criteria for this right now
-  const salt = await bcrypt.genSalt();
-  if (!this.isVerified) {
+  if (!this.isPasswordHashed) {
+    const salt = await bcrypt.genSalt();
     this.password = await bcrypt.hash(this.password, salt);
+    this.isPasswordHashed = true;
   }
   next();
 });
@@ -147,7 +154,7 @@ transporter.verify(function (error, success) {
   }
 });
 
-async function createTransporter () {
+async function createTransporter() {
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT!),
@@ -157,7 +164,8 @@ async function createTransporter () {
     },
     greetingTimeout: 1000 * 10,
     logger:
-      !!process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
+      !!process.env.SMTP_DEBUG &&
+      process.env.SMTP_DEBUG.toLowerCase() == "true",
   });
   transporter.verify(function (error, success) {
     if (error) {

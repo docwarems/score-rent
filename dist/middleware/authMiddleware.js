@@ -53,6 +53,15 @@ const checkUser = (req, res, next) => {
         next();
     }
 };
+const requireUserVerified = (req, res, next) => {
+    const user = res.locals.user;
+    if (user.isVerified) {
+        next();
+    }
+    else {
+        res.redirect("/not-verified");
+    }
+};
 const requireAdmin = (req, res, next) => {
     const user = res.locals.user;
     if (user.isAdmin) {
@@ -62,4 +71,4 @@ const requireAdmin = (req, res, next) => {
         res.redirect("/");
     }
 };
-module.exports = { requireAuth, checkUser, requireAdmin };
+module.exports = { requireAuth, checkUser, requireAdmin, requireUserVerified };

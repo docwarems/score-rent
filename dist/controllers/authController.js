@@ -700,9 +700,7 @@ module.exports.password_reset_post = (req, res) => __awaiter(void 0, void 0, voi
         const user = yield User_1.User.findOne({ id: userId });
         if (user) {
             user.password = password;
-            user.isVerified = false;
-            yield user.save(); // in order that password will be hashed during save
-            user.isVerified = true;
+            user.isPasswordHashed = false;
             yield user.save();
             res.status(201).json({ user: user.id });
         }
@@ -719,3 +717,20 @@ module.exports.password_reset_post = (req, res) => __awaiter(void 0, void 0, voi
 module.exports.password_reset_success_get = (req, res) => {
     res.render("password-reset-success");
 };
+module.exports.not_verified_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = res.locals.user;
+    if (user) {
+        if (!user.isVerified) {
+            const verificationToken = Math.random().toString(36).substring(2);
+            user.verificationToken = verificationToken;
+            yield user.save(); // will send verification e-mail
+            res.status(201).json({ user: user._id });
+        }
+        else {
+            res.status(400).json({ errors: `User ${user.id} already verified` });
+        }
+    }
+    else {
+        res.status(400).json({ errors: `User not found in response` });
+    }
+});

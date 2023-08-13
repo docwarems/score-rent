@@ -61,6 +61,10 @@ const userSchema = new mongoose_1.Schema({
         type: Boolean,
         default: false,
     },
+    isPasswordHashed: {
+        type: Boolean,
+        default: false,
+    },
 });
 userSchema.method('fullName', function fullName() {
     return this.firstName + ' ' + this.lastName;
@@ -93,11 +97,10 @@ userSchema.static('generateUserId', function generateUserId(firstName, lastName)
 userSchema.pre("save", function (next) {
     return __awaiter(this, void 0, void 0, function* () {
         // TODO: we must ensure that e-mail doesn't exist because we have no longer a unique constraint on email field because we need to be able to manually register users without email
-        // we must ensure that the password will only be hashed if it is not already hashed
-        // we doesn't have a safe criteria for this right now
-        const salt = yield bcrypt_1.default.genSalt();
-        if (!this.isVerified) {
+        if (!this.isPasswordHashed) {
+            const salt = yield bcrypt_1.default.genSalt();
             this.password = yield bcrypt_1.default.hash(this.password, salt);
+            this.isPasswordHashed = true;
         }
         next();
     });

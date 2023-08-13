@@ -46,6 +46,15 @@ const checkUser = (req: any, res: any, next: Function) => {
   }
 };
 
+const requireUserVerified = (req: any, res: any, next: Function) => {
+  const user = res.locals.user;
+  if (user.isVerified) {
+    next();
+  } else {
+    res.redirect("/not-verified");
+  }
+};
+
 const requireAdmin = (req: any, res: any, next: Function) => {
   const user = res.locals.user;
   if (user.isAdmin) {
@@ -55,4 +64,4 @@ const requireAdmin = (req: any, res: any, next: Function) => {
   }
 };
 
-module.exports = { requireAuth, checkUser, requireAdmin };
+module.exports = { requireAuth, checkUser, requireAdmin, requireUserVerified };

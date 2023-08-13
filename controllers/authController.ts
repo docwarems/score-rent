@@ -10,7 +10,7 @@ import { score } from "../routes/authRoutes";
 import mongoose from "mongoose";
 
 // handle errors
-const handleSaveErrors = (err: any, type: string|undefined) => {
+const handleSaveErrors = (err: any, type: string | undefined) => {
   console.log(err.message, err.code);
   let errors = {
     userId: "",
@@ -43,7 +43,8 @@ const handleSaveErrors = (err: any, type: string|undefined) => {
     } else if (type == "signature") {
       errors.signature = "Diese Notensignatur ist bereits in Verwendung";
     } else if (type == "userId") {
-      errors.userId = "Die aus Vor- und Nachnamen gebildete User Id ist bereits in Verwendung. Bitte HSC kontaktieren!";
+      errors.userId =
+        "Die aus Vor- und Nachnamen gebildete User Id ist bereits in Verwendung. Bitte HSC kontaktieren!";
     }
     return errors;
   }
@@ -202,7 +203,8 @@ const sendVerificationSuccessfulEmail = async (user: any) => {
 
 module.exports.verify_email_get = async (req: any, res: any) => {
   const token = req.query.token as string;
-  const decodedToken = jwt.verify(  // TODO: handle Exception if JWT expired
+  const decodedToken = jwt.verify(
+    // TODO: handle Exception if JWT expired
     token,
     process.env.EMAIL_VERIFICATION_SECRET!
   ) as { userId: string };
@@ -260,7 +262,7 @@ module.exports.signup_post = async (req: any, res: any) => {
       isManuallyRegistered = true;
     } else {
       if (password !== passwordRepeat) {
-          throw new Error("repeated password wrong");  
+        throw new Error("repeated password wrong");
       }
       isManuallyRegistered = false;
     }
@@ -269,15 +271,14 @@ module.exports.signup_post = async (req: any, res: any) => {
     lastName = lastName.trim();
     const userId = User.generateUserId(firstName, lastName);
     if (!userId) {
-      res
-        .status(400)
-        .json({
-          status:
-            `Interner Fehler bei Bildung der User id. Bitte den HSC kontaktieren unter ${process.env.SMTP_FROM}!`,
-        });
+      res.status(400).json({
+        status: `Interner Fehler bei Bildung der User id. Bitte den HSC kontaktieren unter ${process.env.SMTP_FROM}!`,
+      });
     }
 
-    const verificationToken = byAdmin ? undefined : Math.random().toString(36).substring(2);
+    const verificationToken = byAdmin
+      ? undefined
+      : Math.random().toString(36).substring(2);
     const user = await User.create({
       id: userId,
       email,
@@ -289,7 +290,7 @@ module.exports.signup_post = async (req: any, res: any) => {
     });
     res.status(201).json({ user: user._id });
   } catch (err: any) {
-    let type: string|undefined = undefined;
+    let type: string | undefined = undefined;
     if (err.keyValue.id) {
       type = "userId";
     } else if (err.keyValue.email) {
@@ -359,7 +360,17 @@ module.exports.checkout_get = (req: any, res: any) => {
 };
 
 module.exports.checkout_post = async (req: any, res: any) => {
-  const { userJwt, userId, userLastName, scoreId, scoreExtId, state, date, comment, allowDoubleCheckout } = req.body;
+  const {
+    userJwt,
+    userId,
+    userLastName,
+    scoreId,
+    scoreExtId,
+    state,
+    date,
+    comment,
+    allowDoubleCheckout,
+  } = req.body;
 
   try {
     if (userId && scoreId) {
@@ -433,10 +444,13 @@ module.exports.checkout_post = async (req: any, res: any) => {
             if (user) {
               res.status(201).json({ checkoutUser: user });
             } else {
-              res.status(400).json({ errors: `User with Id ${userId} not found` });
-            }                }
+              res
+                .status(400)
+                .json({ errors: `User with Id ${userId} not found` });
+            }
+          }
         }
-      );  
+      );
     } else if (userId) {
       const user = await User.findOne({ id: userId });
 
@@ -447,7 +461,9 @@ module.exports.checkout_post = async (req: any, res: any) => {
       }
     } else if (userLastName) {
       // case-insensitive search at beginning
-      const users = await User.find({ lastName: { $regex: `^${userLastName}`, $options: 'i' } });
+      const users = await User.find({
+        lastName: { $regex: `^${userLastName}`, $options: "i" },
+      });
       // console.log(users);
       res.render("checkout", {
         users,
@@ -537,7 +553,7 @@ module.exports.checkin_post = async (req: any, res: any) => {
 };
 
 module.exports.checkouts_post = async (req: any, res: any) => {
-  const { signature, checkedOut, route, userId } = req.body;  // TODO: gibt es keine andere Lösung die route zu übergeben?
+  const { signature, checkedOut, route, userId } = req.body; // TODO: gibt es keine andere Lösung die route zu übergeben?
   let filter = signature && signature !== "ALL" ? { signature } : {};
   try {
     let error = undefined;
@@ -556,10 +572,14 @@ module.exports.checkouts_post = async (req: any, res: any) => {
           for (const checkout of score.checkouts) {
             if (checkout.userId == userId) {
               const user = await User.findOne({ id: userId });
-              checkoutsWithUser.push({ checkout, user, scoreExtId: score.extId });
+              checkoutsWithUser.push({
+                checkout,
+                user,
+                scoreExtId: score.extId,
+              });
             }
           }
-        }  
+        }
       } else {
         const userIds = []; // TODO: Set
         for (const score of scores) {
@@ -567,17 +587,17 @@ module.exports.checkouts_post = async (req: any, res: any) => {
             userIds.push(checkout.userId);
           }
         }
-  
+
         const userMap = await (
           await User.find({ id: { $in: userIds } })
         ).reduce((map, user) => map.set(user.id, user), new Map());
-  
+
         for (const score of scores) {
           for (const checkout of score.checkouts) {
             const user = userMap.get(checkout.userId);
             checkoutsWithUser.push({ checkout, user, scoreExtId: score.extId });
           }
-        }  
+        }
       }
     }
 
@@ -687,9 +707,8 @@ module.exports.password_forgotten_post = async (req: any, res: any) => {
     } else {
       console.log("password reset requested for unknown: ", email);
     }
-    res.status(201).json({ });
-  } catch (err) {
-  }
+    res.status(201).json({});
+  } catch (err) {}
 };
 
 async function sendPasswordResetEmail(user: any) {
@@ -712,7 +731,7 @@ async function sendPasswordResetEmail(user: any) {
     if (transporter.logger) {
       console.log("Password reset e-mail:", result);
     }
-} catch (e) {
+  } catch (e) {
     console.error(e);
     throw e;
   }
@@ -724,19 +743,24 @@ module.exports.password_forgotten_success_get = (req: any, res: any) => {
 
 module.exports.verify_password_reset_email_get = async (req: any, res: any) => {
   const token = req.query.token as string;
-  const decodedToken = jwt.verify(   // TODO: handle Exception if JWT expired
+  const decodedToken = jwt.verify(
+    // TODO: handle Exception if JWT expired
     token,
     process.env.EMAIL_VERIFICATION_SECRET!
   ) as { userId: string };
 
-  let verificationResult: { userId: string|undefined; status: EmailVerificationStatus; message: string };
+  let verificationResult: {
+    userId: string | undefined;
+    status: EmailVerificationStatus;
+    message: string;
+  };
   const user = await User.findById(decodedToken.userId);
   if (user) {
     verificationResult = {
       userId: user.id,
       status: EmailVerificationStatus.OK,
       message: "Die E-Mail Adresse wurde erfolgreich verifiziert",
-    };  
+    };
   } else {
     verificationResult = {
       userId: undefined,
@@ -746,30 +770,23 @@ module.exports.verify_password_reset_email_get = async (req: any, res: any) => {
   }
 
   res.render("password-reset", {
-    EmailVerificationStatus: EmailVerificationStatus,  // make enum known to EJS
+    EmailVerificationStatus: EmailVerificationStatus, // make enum known to EJS
     verificationResult: verificationResult,
   });
 };
 
 module.exports.password_reset_post = async (req: any, res: any) => {
-  let {
-    userId,
-    password,
-    passwordRepeat,
-  } = req.body;
+  let { userId, password, passwordRepeat } = req.body;
 
   try {
     if (password !== passwordRepeat) {
-        throw new Error("repeated password wrong");  
+      throw new Error("repeated password wrong");
     }
 
     const user = await User.findOne({ id: userId });
     if (user) {
       user.password = password;
-      user.isVerified = false;
-      await user.save(); // in order that password will be hashed during save
-
-      user.isVerified = true;
+      user.isPasswordHashed = false;
       await user.save();
 
       res.status(201).json({ user: user.id });
@@ -777,7 +794,7 @@ module.exports.password_reset_post = async (req: any, res: any) => {
       res.status(400).json({ errors: `User with Id ${userId} not found` });
     }
   } catch (err: any) {
-    let type: string|undefined = undefined;
+    let type: string | undefined = undefined;
     const errors = handleSaveErrors(err, type);
     res.status(400).json({ errors });
   }
@@ -787,4 +804,18 @@ module.exports.password_reset_success_get = (req: any, res: any) => {
   res.render("password-reset-success");
 };
 
-
+module.exports.not_verified_post = async (req: any, res: any) => {
+  const user = res.locals.user;
+  if (user) {
+    if (!user.isVerified) {
+      const verificationToken = Math.random().toString(36).substring(2);
+      user.verificationToken = verificationToken;
+      await user.save(); // will send verification e-mail
+      res.status(201).json({ user: user._id });
+    } else {
+      res.status(400).json({ errors: `User ${user.id} already verified` });
+    }
+  } else {
+    res.status(400).json({ errors: `User not found in response` });
+  }
+};
