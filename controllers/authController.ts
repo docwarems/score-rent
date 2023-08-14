@@ -364,7 +364,7 @@ module.exports.checkout_get = (req: any, res: any) => {
 
 module.exports.checkout_post = async (req: any, res: any) => {
   const {
-    userJwt,
+    userJwt,  // oder Leihzettel Checkout Id
     userId,
     userLastName,
     scoreId,
@@ -448,9 +448,11 @@ module.exports.checkout_post = async (req: any, res: any) => {
             const text = userJwt as string;
             if (text.startsWith("C-")) {
               // looks like a checkout Id; we continue with the "un.known" user.
+              // TODO: Checkout Id statt User in GUI anzeigen; allow double checkout by default
               userId = "un.known";
             }  else {
-              res.status(400).json({ errors: `User JWT not valid` });
+              res.status(400).json({ errors: `Kein gültiger User oder Leihzettel QR Code!` });
+              return;
             }
           } else {
             userId = decodedToken.id;

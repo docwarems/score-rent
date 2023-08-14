@@ -331,7 +331,8 @@ module.exports.checkout_get = (req, res) => {
     res.redirect("/checkout");
 };
 module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { userJwt, userId, userLastName, scoreId, scoreExtId, state, date, comment, allowDoubleCheckout, } = req.body;
+    const { userJwt, // oder Leihzettel Checkout Id
+    userId, userLastName, scoreId, scoreExtId, state, date, comment, allowDoubleCheckout, } = req.body;
     try {
         if (userId && scoreId) {
             let score = yield Score_1.Score.findOne({ id: scoreId });
@@ -399,10 +400,12 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                     const text = userJwt;
                     if (text.startsWith("C-")) {
                         // looks like a checkout Id; we continue with the "un.known" user.
+                        // TODO: Checkout Id statt User in GUI anzeigen; allow double checkout by default
                         userId = "un.known";
                     }
                     else {
-                        res.status(400).json({ errors: `User JWT not valid` });
+                        res.status(400).json({ errors: `Kein gültiger User oder Leihzettel QR Code!` });
+                        return;
                     }
                 }
                 else {

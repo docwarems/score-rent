@@ -10,7 +10,7 @@
 </div>
 
 <form action="/checkout" id="formScan">
-  <button class="w3-button w3-black btnScan">User scannen</button>
+  <button class="w3-button w3-black btnScan">User/Leihzettel scannen</button>
 </form>
 <p></p>
 
@@ -31,12 +31,14 @@
   <% }); %>
 </table>
 <% } else { %>
-<form action="/score/checkout" id="formUserSearch" method="post">
-  <label>Nachname</label>
-  <input type="text" name="userLastName" value="" class="w3-input userSearchLastName" required>
-  <p></p>
-  <button class="w3-button w3-black btnUserSearch">User über Namen suchen</button>
-</form>
+  <div class="divUserSearch" style="display: block">
+    <form action="/score/checkout" id="formUserSearch" method="post">
+      <label>Nachname</label>
+      <input type="text" name="userLastName" value="" class="w3-input userSearchLastName" required>
+      <p></p>
+      <button class="w3-button w3-black btnUserSearch">User über Namen suchen</button>
+    </form>
+  </div>
 <% } %>
 
 
@@ -107,6 +109,7 @@
   const btnScan = document.querySelector('.btnScan');
   const btnCheckout = document.querySelector('.btnCheckout');
   const divUser = document.querySelector('.divUser');
+  const divUserSearch = document.querySelector('.divUserSearch');
   const divScore = document.querySelector('.divScore');
   const divSuccess = document.querySelector('.divSuccess');
   const divError = document.querySelector('.divError');
@@ -154,7 +157,7 @@
 
   async function postCheckout(input) {
     const {
-      userJwt,
+      userJwt,  // oder Leihzettel Chekout Id
       userId,
       userLastName,
       scoreId,
@@ -186,6 +189,7 @@
       const data = await res.json();
       console.log("data=", data);
       if (data.errors) {
+        console.error(data.errors);
         divError.style = "display: block";
         const pError = document.querySelector('.pError');
         pError.textContent = data.errors;
@@ -193,8 +197,13 @@
       }
       if ((userId && data.checkoutUser) || (userJwt && data.checkoutUser)) {
         // User which is about to checkout found
+        console.log("User which is about to checkout found");
+
+        divSuccess.style = "display: block";
+        const pSuccess = document.querySelector('.pSuccess');
+        pSuccess.textContent = "Benutzer: " + data.checkoutUser.firstName + " " + data.checkoutUser.lastName;
         btnScan.textContent = "Noten scannen";
-        divUser.style = "display: block";
+        // divUser.style = "display: block";
         const inputUserId = document.querySelector('.userId');
         const inputName = document.querySelector('.name');
         const inputEmail = document.querySelector('.email');
@@ -204,16 +213,20 @@
       }
 
       if (data.checkoutScore) {
-        if (userId && scoreId) {
+        if (userId && scoreId) {  // input parameter function
           // Checkout success
+          console.log("Checkout success");
+
           divUser.style = "display: none";
           divScore.style = "display: none";
           btnCheckout.remove();
           divSuccess.style = "display: block";
           divError.style = "display: none";
           divHome.style = "display: block";
-        } else if (scoreId) {
+        } else if (scoreId) {  // input parameter function
           // score to checkout found
+          console.log("score to checkout found");
+
           const inputScoreId = document.querySelector('.scoreId');
           const inputScoreExtId = document.querySelector('.scoreExtId');
           const inputState = document.querySelector('.state');
@@ -225,6 +238,8 @@
         } else {
           console.log("We should not be here");
         }
+      } else {
+        console.log("NOT data.checkoutScore");
       }
       return true;
     } catch (err) {
@@ -237,13 +252,14 @@
 
   async function scanSuccess(result) {
     console.log(result);
-    if (btnScan.textContent == "User scannen") {
+    if (btnScan.textContent == "User/Leihzettel scannen") {
       scanner.clear();
       if (await postCheckout({
           userJwt: result
         })) {
         btnScan.textContent = "Noten scannen";
-        divUser.style = "display: block";
+        // divUser.style = "display: block";
+        divUserSearch.style = "display: none";
       }
     } else if (btnScan.textContent == "Noten scannen") {
       scanner.clear();
@@ -251,7 +267,7 @@
           scoreId: result
         })) {
         document.getElementById('reader').remove();
-        divScore.style = "display: block";
+        divScore.style = "display: block";  // we need to display this form because it has the checkout details input field
         btnScan.remove();
       }
     }
