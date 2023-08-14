@@ -390,20 +390,32 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
         }
         else if (userJwt) {
             // decode JWT and look up user
+            // if JWT invalid we check if the text could be a choutout receipt id 
+            let jwtInvalid = false;
             jsonwebtoken_1.default.verify(userJwt, process.env.JWT_SECRET, (err, decodedToken) => __awaiter(void 0, void 0, void 0, function* () {
+                let userId;
                 if (err) {
-                    res.status(400).json({ errors: `User JWT not valid` });
-                }
-                else {
-                    let user = yield User_1.User.findOne({ id: decodedToken.id });
-                    if (user) {
-                        res.status(201).json({ checkoutUser: user });
+                    jwtInvalid = true;
+                    const text = userJwt;
+                    if (text.startsWith("C-")) {
+                        // looks like a checkout Id; we continue with the "un.known" user.
+                        userId = "un.known";
                     }
                     else {
-                        res
-                            .status(400)
-                            .json({ errors: `User with Id ${userId} not found` });
+                        res.status(400).json({ errors: `User JWT not valid` });
                     }
+                }
+                else {
+                    userId = decodedToken.id;
+                }
+                let user = yield User_1.User.findOne({ id: userId });
+                if (user) {
+                    res.status(201).json({ checkoutUser: user });
+                }
+                else {
+                    res
+                        .status(400)
+                        .json({ errors: `User with Id ${userId} not found` });
                 }
             }));
         }

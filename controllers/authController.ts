@@ -436,21 +436,32 @@ module.exports.checkout_post = async (req: any, res: any) => {
       }
     } else if (userJwt) {
       // decode JWT and look up user
+      // if JWT invalid we check if the text could be a choutout receipt id 
+      let jwtInvalid = false;
       jwt.verify(
         userJwt,
         process.env.JWT_SECRET!,
         async (err: any, decodedToken: any) => {
+          let userId;
           if (err) {
-            res.status(400).json({ errors: `User JWT not valid` });
-          } else {
-            let user = await User.findOne({ id: decodedToken.id });
-            if (user) {
-              res.status(201).json({ checkoutUser: user });
-            } else {
-              res
-                .status(400)
-                .json({ errors: `User with Id ${userId} not found` });
+            jwtInvalid = true;
+            const text = userJwt as string;
+            if (text.startsWith("C-")) {
+              // looks like a checkout Id; we continue with the "un.known" user.
+              userId = "un.known";
+            }  else {
+              res.status(400).json({ errors: `User JWT not valid` });
             }
+          } else {
+            userId = decodedToken.id;
+          }
+          let user = await User.findOne({ id: userId });
+          if (user) {
+            res.status(201).json({ checkoutUser: user });
+          } else {
+            res
+              .status(400)
+              .json({ errors: `User with Id ${userId} not found` });
           }
         }
       );
