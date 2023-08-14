@@ -260,6 +260,9 @@ module.exports.signup_post = async (req: any, res: any) => {
     if (byAdmin) {
       password = "jdj849kddwerß02340wasdölad";
       isManuallyRegistered = true;
+      if (email == '') {
+        email = undefined; // will avoid duplicate key error
+      }
     } else {
       if (password !== passwordRepeat) {
         throw new Error("repeated password wrong");

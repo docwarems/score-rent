@@ -29,7 +29,7 @@ const userSchema = new mongoose_1.Schema({
     },
     email: {
         type: String,
-        // required: [true, "Bitte E-Mail angeben"],  // normal schon; aber nicht alle haben eine; für manuelle Registrierung
+        // required: [true, "Bitte E-Mail angeben"],  // normally yes, but not all users must have one; not mandatory for manual signup by admin
         unique: true,
         sparse: true,
         lowercase: true,
@@ -66,8 +66,8 @@ const userSchema = new mongoose_1.Schema({
         default: false,
     },
 });
-userSchema.method('fullName', function fullName() {
-    return this.firstName + ' ' + this.lastName;
+userSchema.method("fullName", function fullName() {
+    return this.firstName + " " + this.lastName;
 });
 userSchema.static("login", function login(email, password) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -82,7 +82,7 @@ userSchema.static("login", function login(email, password) {
         throw Error("incorrect email");
     });
 });
-userSchema.static('generateUserId', function generateUserId(firstName, lastName) {
+userSchema.static("generateUserId", function generateUserId(firstName, lastName) {
     firstName = convertToGermanCharacterRules(firstName);
     lastName = convertToGermanCharacterRules(lastName).replace(" ", "");
     let userId = firstName.substring(0, 2) + "." + lastName.substring(0, 6);
@@ -144,7 +144,8 @@ function createTransporter() {
                 pass: process.env.SMTP_PASS,
             },
             greetingTimeout: 1000 * 10,
-            logger: !!process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
+            logger: !!process.env.SMTP_DEBUG &&
+                process.env.SMTP_DEBUG.toLowerCase() == "true",
         });
         transporter.verify(function (error, success) {
             if (error) {

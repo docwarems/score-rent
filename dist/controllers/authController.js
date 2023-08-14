@@ -53,7 +53,8 @@ const handleSaveErrors = (err, type) => {
             errors.signature = "Diese Notensignatur ist bereits in Verwendung";
         }
         else if (type == "userId") {
-            errors.userId = "Die aus Vor- und Nachnamen gebildete User Id ist bereits in Verwendung. Bitte HSC kontaktieren!";
+            errors.userId =
+                "Die aus Vor- und Nachnamen gebildete User Id ist bereits in Verwendung. Bitte HSC kontaktieren!";
         }
         return errors;
     }
@@ -186,7 +187,8 @@ const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void
 });
 module.exports.verify_email_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const token = req.query.token;
-    const decodedToken = jsonwebtoken_1.default.verify(// TODO: handle Exception if JWT expired
+    const decodedToken = jsonwebtoken_1.default.verify(
+    // TODO: handle Exception if JWT expired
     token, process.env.EMAIL_VERIFICATION_SECRET);
     let verificationResult;
     const user = yield User_1.User.findById(decodedToken.userId);
@@ -232,6 +234,9 @@ module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, fun
         if (byAdmin) {
             password = "jdj849kddwerß02340wasdölad";
             isManuallyRegistered = true;
+            if (email == '') {
+                email = undefined; // will avoid duplicate key error
+            }
         }
         else {
             if (password !== passwordRepeat) {
@@ -243,13 +248,13 @@ module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, fun
         lastName = lastName.trim();
         const userId = User_1.User.generateUserId(firstName, lastName);
         if (!userId) {
-            res
-                .status(400)
-                .json({
+            res.status(400).json({
                 status: `Interner Fehler bei Bildung der User id. Bitte den HSC kontaktieren unter ${process.env.SMTP_FROM}!`,
             });
         }
-        const verificationToken = byAdmin ? undefined : Math.random().toString(36).substring(2);
+        const verificationToken = byAdmin
+            ? undefined
+            : Math.random().toString(36).substring(2);
         const user = yield User_1.User.create({
             id: userId,
             email,
@@ -326,7 +331,7 @@ module.exports.checkout_get = (req, res) => {
     res.redirect("/checkout");
 };
 module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { userJwt, userId, userLastName, scoreId, scoreExtId, state, date, comment, allowDoubleCheckout } = req.body;
+    const { userJwt, userId, userLastName, scoreId, scoreExtId, state, date, comment, allowDoubleCheckout, } = req.body;
     try {
         if (userId && scoreId) {
             let score = yield Score_1.Score.findOne({ id: scoreId });
@@ -395,7 +400,9 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                         res.status(201).json({ checkoutUser: user });
                     }
                     else {
-                        res.status(400).json({ errors: `User with Id ${userId} not found` });
+                        res
+                            .status(400)
+                            .json({ errors: `User with Id ${userId} not found` });
                     }
                 }
             }));
@@ -411,7 +418,9 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
         }
         else if (userLastName) {
             // case-insensitive search at beginning
-            const users = yield User_1.User.find({ lastName: { $regex: `^${userLastName}`, $options: 'i' } });
+            const users = yield User_1.User.find({
+                lastName: { $regex: `^${userLastName}`, $options: "i" },
+            });
             // console.log(users);
             res.render("checkout", {
                 users,
@@ -519,7 +528,11 @@ module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, 
                     for (const checkout of score.checkouts) {
                         if (checkout.userId == userId) {
                             const user = yield User_1.User.findOne({ id: userId });
-                            checkoutsWithUser.push({ checkout, user, scoreExtId: score.extId });
+                            checkoutsWithUser.push({
+                                checkout,
+                                user,
+                                scoreExtId: score.extId,
+                            });
                         }
                     }
                 }
@@ -636,8 +649,7 @@ module.exports.password_forgotten_post = (req, res) => __awaiter(void 0, void 0,
         }
         res.status(201).json({});
     }
-    catch (err) {
-    }
+    catch (err) { }
 });
 function sendPasswordResetEmail(user) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -668,7 +680,8 @@ module.exports.password_forgotten_success_get = (req, res) => {
 };
 module.exports.verify_password_reset_email_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const token = req.query.token;
-    const decodedToken = jsonwebtoken_1.default.verify(// TODO: handle Exception if JWT expired
+    const decodedToken = jsonwebtoken_1.default.verify(
+    // TODO: handle Exception if JWT expired
     token, process.env.EMAIL_VERIFICATION_SECRET);
     let verificationResult;
     const user = yield User_1.User.findById(decodedToken.userId);
@@ -692,7 +705,7 @@ module.exports.verify_password_reset_email_get = (req, res) => __awaiter(void 0,
     });
 });
 module.exports.password_reset_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    let { userId, password, passwordRepeat, } = req.body;
+    let { userId, password, passwordRepeat } = req.body;
     try {
         if (password !== passwordRepeat) {
             throw new Error("repeated password wrong");

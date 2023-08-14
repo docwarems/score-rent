@@ -42,9 +42,9 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>({
   },
   email: {
     type: String,
-    // required: [true, "Bitte E-Mail angeben"],  // normal schon; aber nicht alle haben eine; für manuelle Registrierung
-    unique: true, // wenn vorhanden
-    sparse: true, // mehrere null Werte erlaubt
+    // required: [true, "Bitte E-Mail angeben"],  // normally yes, but not all users must have one; not mandatory for manual signup by admin
+    unique: true, // if existing
+    sparse: true, // allow multiple users with undefined email (email will not appear as property in db)
     lowercase: true,
     // validate: [isEmail, "Bitte eine gültige E-Mail-Adresse angeben"],  TODO: Validierung nur wenn nicht leer
   },
