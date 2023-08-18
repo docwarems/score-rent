@@ -2,6 +2,27 @@
 
 <h1>Ausleihe</h1>
 
+<style>
+  main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #reader {
+    width: 600px;
+  }
+
+  #result {
+    text-align: center;
+    font-size: 1.5rem;
+  }
+</style>
+<main id="scanMain">
+  <div id="reader"></div>
+  <div id="result"></div>
+</main>
+
 <div class="w3-panel w3-green divSuccess" style="display: none">
   <p class="pSuccess">Ausleihe erfolgreich:</p>
 </div>
@@ -31,40 +52,20 @@
   <% }); %>
 </table>
 <% } else { %>
-  <div class="divUserSearch" style="display: block">
-    <form action="/score/checkout" id="formUserSearch" method="post">
-      <label>Nachname</label>
-      <input type="text" name="userLastName" value="" class="w3-input userSearchLastName" required>
-      <p></p>
-      <button class="w3-button w3-black btnUserSearch">User über Namen suchen</button>
-    </form>
-  </div>
+<div class="divUserSearch" style="display: block">
+  <form action="/score/checkout" id="formUserSearch" method="post">
+    <label>Nachname</label>
+    <input type="text" name="userLastName" value="" class="w3-input userSearchLastName" required>
+    <p></p>
+    <button class="w3-button w3-black btnUserSearch">User über Namen suchen</button>
+  </form>
+</div>
 <% } %>
 
 
 <!-- <script src="./node_modules/html5-qrcode/html5-qrcode.min.js"></script> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js" integrity="sha512-k/KAe4Yff9EUdYI5/IAHlwUswqeipP+Cp5qnrsUjTPCgl51La2/JhyyjNciztD7mWNKLSXci48m7cctATKfLlQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-<style>
-  main {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  #reader {
-    width: 600px;
-  }
-
-  #result {
-    text-align: center;
-    font-size: 1.5rem;
-  }
-</style>
-<main id="scanMain">
-  <div id="reader"></div>
-  <div id="result"></div>
-</main>
 
 <div class="w3-panel w3-border divUser" style="display: none">
   <h3>Benutzer</h3>
@@ -121,6 +122,9 @@
   formScan.addEventListener('submit', async (e) => {
     e.preventDefault();
     divError.style = "display: none";
+    formScan.style = "display: none";
+    divUserSearch.style = "display: none";
+    divSuccess.style = "display: none";
 
     scanner = new Html5QrcodeScanner('reader', {
       qrbox: {
@@ -157,7 +161,7 @@
 
   async function postCheckout(input) {
     const {
-      userJwt,  // oder Leihzettel Checkout Id
+      userJwt, // oder Leihzettel Checkout Id
       userId,
       userLastName,
       scoreId,
@@ -190,7 +194,6 @@
       console.log("data=", data);
       if (data.errors) {
         console.error(data.errors);
-        divError.style = "display: block";
         const pError = document.querySelector('.pError');
         pError.textContent = data.errors;
         return false;
@@ -203,7 +206,6 @@
         const pSuccess = document.querySelector('.pSuccess');
         pSuccess.textContent = "Benutzer: " + data.checkoutUser.firstName + " " + data.checkoutUser.lastName;
         btnScan.textContent = "Noten scannen";
-        // divUser.style = "display: block";
         const inputUserId = document.querySelector('.userId');
         const inputName = document.querySelector('.name');
         const inputEmail = document.querySelector('.email');
@@ -213,7 +215,7 @@
       }
 
       if (data.checkoutScore) {
-        if (userId && scoreId) {  // input parameter function
+        if (userId && scoreId) { // input parameter function
           // Checkout success
           console.log("Checkout success");
 
@@ -223,7 +225,7 @@
           divSuccess.style = "display: block";
           divError.style = "display: none";
           divHome.style = "display: block";
-        } else if (scoreId) {  // input parameter function
+        } else if (scoreId) { // input parameter function
           // score to checkout found
           console.log("score to checkout found");
 
@@ -258,8 +260,14 @@
           userJwt: result
         })) {
         btnScan.textContent = "Noten scannen";
-        // divUser.style = "display: block";
+        formScan.style = "display: block";
         divUserSearch.style = "display: none";
+        divSuccess.style = "display: block";
+      } else {
+        // Error
+        divError.style = "display: block";
+        formScan.style = "display: block";
+        divUserSearch.style = "display: block";
       }
     } else if (btnScan.textContent == "Noten scannen") {
       scanner.clear();
@@ -267,8 +275,14 @@
           scoreId: result
         })) {
         document.getElementById('reader').remove();
-        divScore.style = "display: block";  // we need to display this form because it has the checkout details input field
+        divSuccess.style = "display: block";
+        divScore.style = "display: block"; // we need to display this form because it has the checkout details input field
         btnScan.remove();
+      } else {
+        // Error
+        divError.style = "display: block";
+        formScan.style = "display: block";
+        divUserSearch.style = "display: none";
       }
     }
   }
