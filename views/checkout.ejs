@@ -113,6 +113,7 @@
   const divUserSearch = document.querySelector('.divUserSearch');
   const divScore = document.querySelector('.divScore');
   const divSuccess = document.querySelector('.divSuccess');
+  const pSuccess = document.querySelector('.pSuccess');
   const divError = document.querySelector('.divError');
   const divHome = document.querySelector('.divHome');
   const cbAllowDoubleCheckout = document.querySelector('.allowDoubleCheckout');
@@ -203,8 +204,7 @@
         console.log("User which is about to checkout found");
 
         divSuccess.style = "display: block";
-        const pSuccess = document.querySelector('.pSuccess');
-        pSuccess.textContent = "Benutzer: " + data.checkoutUser.firstName + " " + data.checkoutUser.lastName;
+        pSuccess.innerHTML = "Benutzer: " + data.checkoutUser.firstName + " " + data.checkoutUser.lastName + "<br>";
         btnScan.textContent = "Noten scannen";
         const inputUserId = document.querySelector('.userId');
         const inputName = document.querySelector('.name');
@@ -222,12 +222,18 @@
           divUser.style = "display: none";
           divScore.style = "display: none";
           btnCheckout.remove();
+
           divSuccess.style = "display: block";
+          pSuccess.innerHTML += "Ausleihe erfolgreich";
+
           divError.style = "display: none";
           divHome.style = "display: block";
         } else if (scoreId) { // input parameter function
           // score to checkout found
           console.log("score to checkout found");
+
+          divSuccess.style = "display: block";
+          pSuccess.innerHTML += `Noten Id ${data.checkoutScore.id}<br>`;
 
           const inputScoreId = document.querySelector('.scoreId');
           const inputScoreExtId = document.querySelector('.scoreExtId');
