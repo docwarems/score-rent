@@ -1,37 +1,87 @@
 # score-rent
 
+## What this app is about
+
+In my spare time I'm enthousiastic choral singer in a choir located in Nuremberg, Germany.
+Within this choir I'm responsible for managing the scores the choir needs for it's rehearsals and concerts.
+
+A challenge is the managing of rental scores. i.e. scores which must, once a concert is over, collected from the choir singers, and returned to the score dealer, who in turn returns them to the publishing company.
+
+Traditionally this has been the workflow:
+
+- I receive a certain number (say 120) copies of the coral score.
+- these copies are hand written numbered by the publisher or by previous lenders (but the problem is: double numberings occur, and due to several numbering systems, you do not always know which number to use as the reference)
+- the choir singers each fill out a checkout sheet by hand, providing their contact data. Also the score number was written on the sheet
+- once the concert was over, the scores are collected in a box, and it is up to me the score manager to map scores and checkout sheets; due to the problems above the mapping is not easy and sometimes errors occur.
+- also amongst the 120 rentals there's always a certain number of singers wo don't return their scores in time at first or second request to do so; so there's the need to remind them using the contact data (usually the email address) from the checkout sheet.
+
+Because I'm professional web developer (previously Java fullstack, today nodejs backend), after a while there came up the wish to improve this manual process. These where the ideas:
+
+- all scores get unique Id attached and we should able to be register it by smartphone scanning
+- the unique Id shall be human readable and relate to a certain composer/work; that's why we chose QR code rather than barcode.
+- before return to the dealer, the id must be removed from the score. So we need special kind of labels which can removed again
+- the rental (checkout) process for a score should be 'digital', i.e.
+  - scanning a user id
+  - scanning a score id
+  - store the relation (checkout) in a database with a unique checkout id
+  - during checkout also some metadata must be collected; among these
+    - an existing (hand written) number of the score (we call it 'external id')
+    - current date
+    - comment about the score state (e.g. full of previous user remarks)
+    - a reference to another user if the checkout user acts on behalf of another user
+- similar also the score return (checkin) should be 'digital', i.e.
+  - scanning the score's QR code will
+    - mark the score as 'not checked out' in the db
+    - record some metadata, as
+      - the date
+      - the score state (if different from the checkout state)
+      - send the choir singer an e-mail with a confirmation that 'his' score were de-registered.
+
+## User registration
+
+- mandatory are
+  - e-mail address (which must be validated)
+  - sing group (soprano, alto, tenor, bass)
+  - member state (choir member, guest, student)
+  - we build a human readable user if from user's first and last name
+  - once signed up, the user must confirm the e-mail by confirming a link in a-mail sent after signup
+  - once the e-mail address is confirmed. the user receives another e-mail containing a QR code with his user id
+  - the user QR code is used to speed up the score checkout process
+  - obligatory functions for 'forgotten password' and "resend conformation link"
+
+## User login
+
+- only function for normal users are viewing a list of 'his' checkout records
+
+## Score checkout
+
+Because not all users will accept to use their QR code (some even might not have a e-mail adress), we must also still support the checkout with checkout sheet.
+
+- authorize the choral singer either
+  - by scanning 'his' QR code. The QR code contains a JWT (Json Web Token) so that the contained user id cannot be tampered.
+  - by scanning the QR code of a traditional checkout sheet the user has to fill out. The QR code contaims a checkout id
+- scan the score
+- optionally add some metadata (e.g. score state, date)
+- confirm the checkout which will
+  - store the checkout process in a database using a unique checkout id; for checkout by sheet, it's id is the checkout id
+  - send the user an e-mail about the checkout process, optionally with some info how to care the score
+
+## List checkouts
+
+As a maintainer I need to get a view of all checkouts.
+
+- filter checkouts by
+  - composer/work
+  - 'open' checkouts, i.e. scores not returned
+  - user
+
+## Score checkin
+
+- scan the returned score which will
+  - mark the checkout record as returned
+  - log some metadata (e.g. date)
+
 ## TODOs
-
-### General
-
-- sign QR codes
-- format timestamps
-- replace home page by menu?
-- responsive side bar?
-- toggle e-mails with informational purpose
-
-### User registration
-
-- forgotten password function
-- sing group, member state
-
-### Checkout
-
-- send e-mail
-
-### Checkin
-
-- send e-mail
-
-### Checkouts
-
-- signatures from db
-
-#### Administration
-
-- show checkout
-- show/filter users
-- save score state - not only at checkout
 
 ## Create Etiketten
 
