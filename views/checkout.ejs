@@ -75,6 +75,7 @@
   <input type="text" name="name" value="" class="w3-input name" readonly>
   <label>Email</label>
   <input type="text" name="email" value="" class="w3-input email" readonly>
+  <input type="hidden" name="checkoutId" value="" class="w3-input checkoutId" readonly>
 </div>
 
 <div class="w3-panel w3-border divScore" style="display: none">
@@ -124,7 +125,9 @@
     e.preventDefault();
     divError.style = "display: none";
     formScan.style = "display: none";
-    divUserSearch.style = "display: none";
+    if (divUserSearch) {  // TODO: why not defined after search?
+      divUserSearch.style = "display: none";
+    }
     divSuccess.style = "display: none";
 
     scanner = new Html5QrcodeScanner('reader', {
@@ -148,7 +151,7 @@
     const inputDate = document.querySelector('.date');
     const inputComment = document.querySelector('.comment');
     const inputAllowDoubleCheckout = document.querySelector('.allowDoubleCheckout');
-    // console.log("inputAllowDoubleCheckout", inputAllowDoubleCheckout, inputAllowDoubleCheckout.value);
+    const inputCheckoutId = document.querySelector('.checkoutId');
     await postCheckout({
       userId: inputUserId.value,
       scoreId: inputScoreId.value,
@@ -156,13 +159,14 @@
       state: inputState.value,
       date: inputDate.value,
       comment: inputComment.value,
-      allowDoubleCheckout: inputAllowDoubleCheckout.value
+      allowDoubleCheckout: inputAllowDoubleCheckout.value,
+      checkoutId: inputCheckoutId.value,
     });
   });
 
   async function postCheckout(input) {
     const {
-      userJwt, // oder Leihzettel Checkout Id
+      userJwtOrCheckoutId, // oder Leihzettel Checkout Id
       userId,
       userLastName,
       scoreId,
@@ -170,14 +174,15 @@
       state,
       date,
       comment,
-      allowDoubleCheckout
+      allowDoubleCheckout,
+      checkoutId
     } = input;
     // console.log("submitScanResult: userId=" + userId + ", lastName=" + userLastName + ", scoreId=" + scoreId, ", allowDoubleCheckout=", allowDoubleCheckout);
     try {
       const res = await fetch('/score/checkout', {
         method: 'POST',
         body: JSON.stringify({
-          userJwt,
+          userJwtOrCheckoutId,
           userId,
           userLastName,
           scoreId,
@@ -185,7 +190,8 @@
           state,
           date,
           comment,
-          allowDoubleCheckout
+          allowDoubleCheckout,
+          checkoutId
         }),
         headers: {
           'Content-Type': 'application/json'
@@ -199,7 +205,7 @@
         pError.textContent = data.errors;
         return false;
       }
-      if ((userId && data.checkoutUser) || (userJwt && data.checkoutUser)) {
+      if ((userId && data.checkoutUser) || (userJwtOrCheckoutId && data.checkoutUser)) {
         // User which is about to checkout found
         console.log("User which is about to checkout found");
 
@@ -209,9 +215,11 @@
         const inputUserId = document.querySelector('.userId');
         const inputName = document.querySelector('.name');
         const inputEmail = document.querySelector('.email');
+        const inputCheckoutId = document.querySelector('.checkoutId');
         inputUserId.value = data.checkoutUser.id;
         inputName.value = data.checkoutUser.firstName + " " + data.checkoutUser.lastName;
         inputEmail.value = data.checkoutUser.email;
+        inputCheckoutId.value = data.checkoutId;
       }
 
       if (data.checkoutScore) {
@@ -263,7 +271,7 @@
     if (btnScan.textContent == "User/Leihzettel scannen") {
       scanner.clear();
       if (await postCheckout({
-          userJwt: result
+        userJwtOrCheckoutId: result
         })) {
         btnScan.textContent = "Noten scannen";
         formScan.style = "display: block";

@@ -234,7 +234,7 @@ module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, fun
         if (byAdmin) {
             password = "jdj849kddwerß02340wasdölad";
             isManuallyRegistered = true;
-            if (email == '') {
+            if (email == "") {
                 email = undefined; // will avoid duplicate key error
             }
         }
@@ -331,8 +331,7 @@ module.exports.checkout_get = (req, res) => {
     res.redirect("/checkout");
 };
 module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { userJwt, // oder Leihzettel Checkout Id
-    userId, userLastName, scoreId, scoreExtId, state, date, comment, allowDoubleCheckout, } = req.body;
+    const { userJwtOrCheckoutId, userId, userLastName, scoreId, scoreExtId, state, date, comment, allowDoubleCheckout, checkoutId, } = req.body;
     try {
         if (userId && scoreId) {
             let score = yield Score_1.Score.findOne({ id: scoreId });
@@ -345,6 +344,7 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                 if (!existingScoreOfCurrentType ||
                     (doubleCheckoutIsAllowed && comment)) {
                     const checkout = new Checkout_1.Checkout({
+                        _id: checkoutId || (0, uuid_1.v4)(),
                         userId,
                         scoreId,
                         checkoutComment: comment,
@@ -389,31 +389,37 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                 res.status(400).json({ errors: `Score with Id ${scoreId} not found` });
             }
         }
-        else if (userJwt) {
+        else if (userJwtOrCheckoutId) {
             // decode JWT and look up user
-            // if JWT invalid we check if the text could be a choutout receipt id 
+            // if JWT invalid we check if the text could be a choutout receipt id
             let jwtInvalid = false;
-            jsonwebtoken_1.default.verify(userJwt, process.env.JWT_SECRET, (err, decodedToken) => __awaiter(void 0, void 0, void 0, function* () {
-                let userId;
+            jsonwebtoken_1.default.verify(userJwtOrCheckoutId, process.env.JWT_SECRET, (err, decodedToken) => __awaiter(void 0, void 0, void 0, function* () {
+                let userId, checkoutId;
                 if (err) {
                     jwtInvalid = true;
-                    const text = userJwt;
+                    const text = userJwtOrCheckoutId;
                     if (text.startsWith("C-")) {
                         // looks like a checkout Id; we continue with the "un.known" user.
                         // TODO: Checkout Id statt User in GUI anzeigen; allow double checkout by default
+                        checkoutId = text;
                         userId = "un.known";
                     }
                     else {
-                        res.status(400).json({ errors: `Kein gültiger User oder Leihzettel QR Code!` });
+                        res
+                            .status(400)
+                            .json({
+                            errors: `Kein gültiger User oder Leihzettel QR Code!`,
+                        });
                         return;
                     }
                 }
                 else {
                     userId = decodedToken.id;
+                    checkoutId = "";
                 }
-                let user = yield User_1.User.findOne({ id: userId });
-                if (user) {
-                    res.status(201).json({ checkoutUser: user });
+                let checkoutUser = yield User_1.User.findOne({ id: userId });
+                if (checkoutUser) {
+                    res.status(201).json({ checkoutUser, checkoutId });
                 }
                 else {
                     res
@@ -425,7 +431,7 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
         else if (userId) {
             const user = yield User_1.User.findOne({ id: userId });
             if (user) {
-                res.status(201).json({ checkoutUser: user });
+                res.status(201).json({ checkoutUser: user, checkoutId: "" });
             }
             else {
                 res.status(400).json({ errors: `User with Id ${userId} not found` });

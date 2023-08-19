@@ -5,6 +5,7 @@ import nodemailer from "nodemailer";
 require("dotenv").config();
 
 export interface ICheckout {
+  _id: string;
   userId: string;
   scoreId: string;
   checkoutTimestamp: Date;
@@ -14,6 +15,10 @@ export interface ICheckout {
 }
 
 export const checkoutSchema = new Schema<ICheckout>({
+  _id: {
+    type: String,
+    required: true,
+  },
   userId: {
     type: String,
     required: true,

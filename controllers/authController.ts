@@ -260,7 +260,7 @@ module.exports.signup_post = async (req: any, res: any) => {
     if (byAdmin) {
       password = "jdj849kddwerß02340wasdölad";
       isManuallyRegistered = true;
-      if (email == '') {
+      if (email == "") {
         email = undefined; // will avoid duplicate key error
       }
     } else {
@@ -364,7 +364,7 @@ module.exports.checkout_get = (req: any, res: any) => {
 
 module.exports.checkout_post = async (req: any, res: any) => {
   const {
-    userJwt,  // oder Leihzettel Checkout Id
+    userJwtOrCheckoutId,
     userId,
     userLastName,
     scoreId,
@@ -373,6 +373,7 @@ module.exports.checkout_post = async (req: any, res: any) => {
     date,
     comment,
     allowDoubleCheckout,
+    checkoutId,
   } = req.body;
 
   try {
@@ -395,6 +396,7 @@ module.exports.checkout_post = async (req: any, res: any) => {
           (doubleCheckoutIsAllowed && comment)
         ) {
           const checkout = new Checkout({
+            _id: checkoutId || uuidv4(),
             userId,
             scoreId,
             checkoutComment: comment,
@@ -434,32 +436,38 @@ module.exports.checkout_post = async (req: any, res: any) => {
       } else {
         res.status(400).json({ errors: `Score with Id ${scoreId} not found` });
       }
-    } else if (userJwt) {
+    } else if (userJwtOrCheckoutId) {
       // decode JWT and look up user
-      // if JWT invalid we check if the text could be a choutout receipt id 
+      // if JWT invalid we check if the text could be a choutout receipt id
       let jwtInvalid = false;
       jwt.verify(
-        userJwt,
+        userJwtOrCheckoutId,
         process.env.JWT_SECRET!,
         async (err: any, decodedToken: any) => {
-          let userId;
+          let userId, checkoutId;
           if (err) {
             jwtInvalid = true;
-            const text = userJwt as string;
+            const text = userJwtOrCheckoutId as string;
             if (text.startsWith("C-")) {
               // looks like a checkout Id; we continue with the "un.known" user.
               // TODO: Checkout Id statt User in GUI anzeigen; allow double checkout by default
+              checkoutId = text;
               userId = "un.known";
-            }  else {
-              res.status(400).json({ errors: `Kein gültiger User oder Leihzettel QR Code!` });
+            } else {
+              res
+                .status(400)
+                .json({
+                  errors: `Kein gültiger User oder Leihzettel QR Code!`,
+                });
               return;
             }
           } else {
             userId = decodedToken.id;
+            checkoutId = "";
           }
-          let user = await User.findOne({ id: userId });
-          if (user) {
-            res.status(201).json({ checkoutUser: user });
+          let checkoutUser = await User.findOne({ id: userId });
+          if (checkoutUser) {
+            res.status(201).json({ checkoutUser, checkoutId });
           } else {
             res
               .status(400)
@@ -471,7 +479,7 @@ module.exports.checkout_post = async (req: any, res: any) => {
       const user = await User.findOne({ id: userId });
 
       if (user) {
-        res.status(201).json({ checkoutUser: user });
+        res.status(201).json({ checkoutUser: user, checkoutId: "" });
       } else {
         res.status(400).json({ errors: `User with Id ${userId} not found` });
       }

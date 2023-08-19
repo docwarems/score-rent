@@ -4,6 +4,10 @@ exports.Checkout = exports.checkoutSchema = void 0;
 const mongoose_1 = require("mongoose");
 require("dotenv").config();
 exports.checkoutSchema = new mongoose_1.Schema({
+    _id: {
+        type: String,
+        required: true,
+    },
     userId: {
         type: String,
         required: true,
