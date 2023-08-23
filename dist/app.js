@@ -5,7 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const mongoose_1 = __importDefault(require("mongoose"));
-const { router, score, user } = require("./routes/authRoutes");
+const { router, user } = require("./routes/authRoutes");
+const { score } = require("./routes/scoreRoutes");
 const cookieParser = require("cookie-parser");
 const { requireAuth, checkUser, requireAdmin, } = require("./middleware/authMiddleware");
 require("dotenv").config();

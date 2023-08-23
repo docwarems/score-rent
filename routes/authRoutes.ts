@@ -1,5 +1,6 @@
 const { Router } = require("express");
 const authController = require("../controllers/authController");
+const scoreController = require("../controllers/scoreController");
 const {
   requireAuth,
   checkUser,
@@ -46,51 +47,6 @@ router.get("/not-verified", (req: any, res: any) => {
 });
 router.post("/not-verified", authController.not_verified_post);
 
-export const score = Router();
-
-// wildcard for all get/post actions
-score.get("*", checkUser, requireAuth, requireAdmin);
-score.post("*", checkUser, requireAuth, requireAdmin);
-
-score.get("/register", (req: any, res: any) =>
-  res.render("register-score", { scoreType: res.locals.scoreType })
-);
-score.post("/register", authController.register_score_post);
-
-score.get("/checkout", (req: any, res: any) =>
-  res.render("checkout", {
-    checkoutUser: res.locals.checkoutUser,
-    checkoutScore: res.locals.checkoutScore,
-    users: undefined,
-  })
-);
-score.post("/checkout", authController.checkout_post);
-score.post("/updateCheckout", authController.updateCheckout_post);
-
-score.get("/checkin", (req: any, res: any) =>
-  res.render("checkin", {
-    checkinScore: res.locals.checkinScore,
-  })
-);
-score.post("/checkin", authController.checkin_post);
-
-// score.get("/checkouts", authController.checkouts_get);
-
-const signatures = [
-  { id: "ORFF-COM", name: "Orff De temporum finde comoedia" },
-  { id: "BRFS-AD", name: "Braunfels Advent" },
-]; // TODO: from db
-score.get("/checkouts", (req: any, res: any) =>
-  res.render("checkouts", {
-    route: "score",
-    signatures,
-    filter: { signature: "", checkedOut: true },
-    checkouts: undefined,
-    error: undefined,
-  })
-);
-score.post("/checkouts", authController.checkouts_post);
-
 // end user routes
 export const user = Router();
 
@@ -107,4 +63,9 @@ user.get("/checkouts", (req: any, res: any) =>
     error: undefined,
   })
 );
-user.post("/checkouts", authController.checkouts_post);
+user.post("/checkouts", scoreController.checkouts_post);
+
+const signatures = [
+  { id: "ORFF-COM", name: "Orff De temporum finde comoedia" },
+  { id: "BRFS-AD", name: "Braunfels Advent" },
+]; // TODO: from db

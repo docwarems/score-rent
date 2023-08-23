@@ -1,6 +1,7 @@
 const express = require("express");
 import mongoose from "mongoose";
-const { router, score, user } = require("./routes/authRoutes");
+const { router, user } = require("./routes/authRoutes");
+const { score } = require("./routes/scoreRoutes");
 const cookieParser = require("cookie-parser");
 const {
   requireAuth,
