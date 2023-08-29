@@ -18,8 +18,8 @@ const Checkout_1 = require("../models/Checkout");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 require("dotenv").config();
 const nodemailer_1 = __importDefault(require("nodemailer"));
-var QRCode = require("qrcode");
 const uuid_1 = require("uuid");
+const score_utils_1 = require("../utils/score-utils");
 // Create a nodemailer transporter TODO: dupliziert von app.ts
 const transporter = nodemailer_1.default.createTransport({
     host: process.env.SMTP_HOST,
@@ -329,14 +329,9 @@ module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, 
                 return !checkoutWithUser.checkout.checkinTimestamp;
             });
         }
-        const signatures = [
-            { id: "ALL", name: "Alle" },
-            { id: "ORFF-COM", name: "Orff De temporum finde comoedia" },
-            { id: "BRFS-AD", name: "Braunfels Advent" },
-        ]; // TODO: from db
         res.render("checkouts", {
             route: route,
-            signatures,
+            signatures: yield (0, score_utils_1.getScoreTypes)(),
             filter: { signature, checkedOut: onlyCheckedOut },
             checkouts: checkoutsWithUser,
             error,

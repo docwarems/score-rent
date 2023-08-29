@@ -1,9 +1,19 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.score = void 0;
 const { Router } = require("express");
 const scoreController = require("../controllers/scoreController");
 const { requireAuth, checkUser, requireUserVerified, requireAdmin, } = require("../middleware/authMiddleware");
+const score_utils_1 = require("../utils/score-utils");
 exports.score = Router();
 // wildcard for all get/post actions
 exports.score.get("*", checkUser, requireAuth, requireAdmin);
@@ -21,16 +31,13 @@ exports.score.get("/checkin", (req, res) => res.render("checkin", {
     checkinScore: res.locals.checkinScore,
 }));
 exports.score.post("/checkin", scoreController.checkin_post);
-// score.get("/checkouts", authController.checkouts_get);
-const signatures = [
-    { id: "ORFF-COM", name: "Orff De temporum finde comoedia" },
-    { id: "BRFS-AD", name: "Braunfels Advent" },
-]; // TODO: from db
-exports.score.get("/checkouts", (req, res) => res.render("checkouts", {
-    route: "score",
-    signatures,
-    filter: { signature: "", checkedOut: true },
-    checkouts: undefined,
-    error: undefined,
+exports.score.get("/checkouts", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    return res.render("checkouts", {
+        route: "score",
+        signatures: yield (0, score_utils_1.getScoreTypes)(),
+        filter: { signature: "", checkedOut: true },
+        checkouts: undefined,
+        error: undefined,
+    });
 }));
 exports.score.post("/checkouts", scoreController.checkouts_post);

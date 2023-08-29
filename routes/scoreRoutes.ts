@@ -6,6 +6,7 @@ const {
   requireUserVerified,
   requireAdmin,
 } = require("../middleware/authMiddleware");
+import { getScoreTypes } from "../utils/score-utils";
 
 export const score = Router();
 
@@ -35,17 +36,10 @@ score.get("/checkin", (req: any, res: any) =>
 );
 score.post("/checkin", scoreController.checkin_post);
 
-// score.get("/checkouts", authController.checkouts_get);
-
-const signatures = [
-  { id: "ORFF-COM", name: "Orff De temporum finde comoedia" },
-  { id: "BRFS-AD", name: "Braunfels Advent" },
-]; // TODO: from db
-
-score.get("/checkouts", (req: any, res: any) =>
+score.get("/checkouts", async (req: any, res: any) =>
   res.render("checkouts", {
     route: "score",
-    signatures,
+    signatures: await getScoreTypes(),
     filter: { signature: "", checkedOut: true },
     checkouts: undefined,
     error: undefined,

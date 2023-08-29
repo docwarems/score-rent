@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 require("dotenv").config();
 import nodemailer from "nodemailer";
 import { v4 as uuidv4 } from "uuid";
+import { getScoreTypes } from "../utils/score-utils";
 
 // Create a nodemailer transporter TODO: dupliziert von app.ts
 const transporter = nodemailer.createTransport({
@@ -343,15 +344,9 @@ module.exports.checkouts_post = async (req: any, res: any) => {
       });
     }
 
-    const signatures = [
-      { id: "ALL", name: "Alle" },
-      { id: "ORFF-COM", name: "Orff De temporum finde comoedia" },
-      { id: "BRFS-AD", name: "Braunfels Advent" },
-    ]; // TODO: from db
-
     res.render("checkouts", {
       route: route,
-      signatures,
+      signatures: await getScoreTypes(),
       filter: { signature, checkedOut: onlyCheckedOut },
       checkouts: checkoutsWithUser,
       error,
