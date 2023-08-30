@@ -12,13 +12,28 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.User = void 0;
+exports.User = exports.MemberState = exports.SingGroup = void 0;
 const mongoose_1 = require("mongoose");
 const { isEmail } = require("validator");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 require("dotenv").config();
+// the adding of a static User Method from the JS code had to be rewritten according to
+// https://mongoosejs.com/docs/typescript/statics-and-methods.html
+var SingGroup;
+(function (SingGroup) {
+    SingGroup["SOPRANO"] = "S";
+    SingGroup["ALTO"] = "A";
+    SingGroup["TENOR"] = "T";
+    SingGroup["BASS"] = "B";
+})(SingGroup = exports.SingGroup || (exports.SingGroup = {}));
+var MemberState;
+(function (MemberState) {
+    MemberState["MEMBER"] = "M";
+    MemberState["STUDENT"] = "S";
+    MemberState["GUEST"] = "G";
+})(MemberState = exports.MemberState || (exports.MemberState = {}));
 const userSchema = new mongoose_1.Schema({
     id: {
         // vv.nnnnnn z.B. mi.suedka; wird als Referenz zu anderen Objekten verwendet, damit diese sprechend ist
@@ -47,6 +62,14 @@ const userSchema = new mongoose_1.Schema({
     lastName: {
         type: String,
         required: [true, "Bitte Nachnamen angeben"],
+    },
+    singGroup: {
+        type: String,
+        enum: Object.values(SingGroup),
+    },
+    memberState: {
+        type: String,
+        enum: Object.values(MemberState),
     },
     isVerified: {
         type: Boolean,
@@ -188,5 +211,8 @@ function convertToGermanCharacterRules(name) {
     return name
         .toLowerCase()
         .replace(/[äöüß]/g, (match) => germanRulesMap[match] || "");
+}
+function enum2array(e) {
+    return Object.entries(e).map(([key, value]) => ({ key, value }));
 }
 exports.User = (0, mongoose_1.model)("User", userSchema);

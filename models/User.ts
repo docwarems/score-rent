@@ -8,12 +8,27 @@ require("dotenv").config();
 // the adding of a static User Method from the JS code had to be rewritten according to
 // https://mongoosejs.com/docs/typescript/statics-and-methods.html
 
+export enum SingGroup {
+  SOPRANO = "S",
+  ALTO = "A",
+  TENOR = "T",
+  BASS = "B",
+}
+
+export enum MemberState {
+  MEMBER = "M",
+  STUDENT = "S",
+  GUEST = "G",
+}
+
 export interface IUser {
   id: string;
   email: string;
   password: string;
   firstName: string;
   lastName: string;
+  singGroup: string;
+  memberState: string;
   isVerified: boolean;
   verificationToken: String | undefined;
   isAdmin: boolean;
@@ -60,6 +75,14 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>({
   lastName: {
     type: String,
     required: [true, "Bitte Nachnamen angeben"],
+  },
+  singGroup: {
+    type: String,
+    enum: Object.values(SingGroup),
+  },
+  memberState: {
+    type: String,
+    enum: Object.values(MemberState),
   },
   isVerified: {
     type: Boolean,
@@ -213,6 +236,10 @@ function convertToGermanCharacterRules(name: string): string {
   return name
     .toLowerCase()
     .replace(/[äöüß]/g, (match) => germanRulesMap[match] || "");
+}
+
+function enum2array(e: typeof SingGroup | typeof MemberState) {
+  return Object.entries(e).map(([key, value]) => ({ key, value }));
 }
 
 export const User = model<IUser, UserModel>("User", userSchema);
