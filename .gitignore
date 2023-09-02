@@ -122,3 +122,6 @@ out
 dump
 
 .scribble.txt
+/test-results/
+/playwright-report/
+/playwright/.cache/
