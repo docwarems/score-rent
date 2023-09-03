@@ -41,3 +41,4 @@ exports.score.get("/checkouts", (req, res) => __awaiter(void 0, void 0, void 0, 
     });
 }));
 exports.score.post("/checkouts", scoreController.checkouts_post);
+exports.score.post("/userSearch", scoreController.userSearch_post);

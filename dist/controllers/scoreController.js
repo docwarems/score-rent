@@ -371,8 +371,7 @@ const sendCheckinConfirmationEmail = (user, score, testRecipient) => __awaiter(v
     }
 });
 module.exports.updateCheckout_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { scoreId, checkoutId, checkoutComment, checkinComment } = req.body;
-    // console.log(scoreId, checkoutId, checkoutComment, checkinComment);
+    const { scoreId, checkoutId, checkoutComment, checkinComment, userId } = req.body;
     let score = yield Score_1.Score.findOne({ id: scoreId });
     // const score = await Score.findOne({ "checkouts._id" : checkoutId });  // interesting to find a score just by the _id of one of it's checkouts
     if (score) {
@@ -383,6 +382,10 @@ module.exports.updateCheckout_post = (req, res) => __awaiter(void 0, void 0, voi
             console.log("checkout found");
             checkout.checkoutComment = checkoutComment;
             checkout.checkinComment = checkinComment;
+            if (userId) {
+                checkout.userId = userId;
+                score.checkedOutByUserId = userId;
+            }
             score = yield score.save();
             if (score) {
                 res.status(201).json({ updateScore: score });
@@ -399,4 +402,15 @@ module.exports.updateCheckout_post = (req, res) => __awaiter(void 0, void 0, voi
             .status(500)
             .json({ message: `score not found with Id ${scoreId}` }); // TODO: 4xx error
     }
+});
+module.exports.userSearch_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { lastName } = req.body;
+    let users = []; // empty string should return empty users array
+    if (lastName) {
+        // case-insensitive search at beginning
+        users = yield User_1.User.find({
+            lastName: { $regex: `^${lastName}`, $options: "i" },
+        });
+    }
+    res.status(201).json({ users });
 });

@@ -46,3 +46,5 @@ score.get("/checkouts", async (req: any, res: any) =>
   })
 );
 score.post("/checkouts", scoreController.checkouts_post);
+
+score.post("/userSearch", scoreController.userSearch_post);

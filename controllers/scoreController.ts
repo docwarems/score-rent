@@ -394,8 +394,8 @@ const sendCheckinConfirmationEmail = async (
 };
 
 module.exports.updateCheckout_post = async (req: any, res: any) => {
-  const { scoreId, checkoutId, checkoutComment, checkinComment } = req.body;
-  // console.log(scoreId, checkoutId, checkoutComment, checkinComment);
+  const { scoreId, checkoutId, checkoutComment, checkinComment, userId } =
+    req.body;
 
   let score = await Score.findOne({ id: scoreId });
   // const score = await Score.findOne({ "checkouts._id" : checkoutId });  // interesting to find a score just by the _id of one of it's checkouts
@@ -410,6 +410,10 @@ module.exports.updateCheckout_post = async (req: any, res: any) => {
       console.log("checkout found");
       checkout.checkoutComment = checkoutComment;
       checkout.checkinComment = checkinComment;
+      if (userId) {
+        checkout.userId = userId;
+        score.checkedOutByUserId = userId;
+      }
       score = await score.save();
       if (score) {
         res.status(201).json({ updateScore: score });
@@ -424,4 +428,17 @@ module.exports.updateCheckout_post = async (req: any, res: any) => {
       .status(500)
       .json({ message: `score not found with Id ${scoreId}` }); // TODO: 4xx error
   }
+};
+
+module.exports.userSearch_post = async (req: any, res: any) => {
+  const { lastName } = req.body;
+
+  let users: any[] = []; // empty string should return empty users array
+  if (lastName) {
+    // case-insensitive search at beginning
+    users = await User.find({
+      lastName: { $regex: `^${lastName}`, $options: "i" },
+    });
+  }
+  res.status(201).json({ users });
 };

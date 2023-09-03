@@ -180,10 +180,12 @@
           <tr>
             <th>Kommentar Ausleihe</th>
             <th>Kommentar Rückgabe</th>
+            <th>User Id</th>
           </tr>
           <tr>
             <td><input type="text" name="editCheckoutComment" class="w3-input editCheckoutCommentCheckout"></td>
             <td><input type="text" name="editCheckinComment" class="w3-input editCheckoutCommentCheckin"></td>
+            <td><input type="text" name="editCheckoutUserId" class="w3-input editCheckoutUserId"></td>
           </tr>
         </table>
         <p></p>
@@ -191,7 +193,22 @@
       </form>
 
       <P></P>
+      <h4>User suchen</h4>
 
+      <form action="/userSearch" id="formUserSearch">
+        <table class="w3-table-all" id="tableUserSearch">
+          <tr>
+            <th>Nachname</th>
+          </tr>
+          <tr>
+            <td><input type="text" name="lastName" class="w3-input inputLastName"></td>
+          </tr>
+        </table>
+        <p></p>
+        <button class="w3-button w3-black btnUserSearch">User suchen</button>
+      </form>
+      <table id="tableUsers" class="w3-table-all tableUsers"/>
+    
     </div>
   </div>
 </div>
@@ -341,13 +358,14 @@
     const inputCheckoutId = document.querySelector('.editCheckoutCheckoutId');
     const inputCommentCheckout = document.querySelector('.editCheckoutCommentCheckout');
     const inputCommentCheckin = document.querySelector('.editCheckoutCommentCheckin');
+    const inputUserId = document.querySelector('.editCheckoutUserId');
 
-    await postUpdateCheckout(inputScoreId.value, inputCheckoutId.value, inputCommentCheckout.value, inputCommentCheckin.value);
+    await postUpdateCheckout(inputScoreId.value, inputCheckoutId.value, inputCommentCheckout.value, inputCommentCheckin.value, inputUserId.value);
   });
 
-  async function postUpdateCheckout(scoreId, checkoutId, checkoutComment, checkinComment) {
+  async function postUpdateCheckout(scoreId, checkoutId, checkoutComment, checkinComment, userId) {
     try {
-      console.log(scoreId, checkoutId, checkoutComment, checkinComment);
+      console.log(scoreId, checkoutId, checkoutComment, checkinComment, userId);
 
       const res = await fetch('/score/updateCheckout', {
         method: 'POST',
@@ -355,7 +373,8 @@
           scoreId,
           checkoutId,
           checkoutComment,
-          checkinComment
+          checkinComment,
+          userId,
         }),
         headers: {
           'Content-Type': 'application/json'
@@ -384,4 +403,52 @@
       pModalError.textContent = err.message;
     }
   }
+
+  formUserSearch.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const inputLastName = document.querySelector('.inputLastName');
+    await postUserSearch(inputLastName.value);
+  });
+
+  async function postUserSearch(lastName) {
+    try {
+      const res = await fetch('/score/userSearch', {
+        method: 'POST',
+        body: JSON.stringify({
+          lastName,
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await res.json();
+      console.log("data=", data);
+      if (data.errors) {
+        divEditCheckoutModalError.style = "display: block";
+        pEditCheckoutModalError.textContent = data.errors;
+        return false;
+      }
+      if (data.users) {
+        const tableUsers = document.querySelector('.tableUsers');
+        tableUsers.innerHTML = "";
+        for (const user of data.users) {
+          const row = tableUsers.insertRow(-1);
+          const cell = row.insertCell(0);
+          cell.innerHTML = `<button onclick="chooseUser('${user.id}')" class="w3-button">${user.firstName} ${user.lastName}</button>`;
+        }
+      }
+      return true;
+    } catch (err) {
+      console.log("err=", err);
+      divEditCheckoutModalError.style = "display: block";
+      pEditCheckoutModalError.textContent = err.message;
+    }
+  }
+
+function chooseUser(userId) {
+  console.log(userId);
+  const inputUserId = document.querySelector('.editCheckoutUserId');
+  inputUserId.value = userId;
+}
+
 </script>
