@@ -83,6 +83,10 @@ As a maintainer I need to get a view of all checkouts.
 
 ## TODOs
 
+## Development
+
+[Development](docs/development.md)
+
 ## Create Etiketten
 
 How to create Etiketten im Seriendruck mit Word
@@ -163,4 +167,4 @@ z.B. für Text BRFS-AD-xxx
 
 über "Vorschau und Drucken" überzeugt man sich dass die Seriennummerierung für Text und QR Code funktioniert
 
-[Mongo DB](md/mongodb.md)
+[Mongo DB](docs/mongodb.md)
