@@ -167,6 +167,7 @@ const sendVerificationSuccessfulEmail = async (user: any) => {
     const subject = "Registrierung erfolgreich";
     const html = `
     Du wurdest erfolgreich in der Noten Ausleihe Datenbank des Hans-Sachs-Chor registriert.<br>
+    Zum Login: ${process.env.CYCLIC_URL}<br><br>
     Bitte speichere den folgenden QR Code. Er vereinfacht das künftige Ausleihen von Noten (kein Leihzettel mehr nötig).
     <p></p>
     E-Mail: ${user.email}<br>

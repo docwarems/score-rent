@@ -46,11 +46,13 @@ exports.user.post("*", checkUser, requireAuth, requireUserVerified);
 const signatures = () => __awaiter(void 0, void 0, void 0, function* () {
     return yield (0, score_utils_1.getScoreTypes)();
 });
-exports.user.get("/checkouts", (req, res) => res.render("checkouts", {
-    route: "user",
-    signatures,
-    filter: { signature: "", checkedOut: true, user: res.locals.user },
-    checkouts: undefined,
-    error: undefined,
+exports.user.get("/checkouts", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    return res.render("checkouts", {
+        route: "user",
+        signatures: [{ id: "ALL", name: "Alle" }],
+        filter: { signature: "ALL", checkedOut: true },
+        checkouts: undefined,
+        error: undefined,
+    });
 }));
 exports.user.post("/checkouts", scoreController.checkouts_post);
