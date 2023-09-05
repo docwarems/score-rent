@@ -42,3 +42,5 @@ exports.score.get("/checkouts", (req, res) => __awaiter(void 0, void 0, void 0, 
 }));
 exports.score.post("/checkouts", scoreController.checkouts_post);
 exports.score.post("/userSearch", scoreController.userSearch_post);
+// TODO: passt eigentloch nicht nach "score", wir brauchen aber admin-Prüfung
+exports.score.get("/users", scoreController.users_get);

@@ -414,3 +414,10 @@ module.exports.userSearch_post = (req, res) => __awaiter(void 0, void 0, void 0,
     }
     res.status(201).json({ users });
 });
+module.exports.users_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const users = yield User_1.User.find().sort("lastName");
+    res.render("users", {
+        users,
+        error: undefined,
+    });
+});

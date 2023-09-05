@@ -442,3 +442,11 @@ module.exports.userSearch_post = async (req: any, res: any) => {
   }
   res.status(201).json({ users });
 };
+
+module.exports.users_get = async (req: any, res: any) => {
+  const users = await User.find().sort("lastName");
+  res.render("users", {
+    users,
+    error: undefined,
+  });
+};

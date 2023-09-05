@@ -1,0 +1,70 @@
+<%- include('partials/header'); -%>
+
+<h1>Benutzer</h1>
+
+<% if (error) { %>
+<div class="w3-panel w3-red divError">
+  <p class="pError"><%= error %></p>
+</div>
+<% } %>
+
+
+<div class="w3-responsive">
+
+  <!-- <input class="w3-input w3-border w3-padding" type="text" placeholder="Filtern nach Benutzer.." id="searchUserInput" onkeyup="filterUser()"> -->
+  <p></p>
+  <table class="w3-table-all" id="usersTable">
+    <tr>
+      <th>User Id</th>
+      <th>Vorname</th>
+      <th>Nachname</th>
+      <th>Email</th>
+      <th>Stimmgruppe</th>
+      <th>M-Status</th>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <th><input class="w3-input w3-border w3-padding" type="text" placeholder="Filtern.." id="searchLastNameInput" onkeyup="filterUsersTableBy('searchLastNameInput', 2)"></th>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <% users.forEach(user => { %>
+    <tr>
+      <td><%= user.id %></td>
+      <td><%= user.firstName%></td>
+      <td><%= user.lastName %></td>
+      <td><%= user.email %></td>
+      <td><%= user.singGroup %></td>
+      <td><%= user.memberState %></td>
+    </tr>
+    <% }); %>
+  </table>
+</div>
+
+
+<%- include('partials/footer'); -%>
+
+<script>
+  function filterUsersTableBy(input, fieldIdx) {
+    console.log(input);
+    var input, filter, table, tr, td, i;
+    input = document.getElementById(input);
+    filter = input.value.toUpperCase();
+    table = document.getElementById("usersTable");
+    tr = table.getElementsByTagName("tr");
+    tr[1].style.display = ""; // the row with the input fields
+    for (i = 2; i < tr.length; i++) {
+      td = tr[i].getElementsByTagName("td")[fieldIdx];
+      if (td) {
+        txtValue = td.textContent || td.innerText;
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+          tr[i].style.display = "";
+        } else {
+          tr[i].style.display = "none";
+        }
+      }
+    }
+  }
+</script>

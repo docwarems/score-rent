@@ -48,3 +48,7 @@ score.get("/checkouts", async (req: any, res: any) =>
 score.post("/checkouts", scoreController.checkouts_post);
 
 score.post("/userSearch", scoreController.userSearch_post);
+
+// TODO: passt eigentloch nicht nach "score", wir brauchen aber admin-Prüfung
+score.get("/users", scoreController.users_get);
+
