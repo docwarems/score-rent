@@ -14,6 +14,11 @@ export enum SingGroup {
   TENOR = "T",
   BASS = "B",
 }
+export const singGroupNameMap: Map<SingGroup, string> = new Map();
+singGroupNameMap.set(SingGroup.SOPRANO, "Sopran");
+singGroupNameMap.set(SingGroup.ALTO, "Alt");
+singGroupNameMap.set(SingGroup.TENOR, "Tenor");
+singGroupNameMap.set(SingGroup.BASS, "Bass");
 
 export enum MemberState {
   MEMBER = "M",

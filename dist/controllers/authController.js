@@ -71,11 +71,15 @@ const createToken = (id) => {
 module.exports.signup_get = (req, res) => {
     res.render("signup", {
         admin: false,
+        singGroups: Object.values(User_1.SingGroup),
+        singGroupNameMap: User_1.singGroupNameMap,
     });
 };
 module.exports.signup_user_get = (req, res) => {
     res.render("signup", {
         admin: true,
+        singGroups: Object.values(User_1.SingGroup),
+        singGroupNameMap: User_1.singGroupNameMap,
     });
 };
 module.exports.signup_success_get = (req, res) => {
@@ -221,7 +225,7 @@ module.exports.verify_email_get = (req, res) => __awaiter(void 0, void 0, void 0
 });
 module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let { email, password, passwordRepeat, firstName, // TODO: Mindestlänge 2 wg. User Id
-    lastName, } = req.body;
+    lastName, singGroup, } = req.body;
     try {
         const byAdmin = !password;
         let isManuallyRegistered;
@@ -255,6 +259,7 @@ module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, fun
             password,
             firstName,
             lastName,
+            singGroup,
             verificationToken,
             isManuallyRegistered,
         });

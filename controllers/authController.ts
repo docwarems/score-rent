@@ -1,4 +1,4 @@
-import { User } from "../models/User";
+import { User, SingGroup, singGroupNameMap } from "../models/User";
 import jwt from "jsonwebtoken";
 require("dotenv").config();
 import nodemailer from "nodemailer";
@@ -69,12 +69,16 @@ const createToken = (id: string) => {
 module.exports.signup_get = (req: any, res: any) => {
   res.render("signup", {
     admin: false,
+    singGroups: Object.values(SingGroup),
+    singGroupNameMap,
   });
 };
 
 module.exports.signup_user_get = (req: any, res: any) => {
   res.render("signup", {
     admin: true,
+    singGroups: Object.values(SingGroup),
+    singGroupNameMap,
   });
 };
 
@@ -244,6 +248,7 @@ module.exports.signup_post = async (req: any, res: any) => {
     passwordRepeat,
     firstName, // TODO: Mindestlänge 2 wg. User Id
     lastName,
+    singGroup,
   } = req.body;
 
   try {
@@ -281,6 +286,7 @@ module.exports.signup_post = async (req: any, res: any) => {
       password,
       firstName,
       lastName,
+      singGroup,
       verificationToken,
       isManuallyRegistered,
     });

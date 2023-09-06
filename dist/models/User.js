@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.User = exports.MemberState = exports.SingGroup = void 0;
+exports.User = exports.MemberState = exports.singGroupNameMap = exports.SingGroup = void 0;
 const mongoose_1 = require("mongoose");
 const { isEmail } = require("validator");
 const bcrypt_1 = __importDefault(require("bcrypt"));
@@ -28,6 +28,11 @@ var SingGroup;
     SingGroup["TENOR"] = "T";
     SingGroup["BASS"] = "B";
 })(SingGroup = exports.SingGroup || (exports.SingGroup = {}));
+exports.singGroupNameMap = new Map();
+exports.singGroupNameMap.set(SingGroup.SOPRANO, "Sopran");
+exports.singGroupNameMap.set(SingGroup.ALTO, "Alt");
+exports.singGroupNameMap.set(SingGroup.TENOR, "Tenor");
+exports.singGroupNameMap.set(SingGroup.BASS, "Bass");
 var MemberState;
 (function (MemberState) {
     MemberState["MEMBER"] = "M";
