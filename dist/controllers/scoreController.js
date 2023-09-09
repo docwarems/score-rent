@@ -433,3 +433,24 @@ module.exports.users_post = (req, res) => __awaiter(void 0, void 0, void 0, func
         error: undefined,
     });
 });
+module.exports.updateUser_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id, email, active } = req.body;
+    let user = yield User_1.User.findOne({ id });
+    if (user) {
+        // console.log("user found");
+        user.email = email;
+        user.active = !!active;
+        user = yield user.save();
+        if (user) {
+            res.status(201).json({ updateUser: user });
+        }
+        else {
+            return res
+                .status(500)
+                .json({ message: `error saving user with Id ${id}` });
+        }
+    }
+    else {
+        return res.status(500).json({ message: `user not found with Id ${id}` }); // TODO: 4xx error
+    }
+});

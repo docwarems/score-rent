@@ -445,7 +445,9 @@ module.exports.userSearch_post = async (req: any, res: any) => {
 
 module.exports.users_get = async (req: any, res: any) => {
   const active = true;
-  const users = await User.find({$or: [ { active }, { active: null } ]}).sort("lastName"); // active field was added later with default true
+  const users = await User.find({ $or: [{ active }, { active: null }] }).sort(
+    "lastName"
+  ); // active field was added later with default true
   res.render("users", {
     users,
     filter: { active },
@@ -456,10 +458,33 @@ module.exports.users_get = async (req: any, res: any) => {
 module.exports.users_post = async (req: any, res: any) => {
   const { cbActive } = req.body;
   const active = !!cbActive;
-  const users = await User.find({$or: [ { active }, { active: null } ]}).sort("lastName"); // active field was added later with default true
+  const users = await User.find({ $or: [{ active }, { active: null }] }).sort(
+    "lastName"
+  ); // active field was added later with default true
   res.render("users", {
     users,
     filter: { active },
     error: undefined,
   });
+};
+
+module.exports.updateUser_post = async (req: any, res: any) => {
+  const { id, email, active } = req.body;
+
+  let user = await User.findOne({ id });
+  if (user) {
+    // console.log("user found");
+    user.email = email;
+    user.active = !!active;
+    user = await user.save();
+    if (user) {
+      res.status(201).json({ updateUser: user });
+    } else {
+      return res
+        .status(500)
+        .json({ message: `error saving user with Id ${id}` });
+    }
+  } else {
+    return res.status(500).json({ message: `user not found with Id ${id}` }); // TODO: 4xx error
+  }
 };

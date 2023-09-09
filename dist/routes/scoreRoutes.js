@@ -45,3 +45,4 @@ exports.score.post("/userSearch", scoreController.userSearch_post);
 // TODO: passt eigentlich nicht nach "score", wir brauchen aber admin-Prüfung
 exports.score.get("/users", scoreController.users_get);
 exports.score.post("/users", scoreController.users_post);
+exports.score.post("/updateUser", scoreController.updateUser_post);

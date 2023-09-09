@@ -10,14 +10,14 @@
 
 <div class="w3-responsive">
 
-  <form action="/score/users" method="POST" id="formFilter">  
+  <form action="/score/users" method="POST" id="formFilter">
     <label>Nur aktive</label>
     <input type="checkbox" name="cbActive" value="true" <%= filter.active ? "checked" : "" %> class="w3-check cbActive">
     <p></p>
     <button class="w3-button w3-black btnCheckouts" type="submit">Suchen</button>
     <p></p>
   </form>
-    
+
   <!-- <input class="w3-input w3-border w3-padding" type="text" placeholder="Filtern nach Benutzer.." id="searchUserInput" onkeyup="filterUser()"> -->
   <p></p>
   <table class="w3-table-all" id="usersTable">
@@ -41,7 +41,7 @@
     <tr>
       <td><%= user.id %></td>
       <td><%= user.firstName%></td>
-      <td><%= user.lastName %></td>
+      <td><button onclick="editUser('<%= user.id %>','<%= user.email %>','<%= user.active %>')" class="w3-button"><%= user.lastName %></button></td>
       <td><%= user.email %></td>
       <td><%= user.singGroup %></td>
       <td><%= user.memberState %></td>
@@ -50,6 +50,48 @@
   </table>
 </div>
 
+<!-- edit user modal -->
+<div id="editUserModal" class="w3-modal">
+  <div class="w3-modal-content">
+    <div class="w3-container">
+      <span onclick="document.getElementById('editUserModal').style.display='none'" class="w3-button w3-display-topright">&times;</span>
+      <h3>Benutzer bearbeiten</h3>
+
+      <div class="w3-panel w3-green divEditUserSuccess" style="display: none">
+        <p class="pEditUserSuccess">Bearbeitung erfolgreich:</p>
+      </div>
+      <div class="w3-panel w3-red divEditUserError" style="display: none">
+        <p class="pEditUserError">Bearbeitung Fehler</p>
+      </div>
+
+      <p class="editUserP1">User id..</p>
+
+      <form action="/updateUser" id="formEditUser">
+        <input type="hidden" name="editUserId" value="" class="editUserId">
+
+        <label>E-Mail</label>
+        <input type="text" name="editUserEmail" class="w3-input editUserEmail" value="">
+        <input type="checkbox" id="editUserActive" name="editUserActive" class="w3-check editUserActive" value="">
+        <label>Aktiv</label>
+
+        <!-- <table class="w3-table-all" id="editUserTable">
+          <tr>
+            <th>E-Mail</th>
+            <th>Status</th>
+          </tr>
+          <tr>
+            <td><input type="text" name="editUserEmail" value="" class="w3-input editUserEmail"></td>
+            <td><input type="checkbox" name="editUserActive" value="" class="w3-input editUserActive"></td>
+          </tr>
+        </table> -->
+        <p></p>
+        <button class="w3-button w3-black btnUpdateUser">OK</button>
+      </form>
+
+      <p></p>
+    </div>
+  </div>
+</div>
 
 <%- include('partials/footer'); -%>
 
@@ -74,4 +116,73 @@
       }
     }
   }
+
+  function editUser(id, email, active) {
+    console.log(`editUser: id=${id}, email=${email}, active=${active}`);
+
+    const p1 = document.querySelector('.editUserP1');
+    p1.textContent = `User Id: ${id}`;
+
+    const inputId = document.querySelector('.editUserId');
+    inputId.value = id;
+    const inputEmail = document.querySelector('.editUserEmail');
+    inputEmail.value = email;
+    const inputActive = document.querySelector('.editUserActive');
+    inputActive.checked = active === 'true';
+
+    const divEditUserSuccess = document.querySelector('.divEditUserSuccess');
+    const divEditUserError = document.querySelector('.divEditUserError');
+    divEditUserSuccess.style = "display: none";
+    divEditUserError.style = "display: none";
+    document.getElementById('editUserModal').style.display = 'block';
+  }
+
+  formEditUser.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const inputId = document.querySelector('.editUserId');
+    const inputEmail = document.querySelector('.editUserEmail');
+    const inputActive = document.querySelector('.editUserActive');
+
+    await postUpdateUser(inputId.value, inputEmail.value, inputActive.checked);
+  });
+
+  async function postUpdateUser(id, email, active) {
+    try {
+      console.log(`postUpdateUser: id=${id}, email=${email}, active=${active}`);
+
+      const res = await fetch('/score/updateUser', {
+        method: 'POST',
+        body: JSON.stringify({
+          id,
+          email,
+          active,
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await res.json();
+      console.log("data=", data);
+      if (data.errors) {
+        const divEditUserError = document.querySelector('.divEditUserError');
+        divEditUserError.style = "display: block";
+        const pEditUserError = document.querySelector('.pEditUserError');
+        pEditUserError.textContent = data.errors;
+        return false;
+      }
+      if (data.updateUser) {
+        const divEditUserSuccess = document.querySelector('.divEditUserSuccess');
+        divEditUserSuccess.style = "display: block";
+      }
+      return true;
+    } catch (err) {
+      // console.log("err=", err);
+      const divEditUserError = document.querySelector('.divEditUserError');
+      divEditUserError.style = "display: block";
+      const pEditUserError = document.querySelector('.pEditUserError');
+        pEditUserError.textContent = err.message;
+    }
+  }
+
 </script>
