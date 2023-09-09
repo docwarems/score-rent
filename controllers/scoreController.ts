@@ -444,9 +444,22 @@ module.exports.userSearch_post = async (req: any, res: any) => {
 };
 
 module.exports.users_get = async (req: any, res: any) => {
-  const users = await User.find().sort("lastName");
+  const active = true;
+  const users = await User.find({$or: [ { active }, { active: null } ]}).sort("lastName"); // active field was added later with default true
   res.render("users", {
     users,
+    filter: { active },
+    error: undefined,
+  });
+};
+
+module.exports.users_post = async (req: any, res: any) => {
+  const { cbActive } = req.body;
+  const active = !!cbActive;
+  const users = await User.find({$or: [ { active }, { active: null } ]}).sort("lastName"); // active field was added later with default true
+  res.render("users", {
+    users,
+    filter: { active },
     error: undefined,
   });
 };

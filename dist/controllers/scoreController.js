@@ -415,9 +415,21 @@ module.exports.userSearch_post = (req, res) => __awaiter(void 0, void 0, void 0,
     res.status(201).json({ users });
 });
 module.exports.users_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const users = yield User_1.User.find().sort("lastName");
+    const active = true;
+    const users = yield User_1.User.find({ $or: [{ active }, { active: null }] }).sort("lastName"); // active field was added later with default true
     res.render("users", {
         users,
+        filter: { active },
+        error: undefined,
+    });
+});
+module.exports.users_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { cbActive } = req.body;
+    const active = !!cbActive;
+    const users = yield User_1.User.find({ $or: [{ active }, { active: null }] }).sort("lastName"); // active field was added later with default true
+    res.render("users", {
+        users,
+        filter: { active },
         error: undefined,
     });
 });

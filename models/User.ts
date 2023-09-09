@@ -39,6 +39,7 @@ export interface IUser {
   isAdmin: boolean;
   isManuallyRegistered: boolean;
   isPasswordHashed: boolean;
+  active: boolean;
 }
 
 // methods
@@ -105,6 +106,10 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>({
   isPasswordHashed: {
     type: Boolean,
     default: false,
+  },
+  active: {
+    type: Boolean,
+    default: true,
   },
 });
 userSchema.method("fullName", function fullName() {

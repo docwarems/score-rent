@@ -8,9 +8,16 @@
 </div>
 <% } %>
 
-
 <div class="w3-responsive">
 
+  <form action="/score/users" method="POST" id="formFilter">  
+    <label>Nur aktive</label>
+    <input type="checkbox" name="cbActive" value="true" <%= filter.active ? "checked" : "" %> class="w3-check cbActive">
+    <p></p>
+    <button class="w3-button w3-black btnCheckouts" type="submit">Suchen</button>
+    <p></p>
+  </form>
+    
   <!-- <input class="w3-input w3-border w3-padding" type="text" placeholder="Filtern nach Benutzer.." id="searchUserInput" onkeyup="filterUser()"> -->
   <p></p>
   <table class="w3-table-all" id="usersTable">
