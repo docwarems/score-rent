@@ -8,6 +8,8 @@ require("dotenv").config();
 // the adding of a static User Method from the JS code had to be rewritten according to
 // https://mongoosejs.com/docs/typescript/statics-and-methods.html
 
+export const USER_UNKNOWN = "un.known";
+
 export enum SingGroup {
   SOPRANO = "S",
   ALTO = "A",

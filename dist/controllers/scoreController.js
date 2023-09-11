@@ -93,7 +93,8 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                 const existingScoreOfCurrentType = existingScores.find((score) => score.id.substr(0, score.id.lastIndexOf("-")) === scoreTypeId);
                 const doubleCheckoutIsAllowed = allowDoubleCheckout === "allow";
                 if (!existingScoreOfCurrentType ||
-                    (doubleCheckoutIsAllowed && comment)) {
+                    (doubleCheckoutIsAllowed && comment) ||
+                    userId == User_1.USER_UNKNOWN) {
                     const checkout = new Checkout_1.Checkout({
                         _id: checkoutId || (0, uuid_1.v4)(),
                         userId,
@@ -151,9 +152,8 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                     const text = userJwtOrCheckoutId;
                     if (text.startsWith("C-")) {
                         // looks like a checkout Id; we continue with the "un.known" user.
-                        // TODO: Checkout Id statt User in GUI anzeigen; allow double checkout by default
                         checkoutId = text;
-                        userId = "un.known";
+                        userId = User_1.USER_UNKNOWN;
                     }
                     else {
                         res.status(400).json({
@@ -168,7 +168,9 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                 }
                 let checkoutUser = yield User_1.User.findOne({ id: userId });
                 if (checkoutUser) {
-                    res.status(201).json({ checkoutUser, checkoutId });
+                    res
+                        .status(201)
+                        .json({ checkoutUser, checkoutId, USER_UNKNOWN: User_1.USER_UNKNOWN });
                 }
                 else {
                     res
@@ -178,6 +180,7 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
             }));
         }
         else if (userId) {
+            // TODO: Pfad noch unterstützt?
             const user = yield User_1.User.findOne({ id: userId });
             if (user) {
                 res.status(201).json({ checkoutUser: user, checkoutId: "" });

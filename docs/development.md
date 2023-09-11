@@ -22,7 +22,7 @@ Allows to run the app on ypur devive against the pc dev environment
 
 ### Debugging
 
-Below your device on the chrome page there is a list of recently opened urls on your device chrome.
+Below your device on the chrome page there is a list of recently opened urls on your device chrome. The app started on the forwarded URL at localhost:\<port\> should be on the list. If not try to refresh the page.
 
 ![url list on device](./remote-debugging-2.png)
 

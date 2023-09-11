@@ -1,4 +1,4 @@
-import { User } from "../models/User";
+import { User, USER_UNKNOWN } from "../models/User";
 import { Score, ScoreType, IScore } from "../models/Score";
 import { Checkout } from "../models/Checkout";
 import jwt from "jsonwebtoken";
@@ -107,7 +107,8 @@ module.exports.checkout_post = async (req: any, res: any) => {
         const doubleCheckoutIsAllowed = allowDoubleCheckout === "allow";
         if (
           !existingScoreOfCurrentType ||
-          (doubleCheckoutIsAllowed && comment)
+          (doubleCheckoutIsAllowed && comment) ||
+          userId == USER_UNKNOWN
         ) {
           const checkout = new Checkout({
             _id: checkoutId || uuidv4(),
@@ -164,9 +165,8 @@ module.exports.checkout_post = async (req: any, res: any) => {
             const text = userJwtOrCheckoutId as string;
             if (text.startsWith("C-")) {
               // looks like a checkout Id; we continue with the "un.known" user.
-              // TODO: Checkout Id statt User in GUI anzeigen; allow double checkout by default
               checkoutId = text;
-              userId = "un.known";
+              userId = USER_UNKNOWN;
             } else {
               res.status(400).json({
                 errors: `Kein gültiger User oder Leihzettel QR Code!`,
@@ -179,7 +179,9 @@ module.exports.checkout_post = async (req: any, res: any) => {
           }
           let checkoutUser = await User.findOne({ id: userId });
           if (checkoutUser) {
-            res.status(201).json({ checkoutUser, checkoutId });
+            res
+              .status(201)
+              .json({ checkoutUser, checkoutId, USER_UNKNOWN: USER_UNKNOWN });
           } else {
             res
               .status(400)
@@ -188,8 +190,8 @@ module.exports.checkout_post = async (req: any, res: any) => {
         }
       );
     } else if (userId) {
+      // TODO: Pfad noch unterstützt?
       const user = await User.findOne({ id: userId });
-
       if (user) {
         res.status(201).json({ checkoutUser: user, checkoutId: "" });
       } else {

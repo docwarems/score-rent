@@ -210,7 +210,8 @@
         console.log("User which is about to checkout found");
 
         divSuccess.style = "display: block";
-        pSuccess.innerHTML = "Benutzer: " + data.checkoutUser.firstName + " " + data.checkoutUser.lastName + "<br>";
+        const userText = data.checkoutUser.id == data.USER_UNKNOWN ? "Leihzettel " + data.checkoutId : "Benutzer: " + data.checkoutUser.firstName + " " + data.checkoutUser.lastName;
+        pSuccess.innerHTML = userText  + "<br>";
         btnScan.textContent = "Noten scannen";
         const inputUserId = document.querySelector('.userId');
         const inputName = document.querySelector('.name');

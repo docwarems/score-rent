@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.User = exports.MemberState = exports.singGroupNameMap = exports.SingGroup = void 0;
+exports.User = exports.MemberState = exports.singGroupNameMap = exports.SingGroup = exports.USER_UNKNOWN = void 0;
 const mongoose_1 = require("mongoose");
 const { isEmail } = require("validator");
 const bcrypt_1 = __importDefault(require("bcrypt"));
@@ -21,6 +21,7 @@ const nodemailer_1 = __importDefault(require("nodemailer"));
 require("dotenv").config();
 // the adding of a static User Method from the JS code had to be rewritten according to
 // https://mongoosejs.com/docs/typescript/statics-and-methods.html
+exports.USER_UNKNOWN = "un.known";
 var SingGroup;
 (function (SingGroup) {
     SingGroup["SOPRANO"] = "S";
