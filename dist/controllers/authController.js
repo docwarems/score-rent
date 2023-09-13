@@ -83,7 +83,10 @@ module.exports.signup_user_get = (req, res) => {
     });
 };
 module.exports.signup_success_get = (req, res) => {
-    res.render("signup-success");
+    const { admin } = req.query;
+    res.render("signup-success", {
+        admin: admin == "true",
+    });
 };
 module.exports.login_get = (req, res) => {
     res.render("login");
@@ -223,6 +226,10 @@ module.exports.verify_email_get = (req, res) => __awaiter(void 0, void 0, void 0
         verificationResult: verificationResult,
     });
 });
+/**
+ * User signup (optionally by admin)
+ * Signup by admin will not trigger e-mail verification
+ */
 module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let { email, password, passwordRepeat, firstName, // TODO: Mindestlänge 2 wg. User Id
     lastName, singGroup, } = req.body;

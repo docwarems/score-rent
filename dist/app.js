@@ -8,7 +8,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const { router, user } = require("./routes/authRoutes");
 const { score } = require("./routes/scoreRoutes");
 const cookieParser = require("cookie-parser");
-const { requireAuth, checkUser, requireAdmin, } = require("./middleware/authMiddleware");
+const { requireAuth, checkUser, requireAdmin, requireUserVerified, } = require("./middleware/authMiddleware");
 require("dotenv").config();
 const bodyParser = require("body-parser");
 const app = express();
@@ -29,7 +29,7 @@ mongoose_1.default
     .catch((err) => console.log(err));
 // routes
 app.get("*", checkUser);
-app.get("/", requireAuth, (req, res) => res.render("home", { user: res.locals.user }));
+app.get("/", requireAuth, requireUserVerified, (req, res) => res.render("home", { user: res.locals.user }));
 app.use("/score", score);
 app.use("/user", user);
 app.use(router);

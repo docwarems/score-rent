@@ -83,7 +83,10 @@ module.exports.signup_user_get = (req: any, res: any) => {
 };
 
 module.exports.signup_success_get = (req: any, res: any) => {
-  res.render("signup-success");
+  const { admin } = req.query;
+  res.render("signup-success", {
+    admin: admin == "true",
+  });
 };
 
 module.exports.login_get = (req: any, res: any) => {
@@ -241,6 +244,10 @@ module.exports.verify_email_get = async (req: any, res: any) => {
   });
 };
 
+/**
+ * User signup (optionally by admin)
+ * Signup by admin will not trigger e-mail verification
+ */
 module.exports.signup_post = async (req: any, res: any) => {
   let {
     email,

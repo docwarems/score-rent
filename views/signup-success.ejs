@@ -1,8 +1,10 @@
 <%- include('partials/header'); -%>
 
 <div class="w3-panel w3-green">
-  <h3>Fast geschafft</h3>
+  <h3><%= admin ? "Benutzer registriert" : "Fast geschafft" %></h3>
+  <% if (!admin) { %>
   <p>Die E-Mail Adresse muss noch verifiziert werden. Bitte schaue in deinen Posteingang.</p>
+  <% } %>
 </div>
 
 <%- include('partials/footer'); -%>

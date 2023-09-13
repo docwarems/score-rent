@@ -83,6 +83,8 @@ As a maintainer I need to get a view of all checkouts.
 
 ## TODOs
 
+- mit einem Leihzettel können mehrere Ausleihen erzeugt werden
+
 ## Development
 
 [Development](docs/development.md)

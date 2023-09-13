@@ -7,6 +7,7 @@ const {
   requireAuth,
   checkUser,
   requireAdmin,
+  requireUserVerified,
 } = require("./middleware/authMiddleware");
 require("dotenv").config();
 import nodemailer from "nodemailer";
@@ -34,7 +35,7 @@ mongoose
 
 // routes
 app.get("*", checkUser);
-app.get("/", requireAuth, (req: any, res: any) =>
+app.get("/", requireAuth, requireUserVerified, (req: any, res: any) =>
   res.render("home", { user: res.locals.user })
 );
 

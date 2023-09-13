@@ -97,7 +97,7 @@
         // console.log(emailError, passwordError);
       }
       if (data.user) {
-        location.assign('/signup-success');
+        location.assign('/signup-success?admin=<%= admin %>');
       }
 
     } catch (err) {
