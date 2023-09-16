@@ -1,13 +1,11 @@
 const { Router } = require("express");
 const authController = require("../controllers/authController");
-const scoreController = require("../controllers/scoreController");
 const {
   requireAuth,
   checkUser,
   requireUserVerified,
   requireAdmin,
 } = require("../middleware/authMiddleware");
-import { getScoreTypes } from "../utils/score-utils";
 
 export const router = Router();
 
@@ -47,26 +45,3 @@ router.get("/not-verified", (req: any, res: any) => {
   res.render("not-verified", {});
 });
 router.post("/not-verified", authController.not_verified_post);
-
-// end user routes
-export const user = Router();
-
-// wildcard for all get/post actions
-user.get("*", checkUser, requireAuth, requireUserVerified);
-user.post("*", checkUser, requireAuth, requireUserVerified);
-
-const signatures = async () => {
-  return await getScoreTypes();
-};
-
-// user.get("/checkouts", async (req: any, res: any) =>
-//   res.render("checkouts", {
-//     route: "user",
-//     signatures: [{ id: "ALL", name: "Alle" }],
-//     filter: { signature: "ALL", checkedOut: true },
-//     checkouts: undefined,
-//     error: undefined,
-//   })
-// );
-user.get("/checkouts", scoreController.checkouts_get);
-user.post("/checkouts", scoreController.checkouts_post);

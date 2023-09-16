@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.checkouts = void 0;
 const User_1 = require("../models/User");
 const Score_1 = require("../models/Score");
 const Checkout_1 = require("../models/Checkout");
@@ -283,18 +284,12 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
         res.status(500).json({ error });
     }
 });
-module.exports.checkouts_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const userId = res.locals.user.id;
-    const signature = "ALL";
-    const route = "user";
-    const checkedOut = "true";
-    yield checkouts(res, signature, checkedOut, route, userId);
-});
 module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { signature, checkedOut, route, userId } = req.body; // TODO: gibt es keine andere Lösung die route zu übergeben?
-    yield checkouts(res, signature, checkedOut, route, userId);
+    const { signature, checkedOut, userId } = req.body;
+    const admin = true;
+    yield checkouts(res, signature, checkedOut, true, userId);
 });
-function checkouts(res, signature, checkedOut, route, userId) {
+function checkouts(res, signature, checkedOut, admin, userId) {
     return __awaiter(this, void 0, void 0, function* () {
         let filter = signature && signature !== "ALL" ? { signature } : {};
         try {
@@ -344,7 +339,7 @@ function checkouts(res, signature, checkedOut, route, userId) {
                 });
             }
             res.render("checkouts", {
-                route,
+                admin,
                 signatures: yield (0, score_utils_1.getScoreTypes)(),
                 filter: { signature, checkedOut: onlyCheckedOut },
                 checkouts: checkoutsWithUser,
@@ -356,6 +351,7 @@ function checkouts(res, signature, checkedOut, route, userId) {
         }
     });
 }
+exports.checkouts = checkouts;
 const sendCheckinConfirmationEmail = (user, score, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const email = testRecipient ? testRecipient : user.email;

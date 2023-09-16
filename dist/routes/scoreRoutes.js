@@ -33,7 +33,7 @@ exports.score.get("/checkin", (req, res) => res.render("checkin", {
 exports.score.post("/checkin", scoreController.checkin_post);
 exports.score.get("/checkouts", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     return res.render("checkouts", {
-        route: "score",
+        admin: true,
         signatures: yield (0, score_utils_1.getScoreTypes)(),
         filter: { signature: "", checkedOut: true },
         checkouts: undefined,

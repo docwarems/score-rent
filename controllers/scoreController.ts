@@ -290,24 +290,17 @@ module.exports.checkin_post = async (req: any, res: any) => {
   }
 };
 
-module.exports.checkouts_get = async (req: any, res: any) => {
-  const userId = res.locals.user.id;
-  const signature = "ALL";
-  const route = "user";
-  const checkedOut = "true";
-  await checkouts(res, signature, checkedOut, route, userId);
-};
-
 module.exports.checkouts_post = async (req: any, res: any) => {
-  const { signature, checkedOut, route, userId } = req.body; // TODO: gibt es keine andere Lösung die route zu übergeben?
-  await checkouts(res, signature, checkedOut, route, userId);
+  const { signature, checkedOut, userId } = req.body;
+  const admin = true;
+  await checkouts(res, signature, checkedOut, true, userId);
 };
 
-async function checkouts(
+export async function checkouts(
   res: any,
   signature: string,
   checkedOut: string,
-  route: string,
+  admin: boolean,
   userId: string
 ) {
   let filter = signature && signature !== "ALL" ? { signature } : {};
@@ -365,7 +358,7 @@ async function checkouts(
     }
 
     res.render("checkouts", {
-      route,
+      admin,
       signatures: await getScoreTypes(),
       filter: { signature, checkedOut: onlyCheckedOut },
       checkouts: checkoutsWithUser,

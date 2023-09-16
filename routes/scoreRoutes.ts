@@ -38,7 +38,7 @@ score.post("/checkin", scoreController.checkin_post);
 
 score.get("/checkouts", async (req: any, res: any) =>
   res.render("checkouts", {
-    route: "score",
+    admin: true,
     signatures: await getScoreTypes(),
     filter: { signature: "", checkedOut: true },
     checkouts: undefined,

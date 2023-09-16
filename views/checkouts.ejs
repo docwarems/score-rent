@@ -9,11 +9,8 @@
 <% } %>
 
 <div class="w3-panel w3-border divScore">
+  <% const route = admin ? "score" : "user"; %>
   <form action="/<%= route %>/checkouts" method="POST" id="formFilter">
-    <input type="hidden" name="route" value="<%= route %>">
-    <% if (route === 'user') { %>
-    <input type="hidden" name="userId" value="<%= user.id %>">
-    <% } %>
     <h3>Filter</h3>
     <label>Noten Signatur</label>
 
@@ -43,12 +40,12 @@
     <tr>
       <th>Noten Id</th>
       <th>Noten ext. Id</th>
-      <% if (route !== 'user') { %>
+      <% if (admin) { %>
       <th>Benutzer</th>
       <% } %>
       <th>Ausgeliehen am</th>
       <th>Kommentar Ausleihe</th>
-      <% if (route !== 'user') { %>
+      <% if (admin) { %>
       <th></th> <!-- Schalter Rückgabe -->
       <% } %>
       <th>Rückgabe am</th>
@@ -57,7 +54,7 @@
     <tr>
       <td>&nbsp;</td>
       <th><input class="w3-input w3-border w3-padding" type="text" placeholder="Filtern.." id="searchScoreExtIdInput" onkeyup="filterCheckoutsTableBy('searchScoreExtIdInput', 1)"></th>
-      <% if (route !== 'user') { %>
+      <% if (admin) { %>
       <th><input class="w3-input w3-border w3-padding" type="text" placeholder="Filtern.." id="searchUserInput" onkeyup="filterCheckoutsTableBy('searchUserInput', 2)"></th>
       <% } %>
       <td>&nbsp;</td>
@@ -78,19 +75,19 @@
     <tr>
       <td><%= checkout.scoreId %></td>
       <td><%= scoreExtId %></td>
-      <% if (route !== 'user') { %>
+      <% if (admin) { %>
       <td>
         <button onclick="userDetails('<%= userName %>', '<%= user.email %>')" class="w3-button"><%= userName %></button>
       </td>
       <% } %>
-      <% if (route == 'user') { %>
+      <% if (!admin) { %>
       <td><%= checkoutTimestamp %></td>
       <% } else { %>
       <td><button onclick="editCheckout('<%= checkout.scoreId %>','<%= checkout._id %>','<%= checkout.checkoutComment %>','<%= checkout.checkinComment %>')" class="w3-button"><%= checkoutTimestamp %></button></td>
       <% } %>
       <td><%= checkout.checkoutComment %></td>
       <td>
-        <% if (!checkinTimestamp && route !== 'user') { %>
+        <% if (!checkinTimestamp && admin) { %>
         <button onclick="confirmCheckin('<%= checkout.scoreId %>', '<%= checkout.userId %>')" class="w3-button">Rückgabe</button>
         <% } %>
       </td>
