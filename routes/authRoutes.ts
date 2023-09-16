@@ -59,15 +59,14 @@ const signatures = async () => {
   return await getScoreTypes();
 };
 
-user.get("/checkouts", async (req: any, res: any) =>
-  res.render("checkouts", {
-    route: "user",
-    signatures: [{ id: "ALL", name: "Alle" }],
-    filter: { signature: "ALL", checkedOut: true },
-    checkouts: undefined,
-    error: undefined,
-  })
-);
+// user.get("/checkouts", async (req: any, res: any) =>
+//   res.render("checkouts", {
+//     route: "user",
+//     signatures: [{ id: "ALL", name: "Alle" }],
+//     filter: { signature: "ALL", checkedOut: true },
+//     checkouts: undefined,
+//     error: undefined,
+//   })
+// );
+user.get("/checkouts", scoreController.checkouts_get);
 user.post("/checkouts", scoreController.checkouts_post);
-
-

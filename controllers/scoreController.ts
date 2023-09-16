@@ -290,8 +290,26 @@ module.exports.checkin_post = async (req: any, res: any) => {
   }
 };
 
+module.exports.checkouts_get = async (req: any, res: any) => {
+  const userId = res.locals.user.id;
+  const signature = "ALL";
+  const route = "user";
+  const checkedOut = "true";
+  await checkouts(res, signature, checkedOut, route, userId);
+};
+
 module.exports.checkouts_post = async (req: any, res: any) => {
   const { signature, checkedOut, route, userId } = req.body; // TODO: gibt es keine andere Lösung die route zu übergeben?
+  await checkouts(res, signature, checkedOut, route, userId);
+};
+
+async function checkouts(
+  res: any,
+  signature: string,
+  checkedOut: string,
+  route: string,
+  userId: string
+) {
   let filter = signature && signature !== "ALL" ? { signature } : {};
   try {
     let error = undefined;
@@ -347,7 +365,7 @@ module.exports.checkouts_post = async (req: any, res: any) => {
     }
 
     res.render("checkouts", {
-      route: route,
+      route,
       signatures: await getScoreTypes(),
       filter: { signature, checkedOut: onlyCheckedOut },
       checkouts: checkoutsWithUser,
@@ -356,7 +374,7 @@ module.exports.checkouts_post = async (req: any, res: any) => {
   } catch (error) {
     res.status(500).json({ error });
   }
-};
+}
 
 const sendCheckinConfirmationEmail = async (
   user: any,
