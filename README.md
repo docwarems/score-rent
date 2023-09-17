@@ -91,10 +91,12 @@ As a maintainer I need to get a view of all checkouts.
 
 ## Create Etiketten
 
+### Mit Word Vorlage
+
 How to create Etiketten im Seriendruck mit Word
 Based on this tutorial: https://qr1.at/help/article/etiketten-druck-fuer-serien-qr-codes#beginnen-sie-mit-dem-serien-druck
 
-### Word Etikettenvorlage erstellen
+#### Word Etikettenvorlage erstellen
 
 - leeres Dokument erstellen
 - Sendungen / Etiketten
@@ -108,7 +110,7 @@ Im Folgenden wollen wir pro Etikett einen QRCode und den QRCode Text erstellen
 
 TODO: an dieser Stelle müsste eine A4 Datei rauskommen. Das haben wir aktuell noch nicht
 
-### Etiketten erstellen
+#### Etiketten erstellen
 
 - Sendungen / Seriendruck starten ... / Etiketten / abbrechen
 - Empfänger auswählen / vorhandene Liste auswählen (CSV Datei mit Daten)
@@ -134,39 +136,86 @@ Nun sollten die Platzhalter mit dem QRCode und dem QRCode Test gefüllt werden
 - Druck über Drucken oder Fertigstelle und Zusammenführen / Drücken führte zu PDF-Datei mit Fehlern
 - Funktioniert hat Exportieren / Druck als XPS/PDF Datei
 
-### Etiketten erstellen mit Avery-Zweckform Etikettenvorlagen
+### Mit Avery-Zweckform Etikettenvorlagen
 
-- https://www.avery-zweckform.com/etiketten/rechteckige-etiketten
-- gewünschte Etiketten auswählen, z.B. "8"
-- Link "Zu den Avery Online Vorlagen"
-- Editor für gewählten Etikettentyp öffnet sich
-- Textfelder auf die Vorlage ziehen ist selbsterklärend
+#### Bestehende Vorlage verwenden
 
-#### Text mit Fortlaufende Nummern
+Die passende Seite zum Hochladen der eigenen Vorlage zu finden ist etwas mühsam. Zunächst muss man über eine Vorlagennummer navigieren und hat von da aus die Möglichkeit eine gespeicherte Vorlage hochzuladen.
+
+- https://www.avery-zweckform.com
+- Link "Vorlagen und Software"
+- Vorlage "3427" wählen (welche ist egal weil wir im nächsten Schritt ein gespeichertes Projekt öffnen) -> man landet auf der Seite "2 Design auswählen"
+- "Startseite" klicken
+- Schalter "Gespeichertes Projekt" öffnen
+- Anmeldung/Registrierung ignorieren und Schalter "Projekt vom Computer laden"
+- Projektdatei (.avery) auswählen
+
+Nun ist man in der Designansicht. Die Etikettenvorlage ist automatisch eingestellt (z.B. 3427). Von hier kann gdruckt werden.
+
+Gespeicherte Projekte in "avery-label-templates"
+
+- 3427-leihzettel.avery (2x4 zum Ausdruck auf A4 Normalpapier)
+- 6251REV-Notenaufkleber.avery
+
+#### Neue Vorlage erstellen
+
+- https://www.avery-zweckform.com
+- Link "Vorlagen und Software"
+- Vorlage "3427" wählen (welche ist egal weil wir im nächsten Schritt ein gespeichertes Projekt öffnen) -> man landet auf der Seite "2 Design auswählen"
+- Kachel oben links (Blanko Design) auswählen über "Dieses Design auswählen" -> Editor öffnet sich
+
+Vorlagen
+
+- Leihzettel: 3427 (2x4, A4)
+- Aufkleber Noten: 6251REV (5\*7, ablösbare Etiketten, A4)
+
+##### Text mit Fortlaufende Nummern
 
 z.B. für Text BRFS-AD-xxx
 
 - klicke auf "Fortlaufende Nummer"
 - Startwert 1
 - Endwert 500
-- Prefix BFRS-AD-
-- Klick auf Schalter "Forlaufende Bummerierung" -> Textfeld wird in Vorlage eingefügt mit 1. Nummer
+- Prefix BRFS-AD-
+- Klick auf Schalter "Fortlaufende Nummern" -> Textfeld wird in Vorlage eingefügt mit 1. Nummer
+- Position und Größe anpassen wie gewünscht
 
-#### QR Code mit fortlaufender Nummer
+##### QR Code mit fortlaufender Nummer
+
+z.B. für Text BRFS-AD-xxx
 
 - KLick auf "QR und Barcodes"
 - Klick auf "Fügen Sie Barcode ein"
 - Wie möchten Sie Ihre Daten anbieten: Tabelle oder fortlaufende Nummer
 - Schritt 1 Daten vorbereiten
   - auswählen: "Zähler" -> Schalter mit Stift wird sichtbar
-  - Klick auf Schalter m. Stift
+  - Klick auf Stift
   - Nummerierung definieren wie oben bei Text; Dialog m. "Bearbeiten" schließen
 - Schritt 2 Barcodes erstellen
   - "QR Code" aus Liste auswählen
   - Codetyp "Text"
   - Stift-Schalter per Drag & Drop auf das Feld "Barcode Text eingeben" ziehen (etas unintuitiv) -> Der Text, z.B. "SN2" des Stift-Schalters erscheint nun ausgegraut im Feld "Barcode Text eingeben"
   - Klick "Fertigstellen" -> Dialog schließt sich; QR Code wird in Vorlage dargestellt
+- Position und Größe anpassen wie gewünscht
+- Klick auf "Vorschau & Drucken" -> Vorschau der Druckbögen wird angezeigt
+- Klick auf "Drucken" -> hier hat man die Möglichkeit sein Projekt zu speichern
+- "Speichern"
+- "Download editierbare Avery Zweckform Datei auf meinem Computer"
+- nun wird eine PDF-Datei erzeugt die man herunterladen kann (ich hatte Probleme mit dem Drucken - der Drucker sprang nicht an - erst als ich die PDF-Datei heruntergeladen und lokal geöffnet habe, klappte der Druck)
 
 über "Vorschau und Drucken" überzeugt man sich dass die Seriennummerierung für Text und QR Code funktioniert
+
+### Druck Etikettenvorlagen
+
+Etiketten müssen mit dem Einzeleinzug des Laserdruckers gedruckt werden, da sich die Etiketten sonst evtl. ablösen und die Trommel beschädigen könnten.
+
+- Anleitung für Brother HL-L3210D https://www.brother.de/support/hl-l2310d/faqs/how-to-trouble-shooting/faq00000063_052
+- PDF-Datei mit Etiketten wie oben erzeugt auswählen
+- weitere Einstellungen / über Systemdialog drucken
+- gewünschte Seitennummer auswählen
+- Enstellungen -> Brother Einstellungen öffnen sich
+- Papierquelle manuell
+- Drucker einschalten
+- Etikettenseite mit Druckseite oben in den manuellen Einzug einlegen bis sie etwas vom Drucker eingezogen wird
 
 [Mongo DB](docs/mongodb.md)
