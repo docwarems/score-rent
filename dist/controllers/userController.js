@@ -10,10 +10,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const scoreController_1 = require("./scoreController");
+const score_utils_1 = require("../utils/score-utils");
 module.exports.checkouts_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = res.locals.user.id;
-    const signature = "ALL";
-    const checkedOut = "true";
+    const signature = score_utils_1.SIGNATURE_ALL.id;
+    const checkedOut = true;
     const admin = false;
     yield (0, scoreController_1.checkouts)(res, signature, checkedOut, admin, userId);
 });

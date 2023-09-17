@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 require("dotenv").config();
 import nodemailer from "nodemailer";
 import { v4 as uuidv4 } from "uuid";
-import { getScoreTypes } from "../utils/score-utils";
+import { getScoreTypes, SIGNATURE_ALL } from "../utils/score-utils";
 
 // Create a nodemailer transporter TODO: dupliziert von app.ts
 const transporter = nodemailer.createTransport({
@@ -293,17 +293,17 @@ module.exports.checkin_post = async (req: any, res: any) => {
 module.exports.checkouts_post = async (req: any, res: any) => {
   const { signature, checkedOut, userId } = req.body;
   const admin = true;
-  await checkouts(res, signature, checkedOut, true, userId);
+  await checkouts(res, signature, checkedOut == "true", admin, userId);
 };
 
 export async function checkouts(
   res: any,
   signature: string,
-  checkedOut: string,
+  checkedOut: boolean,
   admin: boolean,
   userId: string
 ) {
-  let filter = signature && signature !== "ALL" ? { signature } : {};
+  let filter = signature && signature !== SIGNATURE_ALL.id ? { signature } : {};
   try {
     let error = undefined;
     if (!signature) {
@@ -350,8 +350,7 @@ export async function checkouts(
       }
     }
 
-    const onlyCheckedOut = checkedOut == "true";
-    if (onlyCheckedOut) {
+    if (checkedOut) {
       checkoutsWithUser = checkoutsWithUser.filter((checkoutWithUser: any) => {
         return !checkoutWithUser.checkout.checkinTimestamp;
       });
@@ -360,7 +359,7 @@ export async function checkouts(
     res.render("checkouts", {
       admin,
       signatures: await getScoreTypes(),
-      filter: { signature, checkedOut: onlyCheckedOut },
+      filter: { signature, checkedOut },
       checkouts: checkoutsWithUser,
       error,
     });

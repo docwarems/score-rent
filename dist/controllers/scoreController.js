@@ -287,11 +287,11 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
 module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { signature, checkedOut, userId } = req.body;
     const admin = true;
-    yield checkouts(res, signature, checkedOut, true, userId);
+    yield checkouts(res, signature, checkedOut == "true", admin, userId);
 });
 function checkouts(res, signature, checkedOut, admin, userId) {
     return __awaiter(this, void 0, void 0, function* () {
-        let filter = signature && signature !== "ALL" ? { signature } : {};
+        let filter = signature && signature !== score_utils_1.SIGNATURE_ALL.id ? { signature } : {};
         try {
             let error = undefined;
             if (!signature) {
@@ -332,8 +332,7 @@ function checkouts(res, signature, checkedOut, admin, userId) {
                     }
                 }
             }
-            const onlyCheckedOut = checkedOut == "true";
-            if (onlyCheckedOut) {
+            if (checkedOut) {
                 checkoutsWithUser = checkoutsWithUser.filter((checkoutWithUser) => {
                     return !checkoutWithUser.checkout.checkinTimestamp;
                 });
@@ -341,7 +340,7 @@ function checkouts(res, signature, checkedOut, admin, userId) {
             res.render("checkouts", {
                 admin,
                 signatures: yield (0, score_utils_1.getScoreTypes)(),
-                filter: { signature, checkedOut: onlyCheckedOut },
+                filter: { signature, checkedOut },
                 checkouts: checkoutsWithUser,
                 error,
             });
