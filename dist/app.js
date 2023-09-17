@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -12,6 +21,8 @@ const cookieParser = require("cookie-parser");
 const { requireAuth, checkUser, requireAdmin, requireUserVerified, } = require("./middleware/authMiddleware");
 require("dotenv").config();
 const bodyParser = require("body-parser");
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+var QRCode = require("qrcode");
 const app = express();
 // middleware
 app.use(express.static("public"));
@@ -30,7 +41,14 @@ mongoose_1.default
     .catch((err) => console.log(err));
 // routes
 app.get("*", checkUser);
-app.get("/", requireAuth, requireUserVerified, (req, res) => res.render("home", { user: res.locals.user }));
+const home_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = res.locals.user;
+    const userToken = jsonwebtoken_1.default.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "5y" } // TODO: check in "y" valid
+    );
+    const qrCodeDataUrl = yield QRCode.toDataURL(userToken);
+    res.render("home", { user, qrCodeDataUrl });
+});
+app.get("/", requireAuth, requireUserVerified, home_get);
 app.use("/score", score);
 app.use("/user", user);
 app.use(router);

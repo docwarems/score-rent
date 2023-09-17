@@ -13,6 +13,8 @@ const {
 require("dotenv").config();
 import nodemailer from "nodemailer";
 const bodyParser = require("body-parser");
+import jwt from "jsonwebtoken";
+var QRCode = require("qrcode");
 
 const app = express();
 
@@ -36,9 +38,18 @@ mongoose
 
 // routes
 app.get("*", checkUser);
-app.get("/", requireAuth, requireUserVerified, (req: any, res: any) =>
-  res.render("home", { user: res.locals.user })
-);
+
+const home_get = async (req: any, res: any) => {
+  const user = res.locals.user;
+  const userToken = jwt.sign(
+    { id: user.id, email: user.email },
+    process.env.JWT_SECRET!,
+    { expiresIn: "5y" } // TODO: check in "y" valid
+  );
+  const qrCodeDataUrl = await QRCode.toDataURL(userToken);
+  res.render("home", { user, qrCodeDataUrl });
+};
+app.get("/", requireAuth, requireUserVerified, home_get);
 
 app.use("/score", score);
 app.use("/user", user);
