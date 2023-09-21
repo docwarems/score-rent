@@ -109,6 +109,10 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                     score.checkouts.push(checkout);
                     score = yield score.save();
                     if (score) {
+                        const user = yield User_1.User.findOne({ id: userId });
+                        if (user) { // we don't expect error because we validated the user id before
+                            yield sendCheckoutConfirmationEmail(user, score, process.env.EMAIL_TEST_RECIPIENT);
+                        }
                         res.status(201).json({ checkoutScore: score });
                     }
                     else {
@@ -328,7 +332,12 @@ function checkouts(res, signature, checkedOut, admin, userId) {
                     for (const score of scores) {
                         for (const checkout of score.checkouts) {
                             const user = userMap.get(checkout.userId);
-                            checkoutsWithUser.push({ checkout, user, scoreExtId: score.extId, signature: score.signature });
+                            checkoutsWithUser.push({
+                                checkout,
+                                user,
+                                scoreExtId: score.extId,
+                                signature: score.signature,
+                            });
                         }
                     }
                 }
@@ -354,6 +363,39 @@ function checkouts(res, signature, checkedOut, admin, userId) {
     });
 }
 exports.checkouts = checkouts;
+const sendCheckoutConfirmationEmail = (user, score, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const email = testRecipient ? testRecipient : user.email;
+        const subject = "Hans-Sachs-Chor Noten ausgeliehen";
+        const html = `
+      Liebe Chorsängerin, lieber Chorsänger,
+      <p>
+      Du hast Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit Nummer ${score.id} vom Hans-Sachs-Chor ausgeliehen.<br>
+      Bitte behandle die Noten pfleglich und nehme Eintragungen nur mit Bleistift vor.<br>
+      Nach dem Konzert müssen die Noten zeitnah wieder zurückgegeben werden.<br>
+      Radiere bitte vorher deine Eintragungen aus.<br>    
+      <p>
+      Wenn du das Konzert nicht mitsingen kannst, gib die Noten bitte so schnell wie möglich zurück damit sie anderen zur Vorfügung stehen.<br>
+      <p>
+      Und nun viel Spaß beim Proben und viel Erfolg beim Konzert!
+      <p>
+      Dein Hans-Sachs-Chor Notenwart
+    `;
+        const mailOptions = {
+            from: process.env.SMTP_FROM,
+            to: email,
+            subject,
+            html,
+        };
+        const result = yield transporter.sendMail(mailOptions);
+        if (transporter.logger) {
+            console.log("Score checkout confirmation e-mail:", result);
+        }
+    }
+    catch (err) {
+        console.error(err);
+    }
+});
 const sendCheckinConfirmationEmail = (user, score, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const email = testRecipient ? testRecipient : user.email;
@@ -365,9 +407,13 @@ const sendCheckinConfirmationEmail = (user, score, testRecipient) => __awaiter(v
         // const html =
         //   `Die Noten mit Nummer ${extScoreId} wurden erfolgreich zurückgegeben. Vielen Dank!` +
         //   checkinComment;
-        // TODO: clear text rather than signature
-        const html = `Die Noten ${score.signature} mit Nummer ${score.extId} wurden erfolgreich zurückgegeben. Vielen Dank!<br>
-      Diese E-Mail wurde automatisch versendet!`;
+        const html = `
+    Liebe Chorsängerin, lieber Chorsänger,
+    <p>
+    Du hast die Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit Nummer ${score.id} erfolgreich zurückgegeben. Vielen Dank!
+    <p>
+    Dein Hans-Sachs-Chor Notenwart
+    `;
         const mailOptions = {
             from: process.env.SMTP_FROM,
             to: email,
