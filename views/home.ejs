@@ -1,6 +1,6 @@
 <%- include('partials/header'); -%>
 
-<h1>HSC Leihnoten Verwaltung</h1>
+<h1><%= __('appName') %></h1>
 
 <% if (typeof status != 'undefined') { %>
 <div class="w3-container w3-border w3-large">
@@ -12,17 +12,17 @@
 
 <ul class="w3-ul w3-border">
   <% if (user.isAdmin) { %>
-  <h3>Noten</h3>
-  <li><a href="/score/register" class="w3-button w3-black">Leihnoten registrieren</a></li>
-  <li><a href="/score/checkout" class="w3-button w3-black">Noten Ausleihe</a></li>
-  <li><a href="/score/checkin" class="w3-button w3-black">Noten Rückgabe</a></li>
-  <li><a href="/score/checkouts" class="w3-button w3-black">Ausleihen anzeigen</a></li>
-  <h3>Benutzer</h3>
-  <li><a href="/signup-user" class="w3-button w3-black">Benutzer anlegen</a></li>
-  <li><a href="/score/users" class="w3-button w3-black">Benutzer Liste</a></li>
+  <h3><%= __('Noten') %></h3>
+  <li><a href="/score/register" class="w3-button w3-black"><%= __('Leihnoten registrieren') %></a></li>
+  <li><a href="/score/checkout" class="w3-button w3-black"><%= __('Noten Ausleihe') %></a></li>
+  <li><a href="/score/checkin" class="w3-button w3-black"><%= __('Noten Rückgabe') %></a></li>
+  <li><a href="/score/checkouts" class="w3-button w3-black"><%= __('Ausleihen anzeigen') %></a></li>
+  <h3><%= __('Benutzer') %></h3>
+  <li><a href="/signup-user" class="w3-button w3-black"><%= __('Benutzer anlegen') %></a></li>
+  <li><a href="/score/users" class="w3-button w3-black"><%= __('Benutzer Liste') %></a></li>
   <% } else { %>
-  <li><a href="/user/checkouts" class="w3-button w3-black">Ausleihen anzeigen</a></li>
-  <li><a href="#" onClick="document.querySelector('.divQrCode').style='display: block'" class="w3-button w3-black">QRCode für Login anzeigen</a></li>
+  <li><a href="/user/checkouts" class="w3-button w3-black"><%= __('Ausleihen anzeigen') %></a></li>
+  <li><a href="#" onClick="document.querySelector('.divQrCode').style='display: block'" class="w3-button w3-black"><%= __('QRCode für Login anzeigen') %></a></li>
   <% } %>
 </ul>
 

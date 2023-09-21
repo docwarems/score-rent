@@ -23,12 +23,25 @@ require("dotenv").config();
 const bodyParser = require("body-parser");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 var QRCode = require("qrcode");
+const { I18n } = require("i18n");
+const path = require("path");
+// we must ensure that no write access to the file system is needed; as we are running on a readonly serverless platform
+const i18n = new I18n({
+    locales: ["en", "de"],
+    fallbacks: { "de-*": "de" },
+    retryInDefaultLocale: true,
+    updateFiles: false,
+    queryParameter: 'lang',
+    directory: path.join(__dirname, "locales"),
+});
+console.log("__dirname: ", __dirname);
 const app = express();
 // middleware
 app.use(express.static("public"));
 app.use(express.json());
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(i18n.init); // default: using 'accept-language' header to guess language settings
 // view engine
 app.set("view engine", "ejs");
 // database connection
