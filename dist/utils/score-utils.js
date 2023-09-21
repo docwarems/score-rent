@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getScoreTypes = exports.SIGNATURE_ALL = void 0;
+exports.getScoreTypeMap = exports.getScoreTypes = exports.SIGNATURE_ALL = void 0;
 const Score_1 = require("../models/Score");
 exports.SIGNATURE_ALL = { id: "ALL", name: "Alle" };
 function getScoreTypes() {
@@ -26,3 +26,14 @@ function getScoreTypes() {
     });
 }
 exports.getScoreTypes = getScoreTypes;
+function getScoreTypeMap() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const scoreTypeMap = new Map();
+        const scoreTypes = yield Score_1.ScoreType.find();
+        for (const scoreType of scoreTypes) {
+            scoreTypeMap.set(scoreType.signature, `${scoreType.composer} ${scoreType.work}`);
+        }
+        return scoreTypeMap;
+    });
+}
+exports.getScoreTypeMap = getScoreTypeMap;

@@ -13,3 +13,12 @@ export async function getScoreTypes() {
   }
   return signatures;
 }
+
+export async function getScoreTypeMap() {
+  const scoreTypeMap = new Map();
+  const scoreTypes = await ScoreType.find();
+  for (const scoreType of scoreTypes) {
+    scoreTypeMap.set(scoreType.signature, `${scoreType.composer} ${scoreType.work}`);
+  }
+  return scoreTypeMap;
+}

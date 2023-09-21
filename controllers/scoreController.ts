@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 require("dotenv").config();
 import nodemailer from "nodemailer";
 import { v4 as uuidv4 } from "uuid";
-import { getScoreTypes, SIGNATURE_ALL } from "../utils/score-utils";
+import { getScoreTypes, SIGNATURE_ALL, getScoreTypeMap } from "../utils/score-utils";
 
 // Create a nodemailer transporter TODO: dupliziert von app.ts
 const transporter = nodemailer.createTransport({
@@ -325,6 +325,7 @@ export async function checkouts(
                 checkout,
                 user,
                 scoreExtId: score.extId,
+                signature: score.signature,
               });
             }
           }
@@ -344,7 +345,7 @@ export async function checkouts(
         for (const score of scores) {
           for (const checkout of score.checkouts) {
             const user = userMap.get(checkout.userId);
-            checkoutsWithUser.push({ checkout, user, scoreExtId: score.extId });
+            checkoutsWithUser.push({ checkout, user, scoreExtId: score.extId, signature: score.signature });
           }
         }
       }
@@ -359,6 +360,8 @@ export async function checkouts(
     res.render("checkouts", {
       admin,
       signatures: await getScoreTypes(),
+      signatureMap: await getScoreTypeMap(),
+      SIGNATURE_ALL,
       filter: { signature, checkedOut },
       checkouts: checkoutsWithUser,
       error,

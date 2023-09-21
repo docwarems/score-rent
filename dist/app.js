@@ -34,7 +34,6 @@ const i18n = new I18n({
     queryParameter: 'lang',
     directory: path.join(__dirname, "locales"),
 });
-console.log("__dirname: ", __dirname);
 const app = express();
 // middleware
 app.use(express.static("public"));

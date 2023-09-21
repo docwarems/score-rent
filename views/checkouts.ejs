@@ -8,6 +8,7 @@
 </div>
 <% } %>
 
+<% if (admin) { %>
 <div class="w3-panel w3-border divScore">
   <% const route = admin ? "score" : "user"; %>
   <form action="/<%= route %>/checkouts" method="POST" id="formFilter">
@@ -22,7 +23,6 @@
       <% } %>
     </select>
 
-    <!-- <input type="text" name="signature" value="<%= filter.signature %>" class="w3-input signature"> -->
     <label>Nur offene</label>
     <input type="checkbox" name="checkedOut" value="true" <%= filter.checkedOut ? "checked" : "" %> class="w3-check checkedOut">
     <p></p>
@@ -30,6 +30,7 @@
     <p></p>
   </form>
 </div>
+<% } %>
 
 <% if (checkouts) { %>
 <div class="w3-responsive">
@@ -38,6 +39,9 @@
   <p></p>
   <table class="w3-table-all" id="checkoutsTable">
     <tr>
+      <% if (filter.signature === SIGNATURE_ALL.id) { %>
+      <th>Werk</th>
+      <% } %>
       <th>Noten Id</th>
       <th>Noten ext. Id</th>
       <% if (admin) { %>
@@ -51,11 +55,17 @@
       <th>Rückgabe am</th>
       <th>Kommentar Rückgabe</th>
     </tr>
+    <% if (admin) { %>
     <tr>
+      <% let colOffset = 0; %>
+      <% if (filter.signature === SIGNATURE_ALL.id) { %>
+      <% colOffset = 1; %>
       <td>&nbsp;</td>
-      <th><input class="w3-input w3-border w3-padding" type="text" placeholder="Filtern.." id="searchScoreExtIdInput" onkeyup="filterCheckoutsTableBy('searchScoreExtIdInput', 1)"></th>
+      <% } %>
+      <td>&nbsp;</td>
+      <th><input class="w3-input w3-border w3-padding" type="text" placeholder="Filtern.." id="searchScoreExtIdInput" onkeyup="filterCheckoutsTableBy('searchScoreExtIdInput', <%= colOffset+1 %>)"></th>
       <% if (admin) { %>
-      <th><input class="w3-input w3-border w3-padding" type="text" placeholder="Filtern.." id="searchUserInput" onkeyup="filterCheckoutsTableBy('searchUserInput', 2)"></th>
+      <th><input class="w3-input w3-border w3-padding" type="text" placeholder="Filtern.." id="searchUserInput" onkeyup="filterCheckoutsTableBy('searchUserInput', <%= colOffset+2 %>)"></th>
       <% } %>
       <td>&nbsp;</td>
       <td>&nbsp;</td>
@@ -63,6 +73,7 @@
       <td>&nbsp;</td>
       <td>&nbsp;</td>
     </tr>
+    <% } %>
     <% 
     checkouts.forEach(checkoutWithUser => { 
       const checkout = checkoutWithUser.checkout;
@@ -73,6 +84,9 @@
       const scoreExtId = checkoutWithUser.scoreExtId;
     %>
     <tr>
+      <% if (filter.signature === SIGNATURE_ALL.id) { %>
+      <td><%= signatureMap.get(checkoutWithUser.signature) %></td>
+      <% } %>
       <td><%= checkout.scoreId %></td>
       <td><%= scoreExtId %></td>
       <% if (admin) { %>

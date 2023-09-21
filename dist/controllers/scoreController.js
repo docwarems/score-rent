@@ -311,6 +311,7 @@ function checkouts(res, signature, checkedOut, admin, userId) {
                                     checkout,
                                     user,
                                     scoreExtId: score.extId,
+                                    signature: score.signature,
                                 });
                             }
                         }
@@ -327,7 +328,7 @@ function checkouts(res, signature, checkedOut, admin, userId) {
                     for (const score of scores) {
                         for (const checkout of score.checkouts) {
                             const user = userMap.get(checkout.userId);
-                            checkoutsWithUser.push({ checkout, user, scoreExtId: score.extId });
+                            checkoutsWithUser.push({ checkout, user, scoreExtId: score.extId, signature: score.signature });
                         }
                     }
                 }
@@ -340,6 +341,8 @@ function checkouts(res, signature, checkedOut, admin, userId) {
             res.render("checkouts", {
                 admin,
                 signatures: yield (0, score_utils_1.getScoreTypes)(),
+                signatureMap: yield (0, score_utils_1.getScoreTypeMap)(),
+                SIGNATURE_ALL: score_utils_1.SIGNATURE_ALL,
                 filter: { signature, checkedOut },
                 checkouts: checkoutsWithUser,
                 error,

@@ -21,13 +21,12 @@ const path = require("path");
 // we must ensure that no write access to the file system is needed; as we are running on a readonly serverless platform
 const i18n = new I18n({
   locales: ["en", "de"],  // other locales will fallback to en silently
-  fallbacks: { "de-*": "de" },
-  retryInDefaultLocale: true,
-  updateFiles: false, // I hope to avoid write access to the file system
-  queryParameter: 'lang',
+  fallbacks: { "de-*": "de" }, // fallback from any localized German (de-at, de-li etc.) to German
+  retryInDefaultLocale: true, // will return translation from defaultLocale in case current locale doesn't provide it
+  updateFiles: false, // whether to write new locale information to disk - defaults to true (I hope to avoid write access to the file system)
+  queryParameter: 'lang', // query parameter to switch locale (ie. /home?lang=ch)
   directory: path.join(__dirname, "locales"),
 });
-console.log("__dirname: ", __dirname);
 
 const app = express();
 
