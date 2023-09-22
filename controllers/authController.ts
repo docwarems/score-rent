@@ -301,9 +301,9 @@ module.exports.signup_post = async (req: any, res: any) => {
     res.status(201).json({ user: user._id });
   } catch (err: any) {
     let type: string | undefined = undefined;
-    if (err.keyValue.id) {
+    if (err.keyValue?.id) {
       type = "userId";
-    } else if (err.keyValue.email) {
+    } else if (err.keyValue?.email) {
       type = "email";
     }
     const errors = handleSaveErrors(err, type);

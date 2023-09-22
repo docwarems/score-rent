@@ -232,6 +232,7 @@ module.exports.verify_email_get = (req, res) => __awaiter(void 0, void 0, void 0
  * Signup by admin will not trigger e-mail verification
  */
 module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     let { email, password, passwordRepeat, firstName, // TODO: Mindestlänge 2 wg. User Id
     lastName, singGroup, } = req.body;
     try {
@@ -275,10 +276,10 @@ module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
     catch (err) {
         let type = undefined;
-        if (err.keyValue.id) {
+        if ((_a = err.keyValue) === null || _a === void 0 ? void 0 : _a.id) {
             type = "userId";
         }
-        else if (err.keyValue.email) {
+        else if ((_b = err.keyValue) === null || _b === void 0 ? void 0 : _b.email) {
             type = "email";
         }
         const errors = handleSaveErrors(err, type);
