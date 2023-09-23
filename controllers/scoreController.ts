@@ -128,7 +128,8 @@ module.exports.checkout_post = async (req: any, res: any) => {
           score = await score.save();
           if (score) {
             const user = await User.findOne({ id: userId });
-            if (user) { // we don't expect error because we validated the user id before
+            if (user) {
+              // we don't expect error because we validated the user id before
               await sendCheckoutConfirmationEmail(
                 user,
                 score,
@@ -229,6 +230,7 @@ module.exports.checkin_post = async (req: any, res: any) => {
 
   try {
     if (scoreId && comment != undefined) {
+      // checkin request
       let score = await Score.findOne({ id: scoreId });
       if (score) {
         if (score.checkedOutByUserId) {
@@ -275,12 +277,13 @@ module.exports.checkin_post = async (req: any, res: any) => {
         });
       }
     } else if (scoreId) {
+      // search score and return checkin form
       const score = await Score.findOne({ id: scoreId });
 
       if (score) {
         const checkedOutByUserId = score.checkedOutByUserId;
         if (checkedOutByUserId) {
-          const user = await User.findOne({ _id: checkedOutByUserId });
+          const user = await User.findOne({ id: checkedOutByUserId });
           if (user) {
             res.status(200).json({ checkinScore: score, checkinUser: user });
           } else {
@@ -400,12 +403,14 @@ const sendCheckoutConfirmationEmail = async (
     const html = `
       Liebe Chorsängerin, lieber Chorsänger,
       <p>
-      Du hast Noten "${(await getScoreTypeMap()).get(score.signature)}" mit Nummer ${score.id} vom Hans-Sachs-Chor ausgeliehen.<br>
+      Du hast Noten "${(await getScoreTypeMap()).get(
+        score.signature
+      )}" mit Nummer ${score.id} vom Hans-Sachs-Chor ausgeliehen.<br>
       Bitte behandle die Noten pfleglich und nehme Eintragungen nur mit Bleistift vor.<br>
-      Nach dem Konzert müssen die Noten zeitnah wieder zurückgegeben werden.<br>
+      Nach dem Konzert gebe die Noten bitte zeitnah an den Chor zurück.<br>
       Radiere bitte vorher deine Eintragungen aus.<br>    
       <p>
-      Wenn du das Konzert nicht mitsingen kannst, gib die Noten bitte so schnell wie möglich zurück damit sie anderen zur Vorfügung stehen.<br>
+      Wenn du das Konzert nicht mitsingen kannst, gib die Noten bitte so schnell wie möglich zurück, damit sie anderen zur Verfügung stehen.<br>
       <p>
       Und nun viel Spaß beim Proben und viel Erfolg beim Konzert!
       <p>
@@ -448,7 +453,9 @@ const sendCheckinConfirmationEmail = async (
     const html = `
     Liebe Chorsängerin, lieber Chorsänger,
     <p>
-    Du hast die Noten "${(await getScoreTypeMap()).get(score.signature)}" mit Nummer ${score.id} erfolgreich zurückgegeben. Vielen Dank!
+    Du hast die Noten "${(await getScoreTypeMap()).get(
+      score.signature
+    )}" mit Nummer ${score.id} erfolgreich zurückgegeben. Vielen Dank!
     <p>
     Dein Hans-Sachs-Chor Notenwart
     `;

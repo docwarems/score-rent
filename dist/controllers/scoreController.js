@@ -110,7 +110,8 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                     score = yield score.save();
                     if (score) {
                         const user = yield User_1.User.findOne({ id: userId });
-                        if (user) { // we don't expect error because we validated the user id before
+                        if (user) {
+                            // we don't expect error because we validated the user id before
                             yield sendCheckoutConfirmationEmail(user, score, process.env.EMAIL_TEST_RECIPIENT);
                         }
                         res.status(201).json({ checkoutScore: score });
@@ -213,6 +214,7 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
     const { scoreId, comment } = req.body;
     try {
         if (scoreId && comment != undefined) {
+            // checkin request
             let score = yield Score_1.Score.findOne({ id: scoreId });
             if (score) {
                 if (score.checkedOutByUserId) {
@@ -259,11 +261,12 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
             }
         }
         else if (scoreId) {
+            // search score and return checkin form
             const score = yield Score_1.Score.findOne({ id: scoreId });
             if (score) {
                 const checkedOutByUserId = score.checkedOutByUserId;
                 if (checkedOutByUserId) {
-                    const user = yield User_1.User.findOne({ _id: checkedOutByUserId });
+                    const user = yield User_1.User.findOne({ id: checkedOutByUserId });
                     if (user) {
                         res.status(200).json({ checkinScore: score, checkinUser: user });
                     }
@@ -372,10 +375,10 @@ const sendCheckoutConfirmationEmail = (user, score, testRecipient) => __awaiter(
       <p>
       Du hast Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit Nummer ${score.id} vom Hans-Sachs-Chor ausgeliehen.<br>
       Bitte behandle die Noten pfleglich und nehme Eintragungen nur mit Bleistift vor.<br>
-      Nach dem Konzert müssen die Noten zeitnah wieder zurückgegeben werden.<br>
+      Nach dem Konzert gebe die Noten bitte zeitnah an den Chor zurück.<br>
       Radiere bitte vorher deine Eintragungen aus.<br>    
       <p>
-      Wenn du das Konzert nicht mitsingen kannst, gib die Noten bitte so schnell wie möglich zurück damit sie anderen zur Vorfügung stehen.<br>
+      Wenn du das Konzert nicht mitsingen kannst, gib die Noten bitte so schnell wie möglich zurück, damit sie anderen zur Verfügung stehen.<br>
       <p>
       Und nun viel Spaß beim Proben und viel Erfolg beim Konzert!
       <p>
