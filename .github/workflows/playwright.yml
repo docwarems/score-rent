@@ -20,7 +20,8 @@ jobs:
     - name: Run Playwright tests
       run: npx playwright test
       env: 
-        CYCLIC_URL: ${{ secrets.CYCLIC_URL }}
+        PLAYWRIGHT_BASE_URL: ${{ secrets.PLAYWRIGHT_BASE_URL }}
+        PLAYWRIGHT_ENABLE_WEBSERVER: ${{ vars.PLAYWRIGHT_ENABLE_WEBSERVER }}
         PLAYWRIGHT_USER: ${{ secrets.PLAYWRIGHT_USER }}
         PLAYWRIGHT_PASSWORD: ${{ secrets.PLAYWRIGHT_PASSWORD }}
     - uses: actions/upload-artifact@v3
