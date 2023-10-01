@@ -43,23 +43,23 @@ Because I'm professional web developer (previously Java fullstack, today nodejs 
   - e-mail address (which must be validated)
   - sing group (soprano, alto, tenor, bass)
   - member state (choir member, guest, student)
-  - we build a human readable user if from user's first and last name
+  - we build a human readable user id from user's first and last name
   - once signed up, the user must confirm the e-mail by confirming a link in a-mail sent after signup
   - once the e-mail address is confirmed. the user receives another e-mail containing a QR code with his user id
   - the user QR code is used to speed up the score checkout process
-  - obligatory functions for 'forgotten password' and "resend conformation link"
+  - obligatory functions for 'forgotten password' and "resend confirmation link"
 
 ## User login
 
-- only function for normal users are viewing a list of 'his' checkout records
+- only function for normal users are viewing a list of 'their' checkout records
 
 ## Score checkout
 
-Because not all users will accept to use their QR code (some even might not have a e-mail adress), we must also still support the checkout with checkout sheet.
+Because not all users will accept to use the QR code (some even might not have an e-mail adress), we must also still support the checkout by checkout sheet.
 
 - authorize the choral singer either
   - by scanning 'his' QR code. The QR code contains a JWT (Json Web Token) so that the contained user id cannot be tampered.
-  - by scanning the QR code of a traditional checkout sheet the user has to fill out. The QR code contaims a checkout id
+  - by scanning the QR code of a traditional checkout sheet the user has to fill out. The QR code contains a checkout id
 - scan the score
 - optionally add some metadata (e.g. score state, date)
 - confirm the checkout which will
@@ -81,9 +81,10 @@ As a maintainer I need to get a view of all checkouts.
   - mark the checkout record as returned
   - log some metadata (e.g. date)
 
-## TODOs
+## TODO:
 
 - mit einem Leihzettel können mehrere Ausleihen erzeugt werden
+- Notenstatus per Scannen von Score Id ermitteln
 
 ## Development
 
@@ -150,7 +151,7 @@ Die passende Seite zum Hochladen der eigenen Vorlage zu finden ist etwas mühsam
 - Anmeldung/Registrierung ignorieren und Schalter "Projekt vom Computer laden"
 - Projektdatei (.avery) auswählen
 
-Nun ist man in der Designansicht. Die Etikettenvorlage ist automatisch eingestellt (z.B. 3427). Von hier kann gdruckt werden.
+Nun ist man in der Designansicht. Die Etikettenvorlage ist automatisch eingestellt (z.B. 3427). Von hier kann gedruckt werden.
 
 Gespeicherte Projekte in "avery-label-templates"
 
