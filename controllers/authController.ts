@@ -1,9 +1,9 @@
 import { User, SingGroup, singGroupNameMap } from "../models/User";
 import jwt from "jsonwebtoken";
-require("dotenv").config();
-import nodemailer from "nodemailer";
-var QRCode = require("qrcode");
 import { v4 as uuidv4 } from "uuid";
+import { mailTransporter } from "../utils/misc-utils";
+require("dotenv").config();
+var QRCode = require("qrcode");
 
 const handleSaveErrors = (err: any, type: string | undefined) => {
   console.log(err.message, err.code);
@@ -99,19 +99,6 @@ enum EmailVerificationStatus {
   ALREADY_VERFIED,
 }
 
-// Create a nodemailer transporter TODO: dupliziert von app.ts
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT!),
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  greetingTimeout: 1000 * 10,
-  logger:
-    !!process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
-});
-
 /**
  * Create a espass (electronic smart pass) file to be opened with PassAndroid (and obviously only with this app)
  * - main.json (this constant); the message will converted to a QR Code
@@ -193,8 +180,8 @@ const sendVerificationSuccessfulEmail = async (user: any) => {
       attachments: [{ path: url }],
     };
 
-    const result = await transporter.sendMail(mailOptions);
-    if (transporter.logger) {
+    const result = await mailTransporter.sendMail(mailOptions);
+    if (mailTransporter.logger) {
       console.log("Registration successful e-mail:", result);
     }
   } catch (err) {
@@ -360,9 +347,8 @@ async function sendPasswordResetEmail(user: any) {
   `;
   const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
   try {
-    const result = await transporter.sendMail(mailOptions);
-    // const smtpDebug = process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
-    if (transporter.logger) {
+    const result = await mailTransporter.sendMail(mailOptions);
+    if (mailTransporter.logger) {
       console.log("Password reset e-mail:", result);
     }
   } catch (e) {

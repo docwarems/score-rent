@@ -3,26 +3,13 @@ import { Score, ScoreType, IScore } from "../models/Score";
 import { Checkout } from "../models/Checkout";
 import jwt from "jsonwebtoken";
 require("dotenv").config();
-import nodemailer from "nodemailer";
+import { mailTransporter } from "../utils/misc-utils";
 import { v4 as uuidv4 } from "uuid";
 import {
   getScoreTypes,
   SIGNATURE_ALL,
   getScoreTypeMap,
 } from "../utils/score-utils";
-
-// Create a nodemailer transporter TODO: dupliziert von app.ts
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT!),
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  greetingTimeout: 1000 * 10,
-  logger:
-    !!process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
-});
 
 const handleSaveErrors = (err: any, type: string | undefined) => {
   console.log(err.message, err.code);
@@ -424,8 +411,8 @@ const sendCheckoutConfirmationEmail = async (
       html,
     };
 
-    const result = await transporter.sendMail(mailOptions);
-    if (transporter.logger) {
+    const result = await mailTransporter.sendMail(mailOptions);
+    if (mailTransporter.logger) {
       console.log("Score checkout confirmation e-mail:", result);
     }
   } catch (err) {
@@ -467,8 +454,8 @@ const sendCheckinConfirmationEmail = async (
       html,
     };
 
-    const result = await transporter.sendMail(mailOptions);
-    if (transporter.logger) {
+    const result = await mailTransporter.sendMail(mailOptions);
+    if (mailTransporter.logger) {
       console.log("Score checkin confirmation e-mail:", result);
     }
   } catch (err) {

@@ -2,7 +2,7 @@ import { Model, Schema, model } from "mongoose";
 const { isEmail } = require("validator");
 import bcrypt from "bcrypt";
 import jwt, { sign } from "jsonwebtoken";
-import nodemailer from "nodemailer";
+import { mailTransporter } from "../utils/misc-utils";
 require("dotenv").config();
 
 // the adding of a static User Method from the JS code had to be rewritten according to
@@ -169,50 +169,6 @@ userSchema.post("save", async function (doc: any, next: any) {
   next();
 });
 
-// Create a nodemailer transporter TODO: dupliziert von app.ts
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT!),
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  greetingTimeout: 1000 * 10,
-  logger:
-    !!process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
-});
-transporter.verify(function (error, success) {
-  if (error) {
-    console.log(error);
-  } else {
-    console.log("SMTP server is ready to take our messages");
-  }
-});
-
-async function createTransporter() {
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT!),
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-    greetingTimeout: 1000 * 10,
-    logger:
-      !!process.env.SMTP_DEBUG &&
-      process.env.SMTP_DEBUG.toLowerCase() == "true",
-  });
-  transporter.verify(function (error, success) {
-    if (error) {
-      console.log(error);
-    } else {
-      console.log("SMTP server is ready to take our messages");
-    }
-  });
-
-  return transporter;
-}
-
 // Send verification email to the user
 async function sendVerificationEmail(user: any) {
   const token = jwt.sign(
@@ -229,9 +185,8 @@ async function sendVerificationEmail(user: any) {
   `;
   const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
 
-  const result = await transporter.sendMail(mailOptions);
-  // const smtpDebug = process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
-  if (transporter.logger) {
+  const result = await mailTransporter.sendMail(mailOptions);
+  if (mailTransporter.logger) {
     console.log("Verification e-mail:", result);
   }
 }
