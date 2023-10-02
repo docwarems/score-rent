@@ -18,20 +18,9 @@ const Score_1 = require("../models/Score");
 const Checkout_1 = require("../models/Checkout");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 require("dotenv").config();
-const nodemailer_1 = __importDefault(require("nodemailer"));
+const misc_utils_1 = require("../utils/misc-utils");
 const uuid_1 = require("uuid");
 const score_utils_1 = require("../utils/score-utils");
-// Create a nodemailer transporter TODO: dupliziert von app.ts
-const transporter = nodemailer_1.default.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT),
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
-    greetingTimeout: 1000 * 10,
-    logger: !!process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
-});
 const handleSaveErrors = (err, type) => {
     console.log(err.message, err.code);
     let errors = {
@@ -367,65 +356,58 @@ function checkouts(res, signature, checkedOut, admin, userId) {
 }
 exports.checkouts = checkouts;
 const sendCheckoutConfirmationEmail = (user, score, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const email = testRecipient ? testRecipient : user.email;
-        const subject = "Hans-Sachs-Chor Noten ausgeliehen";
-        const html = `
-      Liebe Chorsängerin, lieber Chorsänger,
-      <p>
-      Du hast Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit Nummer ${score.id} vom Hans-Sachs-Chor ausgeliehen.<br>
-      Bitte behandle die Noten pfleglich und nehme Eintragungen nur mit Bleistift vor.<br>
-      Nach dem Konzert gebe die Noten bitte zeitnah an den Chor zurück.<br>
-      Radiere bitte vorher deine Eintragungen aus.<br>    
-      <p>
-      Wenn du das Konzert nicht mitsingen kannst, gib die Noten bitte so schnell wie möglich zurück, damit sie anderen zur Verfügung stehen.<br>
-      <p>
-      Und nun viel Spaß beim Proben und viel Erfolg beim Konzert!
-      <p>
-      Dein Hans-Sachs-Chor Notenwart
-    `;
-        const mailOptions = {
-            from: process.env.SMTP_FROM,
-            to: email,
-            subject,
-            html,
-        };
-        const result = yield transporter.sendMail(mailOptions);
-        if (transporter.logger) {
-            console.log("Score checkout confirmation e-mail:", result);
-        }
-    }
-    catch (err) {
-        console.error(err);
-    }
-});
-const sendCheckinConfirmationEmail = (user, score, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const email = testRecipient ? testRecipient : user.email;
-        const subject = "Hans-Sachs-Chor Noten Rückgabe erfolgreich";
-        // TODO: not sure if we should send this info to users as it may be internal
-        // checkinComment = checkinComment
-        //   ? `<br>Kommentar zur Rückgabe: '${checkinComment}'`
-        //   : "";
-        // const html =
-        //   `Die Noten mit Nummer ${extScoreId} wurden erfolgreich zurückgegeben. Vielen Dank!` +
-        //   checkinComment;
-        const html = `
+    const subject = "Hans-Sachs-Chor Noten ausgeliehen";
+    const html = `
     Liebe Chorsängerin, lieber Chorsänger,
     <p>
-    Du hast die Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit Nummer ${score.id} erfolgreich zurückgegeben. Vielen Dank!
+    Du hast Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit Nummer ${score.id} vom Hans-Sachs-Chor ausgeliehen.<br>
+    Bitte behandle die Noten pfleglich und nehme Eintragungen nur mit Bleistift vor.<br>
+    Nach dem Konzert gebe die Noten bitte zeitnah an den Chor zurück.<br>
+    Radiere bitte vorher deine Eintragungen aus.<br>    
+    <p>
+    Wenn du das Konzert nicht mitsingen kannst, gib die Noten bitte so schnell wie möglich zurück, damit sie anderen zur Verfügung stehen.<br>
+    <p>
+    Und nun viel Spaß beim Proben und viel Erfolg beim Konzert!
     <p>
     Dein Hans-Sachs-Chor Notenwart
-    `;
-        const mailOptions = {
-            from: process.env.SMTP_FROM,
-            to: email,
-            subject,
-            html,
-        };
-        const result = yield transporter.sendMail(mailOptions);
-        if (transporter.logger) {
-            console.log("Score checkin confirmation e-mail:", result);
+  `;
+    yield sendConfirmationEmail(user, subject, html, testRecipient);
+});
+const sendCheckinConfirmationEmail = (user, score, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
+    const subject = "Hans-Sachs-Chor Noten Rückgabe erfolgreich";
+    // TODO: not sure if we should send this info to users as it may be internal
+    // checkinComment = checkinComment
+    //   ? `<br>Kommentar zur Rückgabe: '${checkinComment}'`
+    //   : "";
+    // const html =
+    //   `Die Noten mit Nummer ${extScoreId} wurden erfolgreich zurückgegeben. Vielen Dank!` +
+    //   checkinComment;
+    const html = `
+  Liebe Chorsängerin, lieber Chorsänger,
+  <p>
+  Du hast die Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit Nummer ${score.id} erfolgreich zurückgegeben. Vielen Dank!
+  <p>
+  Dein Hans-Sachs-Chor Notenwart
+  `;
+    yield sendConfirmationEmail(user, subject, html, testRecipient);
+});
+const sendConfirmationEmail = (user, subject, htmlText, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const email = testRecipient ? testRecipient : user.email;
+        if (email) {
+            const mailOptions = {
+                from: process.env.SMTP_FROM,
+                to: email,
+                subject,
+                htmlText,
+            };
+            const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions);
+            if (misc_utils_1.mailTransporter.logger) {
+                console.log("Score confirmation e-mail:", result);
+            }
+        }
+        else {
+            console.log(`No confirmation sent because no e-mail for user ${user.id} defined.`);
         }
     }
     catch (err) {

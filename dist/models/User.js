@@ -17,7 +17,7 @@ const mongoose_1 = require("mongoose");
 const { isEmail } = require("validator");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const nodemailer_1 = __importDefault(require("nodemailer"));
+const misc_utils_1 = require("../utils/misc-utils");
 require("dotenv").config();
 // the adding of a static User Method from the JS code had to be rewritten according to
 // https://mongoosejs.com/docs/typescript/statics-and-methods.html
@@ -28,7 +28,7 @@ var SingGroup;
     SingGroup["ALTO"] = "A";
     SingGroup["TENOR"] = "T";
     SingGroup["BASS"] = "B";
-})(SingGroup || (exports.SingGroup = SingGroup = {}));
+})(SingGroup = exports.SingGroup || (exports.SingGroup = {}));
 exports.singGroupNameMap = new Map();
 exports.singGroupNameMap.set(SingGroup.SOPRANO, "Sopran");
 exports.singGroupNameMap.set(SingGroup.ALTO, "Alt");
@@ -39,7 +39,7 @@ var MemberState;
     MemberState["MEMBER"] = "M";
     MemberState["STUDENT"] = "S";
     MemberState["GUEST"] = "G";
-})(MemberState || (exports.MemberState = MemberState = {}));
+})(MemberState = exports.MemberState || (exports.MemberState = {}));
 const userSchema = new mongoose_1.Schema({
     id: {
         // vv.nnnnnn z.B. mi.suedka; wird als Referenz zu anderen Objekten verwendet, damit diese sprechend ist
@@ -148,49 +148,6 @@ userSchema.post("save", function (doc, next) {
         next();
     });
 });
-// Create a nodemailer transporter TODO: dupliziert von app.ts
-const transporter = nodemailer_1.default.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT),
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
-    greetingTimeout: 1000 * 10,
-    logger: !!process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
-});
-transporter.verify(function (error, success) {
-    if (error) {
-        console.log(error);
-    }
-    else {
-        console.log("SMTP server is ready to take our messages");
-    }
-});
-function createTransporter() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const transporter = nodemailer_1.default.createTransport({
-            host: process.env.SMTP_HOST,
-            port: parseInt(process.env.SMTP_PORT),
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS,
-            },
-            greetingTimeout: 1000 * 10,
-            logger: !!process.env.SMTP_DEBUG &&
-                process.env.SMTP_DEBUG.toLowerCase() == "true",
-        });
-        transporter.verify(function (error, success) {
-            if (error) {
-                console.log(error);
-            }
-            else {
-                console.log("SMTP server is ready to take our messages");
-            }
-        });
-        return transporter;
-    });
-}
 // Send verification email to the user
 function sendVerificationEmail(user) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -203,9 +160,8 @@ function sendVerificationEmail(user) {
   Bitte klicke auf den folgenden Link um die E-Mail Adresse zu bestätigen: <a href="${verificationUrl}">${verificationUrl}</a>
   `;
         const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
-        const result = yield transporter.sendMail(mailOptions);
-        // const smtpDebug = process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
-        if (transporter.logger) {
+        const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions);
+        if (misc_utils_1.mailTransporter.logger) {
             console.log("Verification e-mail:", result);
         }
     });

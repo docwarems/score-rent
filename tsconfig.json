@@ -6,6 +6,11 @@
     "strict": true,
     "esModuleInterop": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
-  }
+    "emitDecoratorMetadata": true,
+    
+  },
+  "exclude": [
+    "e2e",
+    "playwright.config.ts"
+  ]
 }

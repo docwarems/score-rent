@@ -14,10 +14,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const User_1 = require("../models/User");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-require("dotenv").config();
-const nodemailer_1 = __importDefault(require("nodemailer"));
-var QRCode = require("qrcode");
 const uuid_1 = require("uuid");
+const misc_utils_1 = require("../utils/misc-utils");
+require("dotenv").config();
+var QRCode = require("qrcode");
 const handleSaveErrors = (err, type) => {
     console.log(err.message, err.code);
     let errors = {
@@ -97,17 +97,6 @@ var EmailVerificationStatus;
     EmailVerificationStatus[EmailVerificationStatus["NOT_REGISTERED"] = 1] = "NOT_REGISTERED";
     EmailVerificationStatus[EmailVerificationStatus["ALREADY_VERFIED"] = 2] = "ALREADY_VERFIED";
 })(EmailVerificationStatus || (EmailVerificationStatus = {}));
-// Create a nodemailer transporter TODO: dupliziert von app.ts
-const transporter = nodemailer_1.default.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT),
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
-    greetingTimeout: 1000 * 10,
-    logger: !!process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
-});
 /**
  * Create a espass (electronic smart pass) file to be opened with PassAndroid (and obviously only with this app)
  * - main.json (this constant); the message will converted to a QR Code
@@ -178,8 +167,8 @@ const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void
             // attachments: [{ path: url }, { path: "/tmp/hsc-noten.espass" }],
             attachments: [{ path: url }],
         };
-        const result = yield transporter.sendMail(mailOptions);
-        if (transporter.logger) {
+        const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions);
+        if (misc_utils_1.mailTransporter.logger) {
             console.log("Registration successful e-mail:", result);
         }
     }
@@ -331,9 +320,8 @@ function sendPasswordResetEmail(user) {
   `;
         const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
         try {
-            const result = yield transporter.sendMail(mailOptions);
-            // const smtpDebug = process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
-            if (transporter.logger) {
+            const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions);
+            if (misc_utils_1.mailTransporter.logger) {
                 console.log("Password reset e-mail:", result);
             }
         }

@@ -383,41 +383,26 @@ const sendCheckoutConfirmationEmail = async (
   score: IScore,
   testRecipient?: string
 ) => {
-  try {
-    const email = testRecipient ? testRecipient : user.email;
-    const subject = "Hans-Sachs-Chor Noten ausgeliehen";
+  const subject = "Hans-Sachs-Chor Noten ausgeliehen";
 
-    const html = `
-      Liebe Chorsängerin, lieber Chorsänger,
-      <p>
-      Du hast Noten "${(await getScoreTypeMap()).get(
-        score.signature
-      )}" mit Nummer ${score.id} vom Hans-Sachs-Chor ausgeliehen.<br>
-      Bitte behandle die Noten pfleglich und nehme Eintragungen nur mit Bleistift vor.<br>
-      Nach dem Konzert gebe die Noten bitte zeitnah an den Chor zurück.<br>
-      Radiere bitte vorher deine Eintragungen aus.<br>    
-      <p>
-      Wenn du das Konzert nicht mitsingen kannst, gib die Noten bitte so schnell wie möglich zurück, damit sie anderen zur Verfügung stehen.<br>
-      <p>
-      Und nun viel Spaß beim Proben und viel Erfolg beim Konzert!
-      <p>
-      Dein Hans-Sachs-Chor Notenwart
-    `;
+  const html = `
+    Liebe Chorsängerin, lieber Chorsänger,
+    <p>
+    Du hast Noten "${(await getScoreTypeMap()).get(
+      score.signature
+    )}" mit Nummer ${score.id} vom Hans-Sachs-Chor ausgeliehen.<br>
+    Bitte behandle die Noten pfleglich und nehme Eintragungen nur mit Bleistift vor.<br>
+    Nach dem Konzert gebe die Noten bitte zeitnah an den Chor zurück.<br>
+    Radiere bitte vorher deine Eintragungen aus.<br>    
+    <p>
+    Wenn du das Konzert nicht mitsingen kannst, gib die Noten bitte so schnell wie möglich zurück, damit sie anderen zur Verfügung stehen.<br>
+    <p>
+    Und nun viel Spaß beim Proben und viel Erfolg beim Konzert!
+    <p>
+    Dein Hans-Sachs-Chor Notenwart
+  `;
 
-    const mailOptions = {
-      from: process.env.SMTP_FROM,
-      to: email,
-      subject,
-      html,
-    };
-
-    const result = await mailTransporter.sendMail(mailOptions);
-    if (mailTransporter.logger) {
-      console.log("Score checkout confirmation e-mail:", result);
-    }
-  } catch (err) {
-    console.error(err);
-  }
+  await sendConfirmationEmail(user, subject, html, testRecipient);
 };
 
 const sendCheckinConfirmationEmail = async (
@@ -425,38 +410,53 @@ const sendCheckinConfirmationEmail = async (
   score: IScore,
   testRecipient?: string
 ) => {
+  const subject = "Hans-Sachs-Chor Noten Rückgabe erfolgreich";
+
+  // TODO: not sure if we should send this info to users as it may be internal
+  // checkinComment = checkinComment
+  //   ? `<br>Kommentar zur Rückgabe: '${checkinComment}'`
+  //   : "";
+  // const html =
+  //   `Die Noten mit Nummer ${extScoreId} wurden erfolgreich zurückgegeben. Vielen Dank!` +
+  //   checkinComment;
+
+  const html = `
+  Liebe Chorsängerin, lieber Chorsänger,
+  <p>
+  Du hast die Noten "${(await getScoreTypeMap()).get(
+    score.signature
+  )}" mit Nummer ${score.id} erfolgreich zurückgegeben. Vielen Dank!
+  <p>
+  Dein Hans-Sachs-Chor Notenwart
+  `;
+
+  await sendConfirmationEmail(user, subject, html, testRecipient);
+};
+
+const sendConfirmationEmail = async (
+  user: any,
+  subject: string,
+  htmlText: string,
+  testRecipient?: string
+) => {
   try {
     const email = testRecipient ? testRecipient : user.email;
-    const subject = "Hans-Sachs-Chor Noten Rückgabe erfolgreich";
+    if (email) {
+      const mailOptions = {
+        from: process.env.SMTP_FROM,
+        to: email,
+        subject,
+        htmlText,
+      };
 
-    // TODO: not sure if we should send this info to users as it may be internal
-    // checkinComment = checkinComment
-    //   ? `<br>Kommentar zur Rückgabe: '${checkinComment}'`
-    //   : "";
-    // const html =
-    //   `Die Noten mit Nummer ${extScoreId} wurden erfolgreich zurückgegeben. Vielen Dank!` +
-    //   checkinComment;
-
-    const html = `
-    Liebe Chorsängerin, lieber Chorsänger,
-    <p>
-    Du hast die Noten "${(await getScoreTypeMap()).get(
-      score.signature
-    )}" mit Nummer ${score.id} erfolgreich zurückgegeben. Vielen Dank!
-    <p>
-    Dein Hans-Sachs-Chor Notenwart
-    `;
-
-    const mailOptions = {
-      from: process.env.SMTP_FROM,
-      to: email,
-      subject,
-      html,
-    };
-
-    const result = await mailTransporter.sendMail(mailOptions);
-    if (mailTransporter.logger) {
-      console.log("Score checkin confirmation e-mail:", result);
+      const result = await mailTransporter.sendMail(mailOptions);
+      if (mailTransporter.logger) {
+        console.log("Score confirmation e-mail:", result);
+      }
+    } else {
+      console.log(
+        `No confirmation sent because no e-mail for user ${user.id} defined.`
+      );
     }
   } catch (err) {
     console.error(err);
