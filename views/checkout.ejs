@@ -35,7 +35,14 @@
 </form>
 <p></p>
 
-<% if (users) { %>
+<script>
+  const divError = document.querySelector('.divError');
+</script>
+
+<% 
+   if (users && (users.length > 0)) { 
+    // show hits of user search to let admin choose one
+%>
 <table class="w3-table-all userTable" id="userTable">
   <tr>
     <th>Name</th>
@@ -61,11 +68,16 @@
   </form>
 </div>
 <% } %>
-
+<% if (users && (users.length == 0)) { %>
+<script>
+  divError.style = "display: block";
+  const pError = document.querySelector('.pError');
+  pError.textContent = 'Benutzer nicht gefunden';
+</script>
+<% } %>
 
 <!-- <script src="./node_modules/html5-qrcode/html5-qrcode.min.js"></script> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js" integrity="sha512-k/KAe4Yff9EUdYI5/IAHlwUswqeipP+Cp5qnrsUjTPCgl51La2/JhyyjNciztD7mWNKLSXci48m7cctATKfLlQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
 
 <div class="w3-panel w3-border divUser" style="display: none">
   <h3>Benutzer</h3>
@@ -115,7 +127,6 @@
   const divScore = document.querySelector('.divScore');
   const divSuccess = document.querySelector('.divSuccess');
   const pSuccess = document.querySelector('.pSuccess');
-  const divError = document.querySelector('.divError');
   const divHome = document.querySelector('.divHome');
   const cbAllowDoubleCheckout = document.querySelector('.allowDoubleCheckout');
 
@@ -125,7 +136,7 @@
     e.preventDefault();
     divError.style = "display: none";
     formScan.style = "display: none";
-    if (divUserSearch) {  // TODO: why not defined after search?
+    if (divUserSearch) { // TODO: why not defined after search?
       divUserSearch.style = "display: none";
     }
     divSuccess.style = "display: none";
@@ -211,7 +222,7 @@
 
         divSuccess.style = "display: block";
         const userText = data.checkoutUser.id == data.USER_UNKNOWN ? "Leihzettel " + data.checkoutId : "Benutzer: " + data.checkoutUser.firstName + " " + data.checkoutUser.lastName;
-        pSuccess.innerHTML = userText  + "<br>";
+        pSuccess.innerHTML = userText + "<br>";
         btnScan.textContent = "Noten scannen";
         const inputUserId = document.querySelector('.userId');
         const inputName = document.querySelector('.name');
@@ -272,7 +283,7 @@
     if (btnScan.textContent == "User/Leihzettel scannen") {
       scanner.clear();
       if (await postCheckout({
-        userJwtOrCheckoutId: result
+          userJwtOrCheckoutId: result
         })) {
         btnScan.textContent = "Noten scannen";
         formScan.style = "display: block";

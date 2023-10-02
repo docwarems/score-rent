@@ -3,9 +3,13 @@
 ## Remote Android Debugging
 
 - enable USB debugging in Android Dev settings
+  . Einstellungen / Zusätzliche Einstellungen / Entwickleroptionen / USB Debugging
 - connect device with USB to pc
 - URL chrome://inspect/#devices
 - the device type should appear on the page
+- if not, try
+  - reload the inspect page
+  - open the inspect page in new tab
 
 ### Port forwarding
 
