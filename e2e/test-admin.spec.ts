@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 require("dotenv").config();
+const path = require("path");
 
 test.beforeEach(async ({ page }) => {
   // login
@@ -58,4 +59,181 @@ test("Show checkouts", async ({ page }) => {
   ).toBeHidden();
   await page.keyboard.press("Backspace");
   await page.keyboard.press("Backspace");
+});
+
+test.skip("checkout with user search", async ({ page }) => {
+  await page.getByRole("link", { name: "Noten Ausleihe" }).click();
+  await expect(page.getByRole("heading", { name: "Ausleihe" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "User/Leihzettel scannen" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "User über Namen suchen" })
+  ).toBeVisible();
+
+  await page.locator('input[name="userLastName"]').click();
+  await page
+    .locator('input[name="userLastName"]')
+    .fill(process.env.PLAYWRIGHT_USER_LAST_NAME!);
+  await page.getByRole("button", { name: "User über Namen suchen" }).click();
+
+  await expect(
+    page.getByRole("cell", {
+      name: "Monika Mustermann",
+    })
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("cell", {
+        name: "Auswählen",
+      })
+      .nth(2)
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("button", {
+        name: "Auswählen",
+      })
+      .nth(2)
+  ).toBeVisible();
+  await page
+    .getByRole("button", {
+      name: "Auswählen",
+    })
+    .nth(2)
+    .click();
+
+  await expect(page.getByText("Benutzer: Susi Südkamp")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Noten scannen" })
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Noten scannen" }).click();
+  await expect(page.getByText("Scan an Image File")).toBeVisible();
+
+  await page.getByText("Scan an Image File").click();
+  await expect(
+    page.getByRole("button", { name: "Choose Image - No image choosen" })
+  ).toBeVisible();
+
+  console.log("__dirname", __dirname);
+  await expect(page.locator("css=html5-qrcode-element")).toBeHidden();
+  await page
+    .getByRole("button", { name: "Choose Image - No image choosen" })
+    .click();
+  //   await page.locator('css=html5-qrcode-element').setInputFiles(path.join(__dirname, '../qr-code.png'));
+
+  //   await page.pause();
+});
+
+test("checkout with user QR Code", async ({ page }) => {
+  await checkout(page);
+  await page.goto(`/`);
+  await checkin(page);
+  //   await page.pause();
+});
+
+async function checkout(page: any) {
+  await page.getByRole("link", { name: "Noten Ausleihe" }).click();
+  await expect(page.getByRole("heading", { name: "Ausleihe" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "User/Leihzettel scannen" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "User über Namen suchen" })
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "User/Leihzettel scannen" }).click();
+  await page.getByText("Scan an Image File").click();
+  await page.setInputFiles(
+    'input[type="file"]',
+    path.join(__dirname, "qr-test-user.png")
+  );
+  await expect(page.getByText("Benutzer: Monika Mustermann")).toBeVisible();
+
+  // scan non existing score
+  await page.getByRole("button", { name: "Noten scannen" }).click();
+  await page.getByText("Scan an Image File").click();
+  await page.setInputFiles(
+    'input[type="file"]',
+    path.join(__dirname, "qr-brfs-ad-150.png")
+  );
+  await expect(
+    page.getByText("Score with Id BRFS-AD-150 not found")
+  ).toBeVisible();
+
+  // scan existing score
+  await page.getByRole("button", { name: "Noten scannen" }).click();
+  await page.getByText("Scan an Image File").click();
+  await page.setInputFiles(
+    'input[type="file"]',
+    path.join(__dirname, "qr-brfs-ad-140.png")
+  );
+  //   await expect(page.getByText('Score with Id BRFS-AD-150 not found')).toBeVisible();
+
+  await page.getByRole("button", { name: "Ausleihe" }).click();
+  await expect(
+    page.getByText(
+      "Benutzer: Monika MustermannNoten Id BRFS-AD-140Ausleihe erfolgreich"
+    )
+  ).toBeVisible();
+}
+
+async function checkin(page: any) {
+  await page.getByRole("link", { name: "Noten Rückgabe" }).click();
+  await expect(page.getByRole("heading", { name: "Rückgabe" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Noten scannen" })
+  ).toBeVisible();
+
+  // scan non existing score
+  await page.getByRole("button", { name: "Noten scannen" }).click();
+  await page.getByText("Scan an Image File").click();
+  await page.setInputFiles(
+    'input[type="file"]',
+    path.join(__dirname, "qr-brfs-ad-150.png")
+  );
+  await expect(
+    page.getByText("Score with Id BRFS-AD-150 not found")
+  ).toBeVisible();
+
+  // TODO: scan score not checked out
+
+  // scan existing score
+  await page.getByRole("button", { name: "Noten scannen" }).click();
+  await page.getByText("Scan an Image File").click();
+  await page.setInputFiles(
+    'input[type="file"]',
+    path.join(__dirname, "qr-brfs-ad-140.png")
+  );
+  await page.getByRole("button", { name: "Rückgabe" }).click();
+  await expect(page.getByText("Rückgabe erfolgreich")).toBeVisible();
+
+  //   await page.pause();
+}
+
+test("checkout user not found", async ({ page }) => {
+  await page.getByRole("link", { name: "Noten Ausleihe" }).click();
+  await expect(page.getByRole("heading", { name: "Ausleihe" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "User/Leihzettel scannen" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "User über Namen suchen" })
+  ).toBeVisible();
+
+  await page.locator('input[name="userLastName"]').click();
+  await page.locator('input[name="userLastName"]').fill("foo");
+  await page.getByRole("button", { name: "User über Namen suchen" }).click();
+
+  await expect(page.getByText("Benutzer nicht gefunden")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "User/Leihzettel scannen" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "User über Namen suchen" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Noten scannen" })
+  ).toBeHidden();
 });
