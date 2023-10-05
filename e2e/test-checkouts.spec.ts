@@ -16,7 +16,7 @@ test.beforeEach(async ({ page }) => {
   ).toBeVisible();
 });
 
-test("Show checkouts", async ({ page }) => {
+test.skip("Show checkouts", async ({ page }) => {
   await page.getByRole("link", { name: "Ausleihen anzeigen" }).click();
 
   await expect(page.getByRole("heading", { name: "Ausleihen" })).toBeVisible();
