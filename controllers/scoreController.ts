@@ -253,7 +253,7 @@ module.exports.checkin_post = async (req: any, res: any) => {
               }
             } else {
               res.status(400).json({
-                errors: `Score ${scoreId} checked out by user Id ${checkedOutByUserId}, but no user found this id`,
+                errors: `Score ${scoreId} checked out by user Id ${checkedOutByUserId}, but no user found with this id`,
               });
             }
           }
@@ -275,7 +275,7 @@ module.exports.checkin_post = async (req: any, res: any) => {
             res.status(200).json({ checkinScore: score, checkinUser: user });
           } else {
             res.status(400).json({
-              errors: `Score ${scoreId} checked out by user Id ${checkedOutByUserId}, but no user found this id`,
+              errors: `Score ${scoreId} checked out by user Id ${checkedOutByUserId}, but no user found with this id`,
             });
           }
         } else {

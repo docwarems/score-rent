@@ -85,6 +85,7 @@ As a maintainer I need to get a view of all checkouts.
 
 - mit einem Leihzettel können mehrere Ausleihen erzeugt werden
 - Notenstatus per Scannen von Score Id ermitteln
+- User bearbeiten aus User Liste: Registrierungsdatum
 
 ## Development
 
