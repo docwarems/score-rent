@@ -67,7 +67,7 @@ test("checkout/checkin with user QR Code", async ({ page }) => {
 
   // User scan
   await page.getByRole("button", { name: "User/Leihzettel scannen" }).click();
-  await expect(page.getByText("Scan an Image File")).toBeVisible({ timeout: 10 * 1000 });
+  await expect(page.getByText("Scan an Image File")).toBeVisible();  // fails quite often - don't know why
   await page.getByText("Scan an Image File").click();
   await page.setInputFiles(
     'input[type="file"]',
@@ -138,7 +138,7 @@ async function gotoCheckoutPage(page: any) {
 async function scanScoreAndCheckout(page: any) {
   // scan non existing score
   await page.getByRole("button", { name: "Noten scannen" }).click();
-  await expect(page.getByText("Scan an Image File")).toBeVisible({ timeout: 10 * 1000 });
+  await expect(page.getByText("Scan an Image File")).toBeVisible(); // fails quite often - don't know why
   await page.getByText("Scan an Image File").click();
   await page.setInputFiles(
     'input[type="file"]',
@@ -174,7 +174,7 @@ async function checkin(page: any) {
 
   // scan non existing score
   await page.getByRole("button", { name: "Noten scannen" }).click();
-  await expect(page.getByText("Scan an Image File")).toBeVisible({ timeout: 10 * 1000 });
+  await expect(page.getByText("Scan an Image File")).toBeVisible();
   await page.getByText("Scan an Image File").click();
   await page.setInputFiles(
     'input[type="file"]',
