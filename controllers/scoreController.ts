@@ -390,12 +390,13 @@ const sendCheckoutConfirmationEmail = async (
 ) => {
   const subject = "Hans-Sachs-Chor Noten ausgeliehen";
 
+  const extId = score.extId ? score.extId : "???";
   const html = `
     Liebe Chorsängerin, lieber Chorsänger,
     <p>
     Du hast Noten "${(await getScoreTypeMap()).get(
       score.signature
-    )}" mit Nummer ${score.id} vom Hans-Sachs-Chor ausgeliehen.<br>
+    )}" mit Nummer ${score.id} (externe Id: ${extId}) vom Hans-Sachs-Chor ausgeliehen.<br>
     Bitte behandle die Noten pfleglich und nehme Eintragungen nur mit Bleistift vor.<br>
     Nach dem Konzert gebe die Noten bitte zeitnah an den Chor zurück.<br>
     Radiere bitte vorher deine Eintragungen aus.<br>    
@@ -425,12 +426,13 @@ const sendCheckinConfirmationEmail = async (
   //   `Die Noten mit Nummer ${extScoreId} wurden erfolgreich zurückgegeben. Vielen Dank!` +
   //   checkinComment;
 
+  const extId = score.extId ? score.extId : "???";
   const html = `
   Liebe Chorsängerin, lieber Chorsänger,
   <p>
   Du hast die Noten "${(await getScoreTypeMap()).get(
     score.signature
-  )}" mit Nummer ${score.id} erfolgreich zurückgegeben. Vielen Dank!
+  )}" mit Nummer ${score.id} (externe Id: ${extId}) erfolgreich zurückgegeben. Vielen Dank!
   <p>
   Dein Hans-Sachs-Chor Notenwart
   `;
