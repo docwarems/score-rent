@@ -94,6 +94,10 @@ const userSchema = new mongoose_1.Schema({
         type: Boolean,
         default: false,
     },
+    isPlaywright: {
+        type: Boolean,
+        default: false,
+    },
     active: {
         type: Boolean,
         default: true,

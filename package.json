@@ -37,7 +37,7 @@
     "typescript": "^5.2.2"
   },
   "scripts": {
-    "start": "node dist/app.js",
+    "start": "ts-node app.ts",
     "dev": "nodemon app.ts",
     "pretty-quick": "pretty-quick"
   },

@@ -73,6 +73,7 @@ module.exports.checkout_get = (req, res) => {
 };
 module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userJwtOrCheckoutId, userId, userLastName, scoreId, scoreExtId, state, date, comment, allowDoubleCheckout, checkoutId, } = req.body;
+    const { isAdmin, isPlaywright } = res.locals.user;
     try {
         if (userId && scoreId) {
             let score = yield Score_1.Score.findOne({ id: scoreId });
@@ -99,7 +100,7 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                     score = yield score.save();
                     if (score) {
                         const user = yield User_1.User.findOne({ id: userId });
-                        if (user) {
+                        if (user && !isPlaywright) {
                             // we don't expect error because we validated the user id before
                             yield sendCheckoutConfirmationEmail(user, score, process.env.EMAIL_TEST_RECIPIENT);
                         }
@@ -201,6 +202,7 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
 });
 module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { scoreId, comment } = req.body;
+    const { isAdmin, isPlaywright } = res.locals.user;
     try {
         if (scoreId && comment != undefined) {
             // checkin request
@@ -226,13 +228,15 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
                             checkout.checkinComment = comment;
                             score = yield score.save();
                             if (score) {
-                                yield sendCheckinConfirmationEmail(user, score, process.env.EMAIL_TEST_RECIPIENT);
+                                if (!isPlaywright) {
+                                    yield sendCheckinConfirmationEmail(user, score, process.env.EMAIL_TEST_RECIPIENT);
+                                }
                                 res.status(201).json({ checkinScore: score });
                             }
                             else {
                                 res
                                     .status(400)
-                                    .json({ errors: "Update score with checkout record failed" });
+                                    .json({ errors: "Update score checkout record for checkin failed" });
                             }
                         }
                         else {

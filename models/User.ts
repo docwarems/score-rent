@@ -41,6 +41,7 @@ export interface IUser {
   isAdmin: boolean;
   isManuallyRegistered: boolean;
   isPasswordHashed: boolean;
+  isPlaywright: boolean;
   active: boolean;
 }
 
@@ -106,6 +107,10 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>({
     default: false,
   },
   isPasswordHashed: {
+    type: Boolean,
+    default: false,
+  },
+  isPlaywright: {
     type: Boolean,
     default: false,
   },

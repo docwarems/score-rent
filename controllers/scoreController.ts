@@ -81,6 +81,8 @@ module.exports.checkout_post = async (req: any, res: any) => {
     checkoutId,
   } = req.body;
 
+  const { isAdmin, isPlaywright } = res.locals.user;
+
   try {
     if (userId && scoreId) {
       let score = await Score.findOne({ id: scoreId });
@@ -115,7 +117,7 @@ module.exports.checkout_post = async (req: any, res: any) => {
           score = await score.save();
           if (score) {
             const user = await User.findOne({ id: userId });
-            if (user) {
+            if (user && !isPlaywright) {
               // we don't expect error because we validated the user id before
               await sendCheckoutConfirmationEmail(
                 user,
@@ -214,6 +216,7 @@ module.exports.checkout_post = async (req: any, res: any) => {
 
 module.exports.checkin_post = async (req: any, res: any) => {
   const { scoreId, comment } = req.body;
+  const { isAdmin, isPlaywright } = res.locals.user;
 
   try {
     if (scoreId && comment != undefined) {
@@ -240,16 +243,18 @@ module.exports.checkin_post = async (req: any, res: any) => {
 
               score = await score.save();
               if (score) {
-                await sendCheckinConfirmationEmail(
-                  user,
-                  score,
-                  process.env.EMAIL_TEST_RECIPIENT
-                );
+                if (!isPlaywright) {
+                  await sendCheckinConfirmationEmail(
+                    user,
+                    score,
+                    process.env.EMAIL_TEST_RECIPIENT
+                  );  
+                }
                 res.status(201).json({ checkinScore: score });
               } else {
                 res
                   .status(400)
-                  .json({ errors: "Update score with checkout record failed" });
+                  .json({ errors: "Update score checkout record for checkin failed" });
               }
             } else {
               res.status(400).json({
