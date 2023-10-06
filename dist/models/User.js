@@ -28,7 +28,7 @@ var SingGroup;
     SingGroup["ALTO"] = "A";
     SingGroup["TENOR"] = "T";
     SingGroup["BASS"] = "B";
-})(SingGroup || (exports.SingGroup = SingGroup = {}));
+})(SingGroup = exports.SingGroup || (exports.SingGroup = {}));
 exports.singGroupNameMap = new Map();
 exports.singGroupNameMap.set(SingGroup.SOPRANO, "Sopran");
 exports.singGroupNameMap.set(SingGroup.ALTO, "Alt");
@@ -39,7 +39,7 @@ var MemberState;
     MemberState["MEMBER"] = "M";
     MemberState["STUDENT"] = "S";
     MemberState["GUEST"] = "G";
-})(MemberState || (exports.MemberState = MemberState = {}));
+})(MemberState = exports.MemberState || (exports.MemberState = {}));
 const userSchema = new mongoose_1.Schema({
     id: {
         // vv.nnnnnn z.B. mi.suedka; wird als Referenz zu anderen Objekten verwendet, damit diese sprechend ist

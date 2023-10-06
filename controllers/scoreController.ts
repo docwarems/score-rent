@@ -441,7 +441,7 @@ const sendCheckinConfirmationEmail = async (
 const sendConfirmationEmail = async (
   user: any,
   subject: string,
-  htmlText: string,
+  html: string,
   testRecipient?: string
 ) => {
   try {
@@ -451,7 +451,7 @@ const sendConfirmationEmail = async (
         from: process.env.SMTP_FROM,
         to: email,
         subject,
-        htmlText,
+        html,
       };
 
       const result = await mailTransporter.sendMail(mailOptions);

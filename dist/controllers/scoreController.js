@@ -395,7 +395,7 @@ const sendCheckinConfirmationEmail = (user, score, testRecipient) => __awaiter(v
   `;
     yield sendConfirmationEmail(user, subject, html, testRecipient);
 });
-const sendConfirmationEmail = (user, subject, htmlText, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
+const sendConfirmationEmail = (user, subject, html, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const email = testRecipient ? testRecipient : user.email;
         if (email) {
@@ -403,7 +403,7 @@ const sendConfirmationEmail = (user, subject, htmlText, testRecipient) => __awai
                 from: process.env.SMTP_FROM,
                 to: email,
                 subject,
-                htmlText,
+                html,
             };
             const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions);
             if (misc_utils_1.mailTransporter.logger) {
