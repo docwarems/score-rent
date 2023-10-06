@@ -64,7 +64,7 @@ test("Show checkouts", async ({ page }) => {
 
 test("checkout/checkin with user QR Code", async ({ page }) => {
   // Listen for all console logs
-  page.on('console', msg => console.log(msg.text()));
+  // page.on('console', msg => console.log(msg.text()));
 
 
   await gotoCheckoutPage(page);
