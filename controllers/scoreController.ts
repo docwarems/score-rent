@@ -118,12 +118,20 @@ module.exports.checkout_post = async (req: any, res: any) => {
           if (score) {
             const user = await User.findOne({ id: userId });
             if (user && !isPlaywright) {
-              // we don't expect error because we validated the user id before
-              await sendCheckoutConfirmationEmail(
-                user,
-                score,
-                process.env.EMAIL_TEST_RECIPIENT
-              );
+              try {
+                // sending may fail with "sent limit exceeded" error
+                await sendCheckoutConfirmationEmail(
+                  user,
+                  score,
+                  process.env.EMAIL_TEST_RECIPIENT
+                );
+              } catch (error) {
+                console.error(error);
+                score.checkouts.pop();
+                checkout.checkoutConfirmationEmailNotSent = false;
+                score.checkouts.push(checkout);
+                await score.save();
+              }
             }
             res.status(201).json({ checkoutScore: score });
           } else {
@@ -224,7 +232,7 @@ module.exports.checkin_post = async (req: any, res: any) => {
       let score = await Score.findOne({ id: scoreId });
       if (score) {
         if (score.checkedOutByUserId) {
-          // current checkout record should last element of array
+          // current (open) checkout record should be last element of array
           const checkout = score.checkouts[score.checkouts.length - 1];
           if (checkout.checkinTimestamp) {
             // that's an error because last checkout record is not an open checkout
@@ -240,21 +248,28 @@ module.exports.checkin_post = async (req: any, res: any) => {
               score.checkedOutByUserId = ""; // mark this score as "not checked out"
               checkout.checkinTimestamp = new Date();
               checkout.checkinComment = comment;
-
+              checkout.checkinConfirmationEmailNotSent = false;
               score = await score.save();
               if (score) {
                 if (!isPlaywright) {
-                  await sendCheckinConfirmationEmail(
-                    user,
-                    score,
-                    process.env.EMAIL_TEST_RECIPIENT
-                  );  
+                  try {
+                    // sending may fail with "sent limit exceeded" error
+                    await sendCheckinConfirmationEmail(
+                      user,
+                      score,
+                      process.env.EMAIL_TEST_RECIPIENT
+                    );
+                  } catch (error) {
+                    console.error(error);
+                    checkout.checkinConfirmationEmailNotSent = true;
+                    await score.save();
+                  }
                 }
                 res.status(201).json({ checkinScore: score });
               } else {
-                res
-                  .status(400)
-                  .json({ errors: "Update score checkout record for checkin failed" });
+                res.status(400).json({
+                  errors: "Update score checkout record for checkin failed",
+                });
               }
             } else {
               res.status(400).json({
@@ -396,7 +411,9 @@ const sendCheckoutConfirmationEmail = async (
     <p>
     Du hast Noten "${(await getScoreTypeMap()).get(
       score.signature
-    )}" mit HSC-Nummer ${score.id} (andere Nummer: ${extId}) vom Hans-Sachs-Chor ausgeliehen.<br>
+    )}" mit HSC-Nummer ${
+    score.id
+  } (andere Nummer: ${extId}) vom Hans-Sachs-Chor ausgeliehen.<br>
     Bitte behandle die Noten pfleglich und nehme Eintragungen nur mit Bleistift vor.<br>
     Nach dem Konzert gebe die Noten bitte zeitnah an den Chor zurück.<br>
     Vorher radiere bitte deine Eintragungen aus.<br>    
@@ -432,7 +449,9 @@ const sendCheckinConfirmationEmail = async (
   <p>
   Du hast die Noten "${(await getScoreTypeMap()).get(
     score.signature
-  )}" mit HSC-Nummer ${score.id} (andere Nummer: ${extId}) zurückgegeben. Vielen Dank!
+  )}" mit HSC-Nummer ${
+    score.id
+  } (andere Nummer: ${extId}) zurückgegeben. Vielen Dank!
   <p>
   Dein Hans-Sachs-Chor Notenwart
   `;
@@ -446,27 +465,23 @@ const sendConfirmationEmail = async (
   html: string,
   testRecipient?: string
 ) => {
-  try {
-    const email = testRecipient ? testRecipient : user.email;
-    if (email) {
-      const mailOptions = {
-        from: process.env.SMTP_FROM,
-        to: email,
-        subject,
-        html,
-      };
+  const email = testRecipient ? testRecipient : user.email;
+  if (email) {
+    const mailOptions = {
+      from: process.env.SMTP_FROM,
+      to: email,
+      subject,
+      html,
+    };
 
-      const result = await mailTransporter.sendMail(mailOptions);
-      if (mailTransporter.logger) {
-        console.log("Score confirmation e-mail:", result);
-      }
-    } else {
-      console.log(
-        `No confirmation sent because no e-mail for user ${user.id} defined.`
-      );
+    const result = await mailTransporter.sendMail(mailOptions);
+    if (mailTransporter.logger) {
+      console.log("Score confirmation e-mail:", result);
     }
-  } catch (err) {
-    console.error(err);
+  } else {
+    console.log(
+      `No confirmation sent because no e-mail for user ${user.id} defined.`
+    );
   }
 };
 

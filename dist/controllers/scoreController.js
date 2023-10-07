@@ -101,8 +101,17 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                     if (score) {
                         const user = yield User_1.User.findOne({ id: userId });
                         if (user && !isPlaywright) {
-                            // we don't expect error because we validated the user id before
-                            yield sendCheckoutConfirmationEmail(user, score, process.env.EMAIL_TEST_RECIPIENT);
+                            try {
+                                // sending may fail with "sent limit exceeded" error
+                                yield sendCheckoutConfirmationEmail(user, score, process.env.EMAIL_TEST_RECIPIENT);
+                            }
+                            catch (error) {
+                                console.error(error);
+                                score.checkouts.pop();
+                                checkout.checkoutConfirmationEmailNotSent = false;
+                                score.checkouts.push(checkout);
+                                yield score.save();
+                            }
                         }
                         res.status(201).json({ checkoutScore: score });
                     }
@@ -209,7 +218,7 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
             let score = yield Score_1.Score.findOne({ id: scoreId });
             if (score) {
                 if (score.checkedOutByUserId) {
-                    // current checkout record should last element of array
+                    // current (open) checkout record should be last element of array
                     const checkout = score.checkouts[score.checkouts.length - 1];
                     if (checkout.checkinTimestamp) {
                         // that's an error because last checkout record is not an open checkout
@@ -226,17 +235,26 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
                             score.checkedOutByUserId = ""; // mark this score as "not checked out"
                             checkout.checkinTimestamp = new Date();
                             checkout.checkinComment = comment;
+                            checkout.checkinConfirmationEmailNotSent = false;
                             score = yield score.save();
                             if (score) {
                                 if (!isPlaywright) {
-                                    yield sendCheckinConfirmationEmail(user, score, process.env.EMAIL_TEST_RECIPIENT);
+                                    try {
+                                        // sending may fail with "sent limit exceeded" error
+                                        yield sendCheckinConfirmationEmail(user, score, process.env.EMAIL_TEST_RECIPIENT);
+                                    }
+                                    catch (error) {
+                                        console.error(error);
+                                        checkout.checkinConfirmationEmailNotSent = true;
+                                        yield score.save();
+                                    }
                                 }
                                 res.status(201).json({ checkinScore: score });
                             }
                             else {
-                                res
-                                    .status(400)
-                                    .json({ errors: "Update score checkout record for checkin failed" });
+                                res.status(400).json({
+                                    errors: "Update score checkout record for checkin failed",
+                                });
                             }
                         }
                         else {
@@ -398,26 +416,21 @@ const sendCheckinConfirmationEmail = (user, score, testRecipient) => __awaiter(v
     yield sendConfirmationEmail(user, subject, html, testRecipient);
 });
 const sendConfirmationEmail = (user, subject, html, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const email = testRecipient ? testRecipient : user.email;
-        if (email) {
-            const mailOptions = {
-                from: process.env.SMTP_FROM,
-                to: email,
-                subject,
-                html,
-            };
-            const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions);
-            if (misc_utils_1.mailTransporter.logger) {
-                console.log("Score confirmation e-mail:", result);
-            }
-        }
-        else {
-            console.log(`No confirmation sent because no e-mail for user ${user.id} defined.`);
+    const email = testRecipient ? testRecipient : user.email;
+    if (email) {
+        const mailOptions = {
+            from: process.env.SMTP_FROM,
+            to: email,
+            subject,
+            html,
+        };
+        const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions);
+        if (misc_utils_1.mailTransporter.logger) {
+            console.log("Score confirmation e-mail:", result);
         }
     }
-    catch (err) {
-        console.error(err);
+    else {
+        console.log(`No confirmation sent because no e-mail for user ${user.id} defined.`);
     }
 });
 module.exports.updateCheckout_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {

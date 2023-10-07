@@ -24,12 +24,20 @@ exports.checkoutSchema = new mongoose_1.Schema({
         type: String,
         required: false,
     },
+    checkoutConfirmationEmailNotSent: {
+        type: Boolean,
+        required: false,
+    },
     checkinTimestamp: {
         type: Date,
         required: false,
     },
     checkinComment: {
         type: String,
+        required: false,
+    },
+    checkinConfirmationEmailNotSent: {
+        type: Boolean,
         required: false,
     },
 });
