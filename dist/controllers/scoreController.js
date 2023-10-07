@@ -365,10 +365,10 @@ const sendCheckoutConfirmationEmail = (user, score, testRecipient) => __awaiter(
     const html = `
     Liebe Chorsängerin, lieber Chorsänger,
     <p>
-    Du hast Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit Nummer ${score.id} (externe Id: ${extId}) vom Hans-Sachs-Chor ausgeliehen.<br>
+    Du hast Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit HSC-Nummer ${score.id} (andere Nummer: ${extId}) vom Hans-Sachs-Chor ausgeliehen.<br>
     Bitte behandle die Noten pfleglich und nehme Eintragungen nur mit Bleistift vor.<br>
     Nach dem Konzert gebe die Noten bitte zeitnah an den Chor zurück.<br>
-    Radiere bitte vorher deine Eintragungen aus.<br>    
+    Vorher radiere bitte deine Eintragungen aus.<br>    
     <p>
     Wenn du das Konzert nicht mitsingen kannst, gib die Noten bitte so schnell wie möglich zurück, damit sie anderen zur Verfügung stehen.<br>
     <p>
@@ -379,7 +379,7 @@ const sendCheckoutConfirmationEmail = (user, score, testRecipient) => __awaiter(
     yield sendConfirmationEmail(user, subject, html, testRecipient);
 });
 const sendCheckinConfirmationEmail = (user, score, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
-    const subject = "Hans-Sachs-Chor Noten Rückgabe erfolgreich";
+    const subject = "Hans-Sachs-Chor Noten Rückgabe erfolgt";
     // TODO: not sure if we should send this info to users as it may be internal
     // checkinComment = checkinComment
     //   ? `<br>Kommentar zur Rückgabe: '${checkinComment}'`
@@ -391,7 +391,7 @@ const sendCheckinConfirmationEmail = (user, score, testRecipient) => __awaiter(v
     const html = `
   Liebe Chorsängerin, lieber Chorsänger,
   <p>
-  Du hast die Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit Nummer ${score.id} (externe Id: ${extId}) erfolgreich zurückgegeben. Vielen Dank!
+  Du hast die Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit HSC-Nummer ${score.id} (andere Nummer: ${extId}) zurückgegeben. Vielen Dank!
   <p>
   Dein Hans-Sachs-Chor Notenwart
   `;

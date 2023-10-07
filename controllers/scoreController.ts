@@ -396,10 +396,10 @@ const sendCheckoutConfirmationEmail = async (
     <p>
     Du hast Noten "${(await getScoreTypeMap()).get(
       score.signature
-    )}" mit Nummer ${score.id} (externe Id: ${extId}) vom Hans-Sachs-Chor ausgeliehen.<br>
+    )}" mit HSC-Nummer ${score.id} (andere Nummer: ${extId}) vom Hans-Sachs-Chor ausgeliehen.<br>
     Bitte behandle die Noten pfleglich und nehme Eintragungen nur mit Bleistift vor.<br>
     Nach dem Konzert gebe die Noten bitte zeitnah an den Chor zurück.<br>
-    Radiere bitte vorher deine Eintragungen aus.<br>    
+    Vorher radiere bitte deine Eintragungen aus.<br>    
     <p>
     Wenn du das Konzert nicht mitsingen kannst, gib die Noten bitte so schnell wie möglich zurück, damit sie anderen zur Verfügung stehen.<br>
     <p>
@@ -416,7 +416,7 @@ const sendCheckinConfirmationEmail = async (
   score: IScore,
   testRecipient?: string
 ) => {
-  const subject = "Hans-Sachs-Chor Noten Rückgabe erfolgreich";
+  const subject = "Hans-Sachs-Chor Noten Rückgabe erfolgt";
 
   // TODO: not sure if we should send this info to users as it may be internal
   // checkinComment = checkinComment
@@ -432,7 +432,7 @@ const sendCheckinConfirmationEmail = async (
   <p>
   Du hast die Noten "${(await getScoreTypeMap()).get(
     score.signature
-  )}" mit Nummer ${score.id} (externe Id: ${extId}) erfolgreich zurückgegeben. Vielen Dank!
+  )}" mit HSC-Nummer ${score.id} (andere Nummer: ${extId}) zurückgegeben. Vielen Dank!
   <p>
   Dein Hans-Sachs-Chor Notenwart
   `;
