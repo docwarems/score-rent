@@ -128,7 +128,7 @@ module.exports.checkout_post = async (req: any, res: any) => {
               } catch (error) {
                 console.error(error);
                 score.checkouts.pop();
-                checkout.checkoutConfirmationEmailNotSent = false;
+                checkout.checkoutConfirmationEmailNotSent = true;
                 score.checkouts.push(checkout);
                 await score.save();
               }
@@ -248,7 +248,6 @@ module.exports.checkin_post = async (req: any, res: any) => {
               score.checkedOutByUserId = ""; // mark this score as "not checked out"
               checkout.checkinTimestamp = new Date();
               checkout.checkinComment = comment;
-              checkout.checkinConfirmationEmailNotSent = false;
               score = await score.save();
               if (score) {
                 if (!isPlaywright) {

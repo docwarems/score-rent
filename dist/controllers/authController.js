@@ -370,6 +370,12 @@ module.exports.password_reset_post = (req, res) => __awaiter(void 0, void 0, voi
         if (user) {
             user.password = password;
             user.isPasswordHashed = false;
+            // if user not verified yet, set as verified because password reset proves e-mail ok
+            if (!user.isVerified) {
+                user.isVerified = true;
+                user.isManuallyRegistered = false;
+                yield sendVerificationSuccessfulEmail(user);
+            }
             yield user.save();
             res.status(201).json({ user: user.id });
         }

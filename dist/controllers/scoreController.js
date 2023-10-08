@@ -108,7 +108,7 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                             catch (error) {
                                 console.error(error);
                                 score.checkouts.pop();
-                                checkout.checkoutConfirmationEmailNotSent = false;
+                                checkout.checkoutConfirmationEmailNotSent = true;
                                 score.checkouts.push(checkout);
                                 yield score.save();
                             }
@@ -235,7 +235,6 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
                             score.checkedOutByUserId = ""; // mark this score as "not checked out"
                             checkout.checkinTimestamp = new Date();
                             checkout.checkinComment = comment;
-                            checkout.checkinConfirmationEmailNotSent = false;
                             score = yield score.save();
                             if (score) {
                                 if (!isPlaywright) {
