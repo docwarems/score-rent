@@ -1,12 +1,14 @@
 {
-	"appName": "HSC rental score management",
-	"Noten": "Scores",
-	"Leihnoten registrieren": "Register rental scores",
-	"Noten Ausleihe": "Checkout score",
-	"Noten Rückgabe": "Return score",
-	"Ausleihen anzeigen": "Show checkouts",
-	"Benutzer": "User",
-	"Benutzer anlegen": "Register user",
-	"Benutzer Liste": "User list",
-	"QRCode für Login anzeigen": "Show QR code for login"
+    "translation": {
+        "app.name": "HSC rental score management",
+        "scores": "Scores",
+        "scores.register": "Register rental scores",
+        "score.checkout": "Checkout score",
+        "score.checkin": "Return score",
+        "checkouts.show": "Show checkouts",
+        "user": "User",
+        "user.register": "Register user",
+        "user.list": "User list",
+        "login.show.qrcode": "Show QR code for login"
+    }
 }

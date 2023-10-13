@@ -15,17 +15,34 @@ import nodemailer from "nodemailer";
 const bodyParser = require("body-parser");
 import jwt from "jsonwebtoken";
 var QRCode = require("qrcode");
-const { I18n } = require("i18n");
 const path = require("path");
 
+import i18next from "i18next";
+var middleware = require("i18next-http-middleware");
+import en from "./locales/en.json";
+import de from "./locales/de.json";
+
+i18next.use(middleware.LanguageDetector).init({
+  preload: ["en", "de"],
+  // ...otherOptions
+});
+
 // we must ensure that no write access to the file system is needed; as we are running on a readonly serverless platform
-const i18n = new I18n({
-  locales: ["en", "de"],  // other locales will fallback to en silently
-  fallbacks: { "de-*": "de" }, // fallback from any localized German (de-at, de-li etc.) to German
-  retryInDefaultLocale: true, // will return translation from defaultLocale in case current locale doesn't provide it
-  updateFiles: false, // whether to write new locale information to disk - defaults to true (I hope to avoid write access to the file system)
-  queryParameter: 'lang', // query parameter to switch locale (ie. /home?lang=ch)
-  directory: path.join(__dirname, "locales"),
+i18next.init({
+  // lng: "de-DE", // if you're using a language detector, do not define the lng option
+  fallbackLng: "en", // general fallback language
+  // debug: true,
+  resources: {
+    en,
+    // example for swiss flavour, falls back to de for other keys
+    "de-CH": {
+      translation: {
+        "app.name": "HSC Leihnoten (CH)",
+      },
+    },
+    // de falls back to en if key missing
+    de,
+  },
 });
 
 const app = express();
@@ -35,7 +52,12 @@ app.use(express.static("public"));
 app.use(express.json());
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(i18n.init); // default: using 'accept-language' header to guess language settings
+app.use(
+  middleware.handle(i18next, {
+    ignoreRoutes: ["/foo"], // or function(req, res, options, i18next) { /* return true to ignore */ }
+    removeLngFromUrl: false, // removes the language from the url when language detected in path
+  })
+);
 
 // view engine
 app.set("view engine", "ejs");

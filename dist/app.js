@@ -23,16 +23,31 @@ require("dotenv").config();
 const bodyParser = require("body-parser");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 var QRCode = require("qrcode");
-const { I18n } = require("i18n");
 const path = require("path");
+const i18next_1 = __importDefault(require("i18next"));
+var middleware = require("i18next-http-middleware");
+const en_json_1 = __importDefault(require("./locales/en.json"));
+const de_json_1 = __importDefault(require("./locales/de.json"));
+i18next_1.default.use(middleware.LanguageDetector).init({
+    preload: ["en", "de"],
+    // ...otherOptions
+});
 // we must ensure that no write access to the file system is needed; as we are running on a readonly serverless platform
-const i18n = new I18n({
-    locales: ["en", "de"],
-    fallbacks: { "de-*": "de" },
-    retryInDefaultLocale: true,
-    updateFiles: false,
-    queryParameter: 'lang',
-    directory: path.join(__dirname, "locales"),
+i18next_1.default.init({
+    // lng: "de-DE", // if you're using a language detector, do not define the lng option
+    fallbackLng: "en",
+    // debug: true,
+    resources: {
+        en: en_json_1.default,
+        // example for swiss flavour, falls back to de for other keys
+        "de-CH": {
+            translation: {
+                "app.name": "HSC Leihnoten (CH)",
+            },
+        },
+        // de falls back to en if key missing
+        de: de_json_1.default,
+    },
 });
 const app = express();
 // middleware
@@ -40,7 +55,10 @@ app.use(express.static("public"));
 app.use(express.json());
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(i18n.init); // default: using 'accept-language' header to guess language settings
+app.use(middleware.handle(i18next_1.default, {
+    ignoreRoutes: ["/foo"],
+    removeLngFromUrl: false, // removes the language from the url when language detected in path
+}));
 // view engine
 app.set("view engine", "ejs");
 // database connection
