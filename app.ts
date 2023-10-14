@@ -23,7 +23,7 @@ import en from "./locales/en.json";
 import de from "./locales/de.json";
 
 i18next.use(middleware.LanguageDetector).init({
-  preload: ["en", "de"],
+  preload: ["de"],
   // ...otherOptions
 });
 

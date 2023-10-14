@@ -1,6 +1,5 @@
 <%- include('partials/header'); -%>
-
-<h1>Ausleihe</h1>
+<h1><%= t('checkout') %></h1>
 
 <style>
   main {
@@ -23,15 +22,23 @@
   <div id="result"></div>
 </main>
 
+<%# Just for injecting translations %>
+<div style="display: none">
+  <p id="scan.score"><%= t('scan.score') %></p>
+  <p id="checkout.success"><%= t('checkout.success') %></p>
+  <p id="checkout.scan.user.sheet"><%= t('checkout.scan.user.sheet') %></p>
+  <p id="user.not.found"><%= t('user.not.found') %></p>
+</div>
+
 <div class="w3-panel w3-green divSuccess" style="display: none">
-  <p class="pSuccess">Ausleihe erfolgreich:</p>
+  <p class="pSuccess"><%= t('checkout.success') %></p>
 </div>
 <div class="w3-panel w3-red divError" style="display: none">
-  <p class="pError">Ausleihe Fehler</p>
+  <p class="pError"><%= t('checkout.error') %></p>
 </div>
 
 <form action="/checkout" id="formScan">
-  <button class="w3-button w3-black btnScan">User/Leihzettel scannen</button>
+  <button class="w3-button w3-black btnScan"><%= t('checkout.scan.user.sheet') %></button>
 </form>
 <p></p>
 
@@ -54,17 +61,17 @@
   <tr>
     <td class="userName"><%= user.firstName %>&nbsp;<%= user.lastName %></td>
     <td class="userEmail"><%= user.email %></td>
-    <td><button onclick="document.querySelector('.userTable').style = 'display: none'; postCheckout({ userId: '<%= user.id %>' });" class="w3-button">Auswählen</button></td>
+    <td><button onclick="document.querySelector('.userTable').style = 'display: none'; postCheckout({ userId: '<%= user.id %>' });" class="w3-button"><%= t('choose') %></button></td>
   </tr>
   <% }); %>
 </table>
 <% } else { %>
 <div class="divUserSearch" style="display: block">
   <form action="/score/checkout" id="formUserSearch" method="post">
-    <label>Nachname</label>
+    <label><%= t('name.last') %></label>
     <input type="text" name="userLastName" value="" class="w3-input userSearchLastName" required>
     <p></p>
-    <button class="w3-button w3-black btnUserSearch">User über Namen suchen</button>
+    <button class="w3-button w3-black btnUserSearch"><%= t('user.search.by.name') %></button>
   </form>
 </div>
 <% } %>
@@ -72,7 +79,7 @@
 <script>
   divError.style = "display: block";
   const pError = document.querySelector('.pError');
-  pError.textContent = 'Benutzer nicht gefunden';
+  pError.textContent = document.getElementById('user.not.found').innerHTML;
 </script>
 <% } %>
 
@@ -91,7 +98,7 @@
 
 <div class="w3-panel w3-border divScore" style="display: none">
   <form action="/checkout" id="formCheckout">
-    <h3>Noten</h3>
+    <h3><%= t('scores') %></h3>
     <label>ID</label>
     <input type="text" name="scoreId" value="" class="w3-input scoreId" readonly>
     <label>Ext. ID</label>
@@ -105,19 +112,19 @@
     <label>Doppelte Ausleihe erlauben</label>
     <input type="checkbox" name="allowDoubleCheckout" value="allow" class="w3-check allowDoubleCheckout">
     <p></p>
-    <button class="w3-button w3-black btnCheckout">Ausleihe</button>
+    <button class="w3-button w3-black btnCheckout"><%= t('checkout') %></button>
   </form>
 </div>
 
 <div class="divHome" style="display: none">
   <p></p>
-  <a href="/" class="w3-button w3-black">Startseite</a>
+  <a href="/" class="w3-button w3-black"><%= t('home') %></a>
 </div>
 
 <%- include('partials/footer'); -%>
 
 <script>
-  const formScan = document.querySelector('#formScan');
+const formScan = document.querySelector('#formScan');
   const formCheckout = document.querySelector('#formCheckout');
   const btnScan = document.querySelector('.btnScan');
   const btnCheckout = document.querySelector('.btnCheckout');
@@ -222,7 +229,7 @@
         divSuccess.style = "display: block";
         const userText = data.checkoutUser.id == data.USER_UNKNOWN ? "Leihzettel " + data.checkoutId : "Benutzer: " + data.checkoutUser.firstName + " " + data.checkoutUser.lastName;
         pSuccess.innerHTML = userText + "<br>";
-        btnScan.textContent = "Noten scannen";
+        btnScan.textContent = document.getElementById('scan.score').innerHTML;
         const inputUserId = document.querySelector('.userId');
         const inputName = document.querySelector('.name');
         const inputEmail = document.querySelector('.email');
@@ -243,7 +250,7 @@
           btnCheckout.remove();
 
           divSuccess.style = "display: block";
-          pSuccess.innerHTML += "Ausleihe erfolgreich";
+          pSuccess.innerHTML += document.getElementById('checkout.success').innerHTML;
 
           divError.style = "display: none";
           divHome.style = "display: block";
@@ -252,7 +259,7 @@
           console.log("score to checkout found");
 
           divSuccess.style = "display: block";
-          pSuccess.innerHTML += `Noten Id ${data.checkoutScore.id}<br>`;
+          pSuccess.innerHTML += `${document.getElementById('scores').innerHTML} Id ${data.checkoutScore.id}<br>`;
 
           const inputScoreId = document.querySelector('.scoreId');
           const inputScoreExtId = document.querySelector('.scoreExtId');
@@ -279,12 +286,12 @@
 
   async function scanSuccess(result) {
     console.log(result);
-    if (btnScan.textContent == "User/Leihzettel scannen") {
+    if (btnScan.textContent == document.getElementById('checkout.scan.user.sheet').innerHTML) {
       scanner.clear();
       if (await postCheckout({
           userJwtOrCheckoutId: result
         })) {
-        btnScan.textContent = "Noten scannen";
+        btnScan.textContent = document.getElementById('scan.score').innerHTML;
         formScan.style = "display: block";
         divUserSearch.style = "display: none";
         divSuccess.style = "display: block";
@@ -294,7 +301,7 @@
         formScan.style = "display: block";
         divUserSearch.style = "display: block";
       }
-    } else if (btnScan.textContent == "Noten scannen") {
+    } else if (btnScan.textContent == document.getElementById('scan.score').innerHTML) {
       scanner.clear();
       if (await postCheckout({
           scoreId: result

@@ -185,7 +185,7 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
             }));
         }
         else if (userId) {
-            // TODO: Pfad noch unterstützt?
+            // User selected from user search result
             const user = yield User_1.User.findOne({ id: userId });
             if (user) {
                 res.status(201).json({ checkoutUser: user, checkoutId: "" });
@@ -199,7 +199,6 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
             const users = yield User_1.User.find({
                 lastName: { $regex: `^${userLastName}`, $options: "i" },
             });
-            // console.log(users);
             res.render("checkout", {
                 users,
             });

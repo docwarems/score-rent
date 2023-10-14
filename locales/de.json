@@ -2,6 +2,7 @@
   "translation": {
     "app.name": "HSC Leihnoten Verwaltung",
     "checkouts.show": "Ausleihen anzeigen",
+    "checkout": "Ausleihe",
     "login.show.qrcode": "QRCode für Login anzeigen",
     "scores": "Noten",
     "scores.register": "Leihnoten registrieren",
@@ -9,6 +10,15 @@
     "score.checkin": "Noten Rückgabe",
     "user": "Benutzer",
     "user.register": "Benutzer anlegen",
-    "user.list": "Benutzer Liste"
+    "user.list": "Benutzer Liste",
+    "checkout.success": "Ausleihe erfolgreich",
+    "checkout.error": "Ausleihe Fehler",
+    "checkout.scan.user.sheet": "User/Leihzettel scannen",
+    "choose": "Auswählen",
+    "name.last": "Nachname",
+    "user.search.by.name": "User über Namen suchen",
+    "user.not.found": "Benutzer nicht gefunden",
+    "home": "Startseite",
+    "scan.score": "Noten scannen"
   }
 }

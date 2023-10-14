@@ -200,7 +200,7 @@ module.exports.checkout_post = async (req: any, res: any) => {
         }
       );
     } else if (userId) {
-      // TODO: Pfad noch unterstützt?
+      // User selected from user search result
       const user = await User.findOne({ id: userId });
       if (user) {
         res.status(201).json({ checkoutUser: user, checkoutId: "" });
@@ -212,7 +212,6 @@ module.exports.checkout_post = async (req: any, res: any) => {
       const users = await User.find({
         lastName: { $regex: `^${userLastName}`, $options: "i" },
       });
-      // console.log(users);
       res.render("checkout", {
         users,
       });

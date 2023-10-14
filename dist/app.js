@@ -29,7 +29,7 @@ var middleware = require("i18next-http-middleware");
 const en_json_1 = __importDefault(require("./locales/en.json"));
 const de_json_1 = __importDefault(require("./locales/de.json"));
 i18next_1.default.use(middleware.LanguageDetector).init({
-    preload: ["en", "de"],
+    preload: ["de"],
     // ...otherOptions
 });
 // we must ensure that no write access to the file system is needed; as we are running on a readonly serverless platform
