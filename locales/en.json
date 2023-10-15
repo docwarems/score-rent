@@ -14,6 +14,7 @@
     "checkout.success": "Checkout success",
     "checkout.error": "Checkout error",
     "checkout.scan.user.sheet": "Scan user / checkout sheet",
+    "checkout.another": "Another checkout",
     "choose": "Choose",
     "name.last": "Last name",
     "user.search.by.name": "Search user by name",
