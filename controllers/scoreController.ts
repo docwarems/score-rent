@@ -323,9 +323,10 @@ export async function checkouts(
   admin: boolean,
   userId: string
 ) {
-  let sigFilter = signature && signature !== SIGNATURE_ALL.id ? { signature } : {};
-  let scoreTypeTotalCount: number|undefined;
-  let scoreTypeTotalCheckedOutCount: number|undefined;
+  let sigFilter =
+    signature && signature !== SIGNATURE_ALL.id ? { signature } : {};
+  let scoreTypeTotalCount: number | undefined;
+  let scoreTypeTotalCheckedOutCount: number | undefined;
   try {
     let error = undefined;
     if (!signature) {
@@ -588,4 +589,43 @@ module.exports.updateUser_post = async (req: any, res: any) => {
   } else {
     return res.status(500).json({ message: `user not found with Id ${id}` }); // TODO: 4xx error
   }
+};
+
+// Code similar to checkouts_post
+module.exports.scoreHistory_post = async (req: any, res: any) => {
+  const { id } = req.body;
+
+  let checkoutsWithUser = [];
+  let error: string | undefined;
+  const score = await Score.findOne({ id });
+  if (score) {
+    // get map of users who checked out this score
+    const userIds = []; // TODO: Set
+    for (const checkout of score.checkouts) {
+      userIds.push(checkout.userId);
+    }
+    const userMap = await (
+      await User.find({ id: { $in: userIds } })
+    ).reduce((map, user) => map.set(user.id, user), new Map());
+
+    // assign user objects to checkouts and collect total number of checked out scores
+    const checkedOutScoresSet = new Set();
+    for (const checkout of score.checkouts) {
+      checkedOutScoresSet.add(score.id);
+      const user = userMap.get(checkout.userId);
+      checkoutsWithUser.push({
+        checkout,
+        user,
+        scoreExtId: score.extId,
+        signature: score.signature,
+      });
+    }
+  } else {
+    error = `Score with Id ${id} not found!`;
+  }
+  res.render("score-history", {
+    signatureMap: await getScoreTypeMap(),
+    checkouts: checkoutsWithUser,
+    error,
+  });
 };

@@ -5,6 +5,7 @@
         "scores.register": "Register rental scores",
         "score.checkout": "Checkout score",
         "score.checkin": "Return score",
+        "score.history": "Score history",
         "checkouts.show": "Show checkouts",
         "checkout": "Checkout",
         "user": "User",

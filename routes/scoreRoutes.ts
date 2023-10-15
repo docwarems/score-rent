@@ -53,3 +53,10 @@ score.post("/userSearch", scoreController.userSearch_post);
 score.get("/users", scoreController.users_get);
 score.post("/users", scoreController.users_post);
 score.post("/updateUser", scoreController.updateUser_post);
+
+exports.score.get("/history", async (req: any, res: any) =>
+  res.render("score-history", {
+    checkouts: undefined,
+  })
+);
+exports.score.post("/history", scoreController.scoreHistory_post);

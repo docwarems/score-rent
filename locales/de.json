@@ -8,6 +8,7 @@
     "scores.register": "Leihnoten registrieren",
     "score.checkout": "Noten Ausleihe",
     "score.checkin": "Noten Rückgabe",
+    "score.history": "Noten History",
     "user": "Benutzer",
     "user.register": "Benutzer anlegen",
     "user.list": "Benutzer Liste",

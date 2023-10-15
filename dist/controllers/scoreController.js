@@ -526,3 +526,38 @@ module.exports.updateUser_post = (req, res) => __awaiter(void 0, void 0, void 0,
         return res.status(500).json({ message: `user not found with Id ${id}` }); // TODO: 4xx error
     }
 });
+// Code similar to checkouts_post
+module.exports.scoreHistory_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.body;
+    let checkoutsWithUser = [];
+    let error;
+    const score = yield Score_1.Score.findOne({ id });
+    if (score) {
+        // get map of users who checked out this score
+        const userIds = []; // TODO: Set
+        for (const checkout of score.checkouts) {
+            userIds.push(checkout.userId);
+        }
+        const userMap = yield (yield User_1.User.find({ id: { $in: userIds } })).reduce((map, user) => map.set(user.id, user), new Map());
+        // assign user objects to checkouts and collect total number of checked out scores
+        const checkedOutScoresSet = new Set();
+        for (const checkout of score.checkouts) {
+            checkedOutScoresSet.add(score.id);
+            const user = userMap.get(checkout.userId);
+            checkoutsWithUser.push({
+                checkout,
+                user,
+                scoreExtId: score.extId,
+                signature: score.signature,
+            });
+        }
+    }
+    else {
+        error = `Score with Id ${id} not found!`;
+    }
+    res.render("score-history", {
+        signatureMap: yield (0, score_utils_1.getScoreTypeMap)(),
+        checkouts: checkoutsWithUser,
+        error,
+    });
+});
