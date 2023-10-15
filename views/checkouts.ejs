@@ -33,6 +33,8 @@
 <% } %>
 
 <% if (checkouts) { %>
+<% const statSummary = filter.checkedOut ? `${checkouts.length} (offen) von ${scoreTypeTotalCheckedOutCount} (ausgeliehen) von ${scoreTypeTotalCount} (gesamt)` : `${checkouts.length} Ausleihvorgänge` %>  
+<div class="w3-left-align"><p><%= statSummary %></p></div>
 <div class="w3-responsive">
 
   <!-- <input class="w3-input w3-border w3-padding" type="text" placeholder="Filtern nach Benutzer.." id="searchUserInput" onkeyup="filterUser()"> -->

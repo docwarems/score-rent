@@ -307,7 +307,9 @@ module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, 
 });
 function checkouts(res, signature, checkedOut, admin, userId) {
     return __awaiter(this, void 0, void 0, function* () {
-        let filter = signature && signature !== score_utils_1.SIGNATURE_ALL.id ? { signature } : {};
+        let sigFilter = signature && signature !== score_utils_1.SIGNATURE_ALL.id ? { signature } : {};
+        let scoreTypeTotalCount;
+        let scoreTypeTotalCheckedOutCount;
         try {
             let error = undefined;
             if (!signature) {
@@ -315,8 +317,10 @@ function checkouts(res, signature, checkedOut, admin, userId) {
             }
             let checkoutsWithUser = [];
             if (signature) {
+                const scoreType = yield Score_1.ScoreType.findOne({ signature });
+                scoreTypeTotalCount = scoreType === null || scoreType === void 0 ? void 0 : scoreType.count;
                 // const scores = await Score.find(filter, "checkouts") // return only checkouts property
-                const scores = yield Score_1.Score.find(filter).populate("checkouts").exec(); // TODO: when exec and when not? // TODO: is populate() correct? See https://mongoosejs.com/docs/subdocs.html
+                const scores = yield Score_1.Score.find(sigFilter).populate("checkouts").exec(); // TODO: when exec and when not? // TODO: is populate() correct? See https://mongoosejs.com/docs/subdocs.html
                 if (userId) {
                     // show only checkouts of this user
                     for (const score of scores) {
@@ -334,6 +338,7 @@ function checkouts(res, signature, checkedOut, admin, userId) {
                     }
                 }
                 else {
+                    // get map of users who checked out these scores
                     const userIds = []; // TODO: Set
                     for (const score of scores) {
                         for (const checkout of score.checkouts) {
@@ -341,8 +346,11 @@ function checkouts(res, signature, checkedOut, admin, userId) {
                         }
                     }
                     const userMap = yield (yield User_1.User.find({ id: { $in: userIds } })).reduce((map, user) => map.set(user.id, user), new Map());
+                    // assign user objects to checkouts and collect total number of checked out scores
+                    const checkedOutScoresSet = new Set();
                     for (const score of scores) {
                         for (const checkout of score.checkouts) {
+                            checkedOutScoresSet.add(score.id);
                             const user = userMap.get(checkout.userId);
                             checkoutsWithUser.push({
                                 checkout,
@@ -352,6 +360,7 @@ function checkouts(res, signature, checkedOut, admin, userId) {
                             });
                         }
                     }
+                    scoreTypeTotalCheckedOutCount = checkedOutScoresSet.size;
                 }
             }
             if (checkedOut) {
@@ -366,6 +375,8 @@ function checkouts(res, signature, checkedOut, admin, userId) {
                 SIGNATURE_ALL: score_utils_1.SIGNATURE_ALL,
                 filter: { signature, checkedOut },
                 checkouts: checkoutsWithUser,
+                scoreTypeTotalCount,
+                scoreTypeTotalCheckedOutCount,
                 error,
             });
         }

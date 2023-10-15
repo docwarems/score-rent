@@ -323,7 +323,9 @@ export async function checkouts(
   admin: boolean,
   userId: string
 ) {
-  let filter = signature && signature !== SIGNATURE_ALL.id ? { signature } : {};
+  let sigFilter = signature && signature !== SIGNATURE_ALL.id ? { signature } : {};
+  let scoreTypeTotalCount: number|undefined;
+  let scoreTypeTotalCheckedOutCount: number|undefined;
   try {
     let error = undefined;
     if (!signature) {
@@ -332,8 +334,11 @@ export async function checkouts(
 
     let checkoutsWithUser = [];
     if (signature) {
+      const scoreType = await ScoreType.findOne({ signature });
+      scoreTypeTotalCount = scoreType?.count;
+
       // const scores = await Score.find(filter, "checkouts") // return only checkouts property
-      const scores = await Score.find(filter).populate("checkouts").exec(); // TODO: when exec and when not? // TODO: is populate() correct? See https://mongoosejs.com/docs/subdocs.html
+      const scores = await Score.find(sigFilter).populate("checkouts").exec(); // TODO: when exec and when not? // TODO: is populate() correct? See https://mongoosejs.com/docs/subdocs.html
 
       if (userId) {
         // show only checkouts of this user
@@ -351,19 +356,22 @@ export async function checkouts(
           }
         }
       } else {
+        // get map of users who checked out these scores
         const userIds = []; // TODO: Set
         for (const score of scores) {
           for (const checkout of score.checkouts) {
             userIds.push(checkout.userId);
           }
         }
-
         const userMap = await (
           await User.find({ id: { $in: userIds } })
         ).reduce((map, user) => map.set(user.id, user), new Map());
 
+        // assign user objects to checkouts and collect total number of checked out scores
+        const checkedOutScoresSet = new Set();
         for (const score of scores) {
           for (const checkout of score.checkouts) {
+            checkedOutScoresSet.add(score.id);
             const user = userMap.get(checkout.userId);
             checkoutsWithUser.push({
               checkout,
@@ -373,6 +381,7 @@ export async function checkouts(
             });
           }
         }
+        scoreTypeTotalCheckedOutCount = checkedOutScoresSet.size;
       }
     }
 
@@ -389,6 +398,8 @@ export async function checkouts(
       SIGNATURE_ALL,
       filter: { signature, checkedOut },
       checkouts: checkoutsWithUser,
+      scoreTypeTotalCount,
+      scoreTypeTotalCheckedOutCount,
       error,
     });
   } catch (error) {
