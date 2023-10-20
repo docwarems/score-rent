@@ -81,6 +81,8 @@
       const checkout = checkoutWithUser.checkout;
       const user = checkoutWithUser.user;
       const userName = user ? (user.firstName + " " + user.lastName) : checkout.userId;
+      const voice = user?.singGroup ?? "?";
+      const userNamePlusVoice = `${userName} (${voice})`;
       const userEmail = user ? user.email : "";  // user probably deleted from db
       const checkoutTimestamp = checkout.checkoutTimestamp ? checkout.checkoutTimestamp.toLocaleDateString("de-DE") : "";
       const checkinTimestamp = checkout.checkinTimestamp ? checkout.checkinTimestamp.toLocaleDateString("de-DE") : "";
@@ -94,7 +96,7 @@
       <td><%= scoreExtId %></td>
       <% if (admin) { %>
       <td>
-        <button onclick="userDetails('<%= userName %>', '<%= userEmail %>')" class="w3-button"><%= userName %></button>
+        <button onclick="userDetails('<%= userName %>', '<%= userEmail %>')" class="w3-button"><%= userNamePlusVoice %></button>
       </td>
       <% } %>
       <% if (!admin) { %>
