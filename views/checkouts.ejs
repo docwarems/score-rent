@@ -96,18 +96,18 @@
       <td><%= scoreExtId %></td>
       <% if (admin) { %>
       <td>
-        <button onclick="userDetails('<%= userName %>', '<%= userEmail %>')" class="w3-button"><%= userNamePlusVoice %></button>
+        <button onclick="userDetails('<%= userName %>', '<%= userEmail %>')" class="w3-button w3-pale-blue"><%= userNamePlusVoice %></button>
       </td>
       <% } %>
       <% if (!admin) { %>
       <td><%= checkoutTimestamp %></td>
       <% } else { %>
-      <td><button onclick="editCheckout('<%= checkout.scoreId %>','<%= checkout._id %>','<%= checkout.checkoutComment %>','<%= checkout.checkinComment %>')" class="w3-button"><%= checkoutTimestamp %></button></td>
+      <td><button onclick="editCheckout('<%= checkout.scoreId %>','<%= checkout._id %>','<%= checkout.checkoutComment %>','<%= checkout.checkinComment %>')" class="w3-button w3-pale-blue"><%= checkoutTimestamp %></button></td>
       <% } %>
       <td><%= checkout.checkoutComment %></td>
       <td>
         <% if (!checkinTimestamp && admin) { %>
-        <button onclick="confirmCheckin('<%= checkout.scoreId %>', '<%= checkout.userId %>')" class="w3-button">Rückgabe</button>
+        <button onclick="confirmCheckin('<%= checkout.scoreId %>', '<%= checkout.userId %>')" class="w3-button w3-pale-blue">Rückgabe</button>
         <% } %>
       </td>
       <td><%= checkinTimestamp %></td>
@@ -226,6 +226,7 @@
         <button class="w3-button w3-black btnUserSearch">User suchen</button>
       </form>
       <table id="tableUsers" class="w3-table-all tableUsers" />
+      <p></p>
 
     </div>
   </div>
@@ -452,8 +453,9 @@
         for (const user of data.users) {
           const row = tableUsers.insertRow(-1);
           const cell = row.insertCell(0);
-          cell.innerHTML = `<button onclick="chooseUser('${user.id}')" class="w3-button">${user.firstName} ${user.lastName}</button>`;
+          cell.innerHTML = `<button onclick="chooseUser('${user.id}')" class="w3-button w3-pale-blue">${user.firstName} ${user.lastName}</button>`;
         }
+        tableUsers.insertAdjacentHTML('afterend', '<p/>');
       }
       return true;
     } catch (err) {
