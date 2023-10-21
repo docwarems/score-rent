@@ -81,7 +81,7 @@
       const checkout = checkoutWithUser.checkout;
       const user = checkoutWithUser.user;
       const userName = user ? (user.firstName + " " + user.lastName) : checkout.userId;
-      const voice = user?.singGroup ?? "?";
+      const voice = user?.voice ?? "?";
       const userNamePlusVoice = `${userName} (${voice})`;
       const userEmail = user ? user.email : "";  // user probably deleted from db
       const checkoutTimestamp = checkout.checkoutTimestamp ? checkout.checkoutTimestamp.toLocaleDateString("de-DE") : "";

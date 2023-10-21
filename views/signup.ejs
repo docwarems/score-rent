@@ -31,10 +31,10 @@
   <input type="text" name="lastName" value="" class="w3-input" required>
   <div class="w3-red userId error"></div>
   <label>Stimmgruppe*</label>
-  <select class="w3-select" name="singGroup" required>
+  <select class="w3-select" name="voice" required>
     <option value="" disabled selected>Stimmgruppe auswählen</option>
-    <% for (const singGroup of singGroups) { %>
-    <option value="<%= singGroup %>"><%= singGroupNameMap.get(singGroup) %></option>
+    <% for (const voice of voices) { %>
+    <option value="<%= voice %>"><%= voiceMap.get(voice) %></option>
     <% } %>
   </select>
   <p>
@@ -69,7 +69,7 @@
     const passwordRepeat = form.passwordRepeat.value;
     const firstName = form.firstName.value;
     const lastName = form.lastName.value;
-    const singGroup = form.singGroup.value;
+    const voice = form.voice.value;
     // console.log(email, password);
 
     try {
@@ -81,7 +81,7 @@
           passwordRepeat,
           firstName,
           lastName,
-          singGroup,
+          voice,
         }),
         headers: {
           'Content-Type': 'application/json'

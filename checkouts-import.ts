@@ -22,7 +22,7 @@ async function importCsv() {
   type CheckoutRecord = {
     firstName: string;
     lastName: string;
-    singGroup: string;
+    voice: string;
     email: string;
     scoreId: string;
     comment: string;
@@ -31,14 +31,14 @@ async function importCsv() {
   type User = {
     firstName: string;
     lastName: string;
-    singGroup: string;
+    voice: string;
     email: string;
   };
 
   const headers = [
     "lastName",
     "firstName",
-    "singGroup",
+    "voice",
     "email",
     "scoreId",
     "comment",
@@ -56,7 +56,7 @@ async function importCsv() {
         userMap.set(record.lastName, {
           firstName: record.firstName,
           lastName: record.lastName,
-          singGroup: record.singGroup,
+          voice: record.voice,
           email: record.email,
         });
 

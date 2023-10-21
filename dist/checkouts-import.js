@@ -34,7 +34,7 @@ function importCsv() {
         const headers = [
             "lastName",
             "firstName",
-            "singGroup",
+            "voice",
             "email",
             "scoreId",
             "comment",
@@ -49,7 +49,7 @@ function importCsv() {
                     userMap.set(record.lastName, {
                         firstName: record.firstName,
                         lastName: record.lastName,
-                        singGroup: record.singGroup,
+                        voice: record.voice,
                         email: record.email,
                     });
                     const email = record.email ? record.email : undefined;

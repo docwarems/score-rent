@@ -10,17 +10,23 @@ require("dotenv").config();
 
 export const USER_UNKNOWN = "un.known";
 
-export enum SingGroup {
+// export enum SingGroup {
+//   SOPRANO = "S",
+//   ALTO = "A",
+//   TENOR = "T",
+//   BASS = "B",
+// }
+export enum Voice {
   SOPRANO = "S",
   ALTO = "A",
   TENOR = "T",
   BASS = "B",
 }
-export const singGroupNameMap: Map<SingGroup, string> = new Map();
-singGroupNameMap.set(SingGroup.SOPRANO, "Sopran");
-singGroupNameMap.set(SingGroup.ALTO, "Alt");
-singGroupNameMap.set(SingGroup.TENOR, "Tenor");
-singGroupNameMap.set(SingGroup.BASS, "Bass");
+export const voiceMap: Map<Voice, string> = new Map();
+voiceMap.set(Voice.SOPRANO, "Sopran");
+voiceMap.set(Voice.ALTO, "Alt");
+voiceMap.set(Voice.TENOR, "Tenor");
+voiceMap.set(Voice.BASS, "Bass");
 
 export enum MemberState {
   MEMBER = "M",
@@ -34,7 +40,8 @@ export interface IUser {
   password: string;
   firstName: string;
   lastName: string;
-  singGroup: string;
+  // singGroup: string;
+  voice: string;
   memberState: string;
   isVerified: boolean;
   verificationToken: String | undefined;
@@ -85,9 +92,13 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>({
     type: String,
     required: [true, "Bitte Nachnamen angeben"],
   },
-  singGroup: {
+  // singGroup: {
+  //   type: String,
+  //   enum: Object.values(SingGroup),
+  // },
+  voice: {
     type: String,
-    enum: Object.values(SingGroup),
+    enum: Object.values(Voice),
   },
   memberState: {
     type: String,
@@ -210,7 +221,7 @@ function convertToGermanCharacterRules(name: string): string {
     .replace(/[äöüß]/g, (match) => germanRulesMap[match] || "");
 }
 
-function enum2array(e: typeof SingGroup | typeof MemberState) {
+function enum2array(e: typeof Voice | typeof MemberState) {
   return Object.entries(e).map(([key, value]) => ({ key, value }));
 }
 

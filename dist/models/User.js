@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.User = exports.MemberState = exports.singGroupNameMap = exports.SingGroup = exports.USER_UNKNOWN = void 0;
+exports.User = exports.MemberState = exports.voiceMap = exports.Voice = exports.USER_UNKNOWN = void 0;
 const mongoose_1 = require("mongoose");
 const { isEmail } = require("validator");
 const bcrypt_1 = __importDefault(require("bcrypt"));
@@ -22,18 +22,24 @@ require("dotenv").config();
 // the adding of a static User Method from the JS code had to be rewritten according to
 // https://mongoosejs.com/docs/typescript/statics-and-methods.html
 exports.USER_UNKNOWN = "un.known";
-var SingGroup;
-(function (SingGroup) {
-    SingGroup["SOPRANO"] = "S";
-    SingGroup["ALTO"] = "A";
-    SingGroup["TENOR"] = "T";
-    SingGroup["BASS"] = "B";
-})(SingGroup || (exports.SingGroup = SingGroup = {}));
-exports.singGroupNameMap = new Map();
-exports.singGroupNameMap.set(SingGroup.SOPRANO, "Sopran");
-exports.singGroupNameMap.set(SingGroup.ALTO, "Alt");
-exports.singGroupNameMap.set(SingGroup.TENOR, "Tenor");
-exports.singGroupNameMap.set(SingGroup.BASS, "Bass");
+// export enum SingGroup {
+//   SOPRANO = "S",
+//   ALTO = "A",
+//   TENOR = "T",
+//   BASS = "B",
+// }
+var Voice;
+(function (Voice) {
+    Voice["SOPRANO"] = "S";
+    Voice["ALTO"] = "A";
+    Voice["TENOR"] = "T";
+    Voice["BASS"] = "B";
+})(Voice || (exports.Voice = Voice = {}));
+exports.voiceMap = new Map();
+exports.voiceMap.set(Voice.SOPRANO, "Sopran");
+exports.voiceMap.set(Voice.ALTO, "Alt");
+exports.voiceMap.set(Voice.TENOR, "Tenor");
+exports.voiceMap.set(Voice.BASS, "Bass");
 var MemberState;
 (function (MemberState) {
     MemberState["MEMBER"] = "M";
@@ -69,9 +75,13 @@ const userSchema = new mongoose_1.Schema({
         type: String,
         required: [true, "Bitte Nachnamen angeben"],
     },
-    singGroup: {
+    // singGroup: {
+    //   type: String,
+    //   enum: Object.values(SingGroup),
+    // },
+    voice: {
         type: String,
-        enum: Object.values(SingGroup),
+        enum: Object.values(Voice),
     },
     memberState: {
         type: String,

@@ -43,7 +43,7 @@ The first test you probably want to do is to restore the backup on a different l
 - execute this command
 
 ```
-mongorestore --uri <connect-url>
+mongorestore --uri <connect-url> --dir dump/\<target-database\>
 ```
 
 It's just that easy. The database "testrestore" will be created if it was not existing.

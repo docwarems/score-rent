@@ -84,3 +84,7 @@ app.use("/user", user);
 app.use(router);
 // app.use("/foo", authRoutes); // for http://localhost:3000/foo/checkout the route handler method gets called
 // app.use("/", authRoutes); // this seems to make no difference to app.use(authRoutes)
+// User.updateMany({}, { $rename: { singGroup: 'voice' } }, { multi: true }, function(err, blocks) {
+//   if(err) { throw err; }
+//   console.log('rename field done!');
+// });

@@ -26,7 +26,7 @@ async function importCsv() {
     firstName: string;
     lastName: string;
     email: string;
-    singGroup: string;
+    voice: string;
     memberState: string;
   };
 
@@ -34,7 +34,7 @@ async function importCsv() {
     "firstName",
     "lastName",
     "email",
-    "singGroup",
+    "voice",
     "memberState",
   ];
   const parser = parse(
@@ -61,7 +61,7 @@ async function importCsv() {
           );
           // it doesn't make sense to update the name because this was the base for the userId
           user.email = record.email;
-          user.singGroup = record.singGroup;
+          user.voice = record.voice;
           user.memberState = record.memberState;
         } else {
           log(
@@ -72,7 +72,7 @@ async function importCsv() {
             firstName: record.firstName,
             lastName: record.lastName,
             email: record.email,
-            singGroup: record.singGroup,
+            voice: record.voice,
             memberState: record.memberState,
             password: uuidv4(),
             isManuallyRegistered: true,

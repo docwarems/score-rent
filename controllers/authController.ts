@@ -1,4 +1,4 @@
-import { User, SingGroup, singGroupNameMap } from "../models/User";
+import { User, Voice, voiceMap } from "../models/User";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import { mailTransporter } from "../utils/misc-utils";
@@ -69,16 +69,16 @@ const createToken = (id: string) => {
 module.exports.signup_get = (req: any, res: any) => {
   res.render("signup", {
     admin: false,
-    singGroups: Object.values(SingGroup),
-    singGroupNameMap,
+    voices: Object.values(Voice),
+    voiceMap,
   });
 };
 
 module.exports.signup_user_get = (req: any, res: any) => {
   res.render("signup", {
     admin: true,
-    singGroups: Object.values(SingGroup),
-    singGroupNameMap,
+    voices: Object.values(Voice),
+    voiceMap,
   });
 };
 
@@ -243,7 +243,7 @@ module.exports.signup_post = async (req: any, res: any) => {
     passwordRepeat,
     firstName, // TODO: Mindestlänge 2 wg. User Id
     lastName,
-    singGroup,
+    voice,
   } = req.body;
 
   try {
@@ -281,7 +281,7 @@ module.exports.signup_post = async (req: any, res: any) => {
       password,
       firstName,
       lastName,
-      singGroup,
+      voice,
       verificationToken,
       isManuallyRegistered,
     });

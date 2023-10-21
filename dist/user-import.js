@@ -37,7 +37,7 @@ function importCsv() {
             "firstName",
             "lastName",
             "email",
-            "singGroup",
+            "voice",
             "memberState",
         ];
         const parser = (0, csv_parse_1.parse)({ delimiter: ";", columns: headers }, function (err, records) {
@@ -58,7 +58,7 @@ function importCsv() {
                         log(`User with Id ${userId} found in db. Will update record!`);
                         // it doesn't make sense to update the name because this was the base for the userId
                         user.email = record.email;
-                        user.singGroup = record.singGroup;
+                        user.voice = record.voice;
                         user.memberState = record.memberState;
                     }
                     else {
@@ -68,7 +68,7 @@ function importCsv() {
                             firstName: record.firstName,
                             lastName: record.lastName,
                             email: record.email,
-                            singGroup: record.singGroup,
+                            voice: record.voice,
                             memberState: record.memberState,
                             password: (0, uuid_1.v4)(),
                             isManuallyRegistered: true,
