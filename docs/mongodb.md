@@ -1,5 +1,10 @@
 # Mongo db
 
+## Data model
+
+In MongoDB we have to decide how we store relations to other entities. A central relation in our data model is the checkout process. I decided to store the checkouts as an array to the score where the checkout refers too. Only one checkout document - always the last in the array - can have the 'open' status, i.e. 'score is checked out'. From this document we can get the user who has checked out this score. For convenience we have also a field 'checkedOutByUser' at the score document, in order to immediately see if a score is checked out and by whom. This is kind of redundant, but if we store this all in one 'save' action during checkout/checkin, there should become no inconsistency from this redundancy, because the 'save' is atomic.
+Technically this criteria could easily be replaced be fetching the last checkout from the checkouts array and get this information from this. Primary reason currently for me to keep this is that I can quickly browse the score documents manually in MongoDB tools, and see which are checked out and which are not.
+
 ## Connection string
 
 At the beginning of the app development I was connecting without database name in the URI (see below). I was curiuos what happens if you provide a wrong database name. Astonishingly Mongoose returned no error when connecting. Instead the code which tried to read from a collection just didn't find anything, but again also no error here. I find this a little bizarre.

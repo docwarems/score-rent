@@ -92,16 +92,16 @@ module.exports.checkout_post = async (req: any, res: any) => {
           0,
           (scoreId as string).lastIndexOf("-")
         );
-        const existingScores = await Score.find({ checkedOutByUserId: userId });
-        const existingScoreOfCurrentType = existingScores.find(
+        const checkedOutScores = await Score.find({ checkedOutByUserId: userId });
+        const checkedOutScoresOfCurrentType = checkedOutScores.find(  // TODO: can for sure be done in one query
           (score) =>
             score.id.substr(0, score.id.lastIndexOf("-")) === scoreTypeId
         );
         const doubleCheckoutIsAllowed = allowDoubleCheckout === "allow";
         if (
-          !existingScoreOfCurrentType ||
-          (doubleCheckoutIsAllowed && comment) ||
-          userId == USER_UNKNOWN
+          !checkedOutScoresOfCurrentType ||
+          (doubleCheckoutIsAllowed && comment) ||  // a double checkout requires a reason in comment
+          userId == USER_UNKNOWN  // checkout by sheet with dummy user
         ) {
           const checkout = new Checkout({
             _id: checkoutId || uuidv4(),
@@ -141,7 +141,7 @@ module.exports.checkout_post = async (req: any, res: any) => {
           }
         } else {
           res.status(400).json({
-            errors: `User with Id ${userId} has already checked out score Id ${existingScoreOfCurrentType.id}. To allow another checkout check checkbox and specify reason in comment field.`,
+            errors: `User with Id ${userId} has already checked out score Id ${checkedOutScoresOfCurrentType.id}. To allow another checkout check checkbox and specify reason in comment field.`,
           });
         }
       }
