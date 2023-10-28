@@ -80,12 +80,14 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
             if (score) {
                 // check if this user already checked out a copy of this score type
                 const scoreTypeId = scoreId.substr(0, scoreId.lastIndexOf("-"));
-                const existingScores = yield Score_1.Score.find({ checkedOutByUserId: userId });
-                const existingScoreOfCurrentType = existingScores.find((score) => score.id.substr(0, score.id.lastIndexOf("-")) === scoreTypeId);
+                const checkedOutScores = yield Score_1.Score.find({ checkedOutByUserId: userId });
+                const checkedOutScoresOfCurrentType = checkedOutScores.find(// TODO: can for sure be done in one query
+                (score) => score.id.substr(0, score.id.lastIndexOf("-")) === scoreTypeId);
                 const doubleCheckoutIsAllowed = allowDoubleCheckout === "allow";
-                if (!existingScoreOfCurrentType ||
-                    (doubleCheckoutIsAllowed && comment) ||
-                    userId == User_1.USER_UNKNOWN) {
+                if (!checkedOutScoresOfCurrentType ||
+                    (doubleCheckoutIsAllowed && comment) || // a double checkout requires a reason in comment
+                    userId == User_1.USER_UNKNOWN // checkout by sheet with dummy user
+                ) {
                     const checkout = new Checkout_1.Checkout({
                         _id: checkoutId || (0, uuid_1.v4)(),
                         userId,
@@ -123,7 +125,7 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                 }
                 else {
                     res.status(400).json({
-                        errors: `User with Id ${userId} has already checked out score Id ${existingScoreOfCurrentType.id}. To allow another checkout check checkbox and specify reason in comment field.`,
+                        errors: `User with Id ${userId} has already checked out score Id ${checkedOutScoresOfCurrentType.id}. To allow another checkout check checkbox and specify reason in comment field.`,
                     });
                 }
             }
@@ -528,7 +530,8 @@ module.exports.updateUser_post = (req, res) => __awaiter(void 0, void 0, void 0,
 });
 // Code similar to checkouts_post
 module.exports.scoreHistory_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { id } = req.body;
+    let { id } = req.body;
+    id = id.trim();
     let checkoutsWithUser = [];
     let error;
     const score = yield Score_1.Score.findOne({ id });
@@ -556,6 +559,7 @@ module.exports.scoreHistory_post = (req, res) => __awaiter(void 0, void 0, void 
         error = `Score with Id ${id} not found!`;
     }
     res.render("score-history", {
+        id,
         signatureMap: yield (0, score_utils_1.getScoreTypeMap)(),
         checkouts: checkoutsWithUser,
         error,

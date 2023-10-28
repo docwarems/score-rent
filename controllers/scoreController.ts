@@ -593,8 +593,9 @@ module.exports.updateUser_post = async (req: any, res: any) => {
 
 // Code similar to checkouts_post
 module.exports.scoreHistory_post = async (req: any, res: any) => {
-  const { id } = req.body;
+  let { id } = req.body;
 
+  id = id.trim();
   let checkoutsWithUser = [];
   let error: string | undefined;
   const score = await Score.findOne({ id });
@@ -624,6 +625,7 @@ module.exports.scoreHistory_post = async (req: any, res: any) => {
     error = `Score with Id ${id} not found!`;
   }
   res.render("score-history", {
+    id,
     signatureMap: await getScoreTypeMap(),
     checkouts: checkoutsWithUser,
     error,

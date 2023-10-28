@@ -56,7 +56,9 @@ score.post("/updateUser", scoreController.updateUser_post);
 
 exports.score.get("/history", async (req: any, res: any) =>
   res.render("score-history", {
+    id: undefined,
     checkouts: undefined,
+    error: undefined,
   })
 );
 exports.score.post("/history", scoreController.scoreHistory_post);

@@ -2,8 +2,19 @@
 
 <h1>Noten History</h1>
 
-<div class="w3-panel w3-red divError" style="display: none">
-  <p class="pError">xxx</p>
+<% 
+  let errorStyle; 
+  let errorText;
+ if (error) { 
+  errorStyle = "display: block"
+  errorText = error;
+ } else { 
+  errorStyle = "display: none"
+  errorText = "";
+ } 
+%>
+<div class="w3-panel w3-red divError" style="<%= errorStyle %>">
+  <p class="pError"><%= errorText %></p>
 </div>
 
 <form action="/score-history" id="formScan">
@@ -34,10 +45,14 @@
   <div id="result"></div>
 </main>
 
-<div class="w3-panel w3-border divForm" style="display: none">
-  <form action="/score/history" method="POST" id="form">
-    <input type="hidden" id="scoreId" name="id" value="">
-  </form>
+<div class="divScoreIdSearch" style="display: block">
+  <p>oder</p>
+  <form action="/score/history" id="form" method="post">
+  <label>Noten Id</label>
+  <input type="text" id="scoreId" name="id" value="<%= id ?? "" %>" class="w3-input scoreIdSearch" required>
+  <p></p>
+  <button class="w3-button w3-black btnScoreIdSearch">Suchen</button>
+</form>
 </div>
 
 <% const divTableStyle = checkouts ? "display: block" : "display: none";  %>
@@ -84,19 +99,20 @@
 
 <script>
   const formScan = document.querySelector('#formScan');
+  const form = document.querySelector('#form');
   const btnScan = document.querySelector('.btnScan');
   const divError = document.querySelector('.divError');
   const divHome = document.querySelector('.divHome');
   const divTable = document.querySelector('.divTable');
+  const divScoreIdSearch = document.querySelector('.divScoreIdSearch');
 
   var scanner;
 
   formScan.addEventListener('submit', async (e) => {
     e.preventDefault();
-    console.log(divError);
-    console.log(divTable);
     divError.style = "display: none";
     divTable.style = "display: none";
+    divScoreIdSearch.style = "display: none";
 
     scanner = new Html5QrcodeScanner('reader', {
       qrbox: {
@@ -106,6 +122,14 @@
       fps: 20,
     });
     scanner.render(scanSuccess, scanError);
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    divError.style = "display: none";
+    divTable.style = "display: none";
+    const form = document.getElementById('form');
+    form.submit();
   });
 
   async function scanSuccess(result) {

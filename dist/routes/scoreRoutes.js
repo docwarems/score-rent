@@ -48,7 +48,9 @@ exports.score.post("/users", scoreController.users_post);
 exports.score.post("/updateUser", scoreController.updateUser_post);
 exports.score.get("/history", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     return res.render("score-history", {
+        id: undefined,
         checkouts: undefined,
+        error: undefined,
     });
 }));
 exports.score.post("/history", scoreController.scoreHistory_post);
