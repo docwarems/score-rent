@@ -1,6 +1,6 @@
-import { User, USER_UNKNOWN } from "../models/User";
+import { IUser, User, USER_UNKNOWN } from "../models/User";
 import { Score, ScoreType, IScore } from "../models/Score";
-import { Checkout } from "../models/Checkout";
+import { Checkout, ICheckout } from "../models/Checkout";
 import jwt from "jsonwebtoken";
 require("dotenv").config();
 import { mailTransporter } from "../utils/misc-utils";
@@ -92,16 +92,19 @@ module.exports.checkout_post = async (req: any, res: any) => {
           0,
           (scoreId as string).lastIndexOf("-")
         );
-        const checkedOutScores = await Score.find({ checkedOutByUserId: userId });
-        const checkedOutScoresOfCurrentType = checkedOutScores.find(  // TODO: can for sure be done in one query
+        const checkedOutScores = await Score.find({
+          checkedOutByUserId: userId,
+        });
+        const checkedOutScoresOfCurrentType = checkedOutScores.find(
+          // TODO: can for sure be done in one query
           (score) =>
             score.id.substr(0, score.id.lastIndexOf("-")) === scoreTypeId
         );
         const doubleCheckoutIsAllowed = allowDoubleCheckout === "allow";
         if (
           !checkedOutScoresOfCurrentType ||
-          (doubleCheckoutIsAllowed && comment) ||  // a double checkout requires a reason in comment
-          userId == USER_UNKNOWN  // checkout by sheet with dummy user
+          (doubleCheckoutIsAllowed && comment) || // a double checkout requires a reason in comment
+          userId == USER_UNKNOWN // checkout by sheet with dummy user
         ) {
           const checkout = new Checkout({
             _id: checkoutId || uuidv4(),
@@ -316,6 +319,17 @@ module.exports.checkouts_post = async (req: any, res: any) => {
   await checkouts(res, signature, checkedOut == "true", admin, userId);
 };
 
+/**
+ * Fälle
+ * - Checkouts ermitteln
+ *   - mit/ohne User Einschränkung
+ *
+ * @param res
+ * @param signature
+ * @param checkedOut
+ * @param admin
+ * @param userId
+ */
 export async function checkouts(
   res: any,
   signature: string,
@@ -333,63 +347,21 @@ export async function checkouts(
       error = "Bitte Signatur auswählen";
     }
 
-    let checkoutsWithUser = [];
+    let checkoutsWithUser: any[] = [];
     if (signature) {
       const scoreType = await ScoreType.findOne({ signature });
       scoreTypeTotalCount = scoreType?.count;
 
       // const scores = await Score.find(filter, "checkouts") // return only checkouts property
       const scores = await Score.find(sigFilter).populate("checkouts").exec(); // TODO: when exec and when not? // TODO: is populate() correct? See https://mongoosejs.com/docs/subdocs.html
-
-      if (userId) {
-        // show only checkouts of this user
-        for (const score of scores) {
-          for (const checkout of score.checkouts) {
-            if (checkout.userId == userId) {
-              const user = await User.findOne({ id: userId });
-              checkoutsWithUser.push({
-                checkout,
-                user,
-                scoreExtId: score.extId,
-                signature: score.signature,
-              });
-            }
-          }
-        }
-      } else {
-        // get map of users who checked out these scores
-        const userIds = []; // TODO: Set
-        for (const score of scores) {
-          for (const checkout of score.checkouts) {
-            userIds.push(checkout.userId);
-          }
-        }
-        const userMap = await (
-          await User.find({ id: { $in: userIds } })
-        ).reduce((map, user) => map.set(user.id, user), new Map());
-
-        // assign user objects to checkouts and collect total number of checked out scores
-        const checkedOutScoresSet = new Set();
-        for (const score of scores) {
-          for (const checkout of score.checkouts) {
-            checkedOutScoresSet.add(score.id);
-            const user = userMap.get(checkout.userId);
-            checkoutsWithUser.push({
-              checkout,
-              user,
-              scoreExtId: score.extId,
-              signature: score.signature,
-            });
-          }
-        }
-        scoreTypeTotalCheckedOutCount = checkedOutScoresSet.size;
-      }
-    }
-
-    if (checkedOut) {
-      checkoutsWithUser = checkoutsWithUser.filter((checkoutWithUser: any) => {
-        return !checkoutWithUser.checkout.checkinTimestamp;
-      });
+      const checkedOutScoreIdSet = new Set<string>();
+      checkoutsWithUser = await getCheckoutsWithUser(
+        scores,
+        checkedOutScoreIdSet,
+        checkedOut,
+        userId
+      );
+      scoreTypeTotalCheckedOutCount = checkedOutScoreIdSet.size;
     }
 
     res.render("checkouts", {
@@ -405,6 +377,48 @@ export async function checkouts(
     });
   } catch (error) {
     res.status(500).json({ error });
+  }
+
+  async function getCheckoutsWithUser(
+    scores: IScore[],
+    checkedOutScoreIdSet: Set<string>,
+    onlyCheckedOut: boolean,
+    onlyForUserId?: string
+  ) {
+    const userMap = await getUserMap(scores);
+    let checkoutsWithUser = [];
+    for (const score of scores) {
+      for (const checkout of score.checkouts) {
+        checkedOutScoreIdSet.add(score.id);
+        if (
+          (!onlyCheckedOut || !checkout.checkinTimestamp) &&
+          (!onlyForUserId || checkout.userId === onlyForUserId)
+        ) {
+          const user = userMap.get(checkout.userId);
+          checkoutsWithUser.push({
+            checkout,
+            user,
+            scoreExtId: score.extId,
+            signature: score.signature,
+          });
+        }
+      }
+    }
+    return checkoutsWithUser;
+
+    async function getUserMap(scores: IScore[]) {
+      const userIds = []; // TODO: Set
+      for (const score of scores) {
+        for (const checkout of score.checkouts) {
+          userIds.push(checkout.userId);
+        }
+      }
+      const userMap = (await User.find({ id: { $in: userIds } })).reduce(
+        (map, user) => map.set(user.id, user),
+        new Map()
+      );
+      return userMap;
+    }
   }
 }
 
@@ -433,6 +447,8 @@ const sendCheckoutConfirmationEmail = async (
     Und nun viel Spaß beim Proben und viel Erfolg beim Konzert!
     <p>
     Dein Hans-Sachs-Chor Notenwart
+    <p>
+    p.s.: Diese E-Mail wurde automatisch versendet
   `;
 
   await sendConfirmationEmail(user, subject, html, testRecipient);
@@ -464,7 +480,9 @@ const sendCheckinConfirmationEmail = async (
   } (andere Nummer: ${extId}) zurückgegeben. Vielen Dank!
   <p>
   Dein Hans-Sachs-Chor Notenwart
-  `;
+  <p>
+  p.s.: Diese E-Mail wurde automatisch versendet
+`;
 
   await sendConfirmationEmail(user, subject, html, testRecipient);
 };

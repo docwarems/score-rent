@@ -80,8 +80,11 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
             if (score) {
                 // check if this user already checked out a copy of this score type
                 const scoreTypeId = scoreId.substr(0, scoreId.lastIndexOf("-"));
-                const checkedOutScores = yield Score_1.Score.find({ checkedOutByUserId: userId });
-                const checkedOutScoresOfCurrentType = checkedOutScores.find(// TODO: can for sure be done in one query
+                const checkedOutScores = yield Score_1.Score.find({
+                    checkedOutByUserId: userId,
+                });
+                const checkedOutScoresOfCurrentType = checkedOutScores.find(
+                // TODO: can for sure be done in one query
                 (score) => score.id.substr(0, score.id.lastIndexOf("-")) === scoreTypeId);
                 const doubleCheckoutIsAllowed = allowDoubleCheckout === "allow";
                 if (!checkedOutScoresOfCurrentType ||
@@ -307,6 +310,17 @@ module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, 
     const admin = true;
     yield checkouts(res, signature, checkedOut == "true", admin, userId);
 });
+/**
+ * Fälle
+ * - Checkouts ermitteln
+ *   - mit/ohne User Einschränkung
+ *
+ * @param res
+ * @param signature
+ * @param checkedOut
+ * @param admin
+ * @param userId
+ */
 function checkouts(res, signature, checkedOut, admin, userId) {
     return __awaiter(this, void 0, void 0, function* () {
         let sigFilter = signature && signature !== score_utils_1.SIGNATURE_ALL.id ? { signature } : {};
@@ -323,52 +337,9 @@ function checkouts(res, signature, checkedOut, admin, userId) {
                 scoreTypeTotalCount = scoreType === null || scoreType === void 0 ? void 0 : scoreType.count;
                 // const scores = await Score.find(filter, "checkouts") // return only checkouts property
                 const scores = yield Score_1.Score.find(sigFilter).populate("checkouts").exec(); // TODO: when exec and when not? // TODO: is populate() correct? See https://mongoosejs.com/docs/subdocs.html
-                if (userId) {
-                    // show only checkouts of this user
-                    for (const score of scores) {
-                        for (const checkout of score.checkouts) {
-                            if (checkout.userId == userId) {
-                                const user = yield User_1.User.findOne({ id: userId });
-                                checkoutsWithUser.push({
-                                    checkout,
-                                    user,
-                                    scoreExtId: score.extId,
-                                    signature: score.signature,
-                                });
-                            }
-                        }
-                    }
-                }
-                else {
-                    // get map of users who checked out these scores
-                    const userIds = []; // TODO: Set
-                    for (const score of scores) {
-                        for (const checkout of score.checkouts) {
-                            userIds.push(checkout.userId);
-                        }
-                    }
-                    const userMap = yield (yield User_1.User.find({ id: { $in: userIds } })).reduce((map, user) => map.set(user.id, user), new Map());
-                    // assign user objects to checkouts and collect total number of checked out scores
-                    const checkedOutScoresSet = new Set();
-                    for (const score of scores) {
-                        for (const checkout of score.checkouts) {
-                            checkedOutScoresSet.add(score.id);
-                            const user = userMap.get(checkout.userId);
-                            checkoutsWithUser.push({
-                                checkout,
-                                user,
-                                scoreExtId: score.extId,
-                                signature: score.signature,
-                            });
-                        }
-                    }
-                    scoreTypeTotalCheckedOutCount = checkedOutScoresSet.size;
-                }
-            }
-            if (checkedOut) {
-                checkoutsWithUser = checkoutsWithUser.filter((checkoutWithUser) => {
-                    return !checkoutWithUser.checkout.checkinTimestamp;
-                });
+                const checkedOutScoreIdSet = new Set();
+                checkoutsWithUser = yield getCheckoutsWithUser(scores, checkedOutScoreIdSet, checkedOut, userId);
+                scoreTypeTotalCheckedOutCount = checkedOutScoreIdSet.size;
             }
             res.render("checkouts", {
                 admin,
@@ -384,6 +355,40 @@ function checkouts(res, signature, checkedOut, admin, userId) {
         }
         catch (error) {
             res.status(500).json({ error });
+        }
+        function getCheckoutsWithUser(scores, checkedOutScoreIdSet, onlyCheckedOut, onlyForUserId) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const userMap = yield getUserMap(scores);
+                let checkoutsWithUser = [];
+                for (const score of scores) {
+                    for (const checkout of score.checkouts) {
+                        checkedOutScoreIdSet.add(score.id);
+                        if ((!onlyCheckedOut || !checkout.checkinTimestamp) &&
+                            (!onlyForUserId || checkout.userId === onlyForUserId)) {
+                            const user = userMap.get(checkout.userId);
+                            checkoutsWithUser.push({
+                                checkout,
+                                user,
+                                scoreExtId: score.extId,
+                                signature: score.signature,
+                            });
+                        }
+                    }
+                }
+                return checkoutsWithUser;
+                function getUserMap(scores) {
+                    return __awaiter(this, void 0, void 0, function* () {
+                        const userIds = []; // TODO: Set
+                        for (const score of scores) {
+                            for (const checkout of score.checkouts) {
+                                userIds.push(checkout.userId);
+                            }
+                        }
+                        const userMap = (yield User_1.User.find({ id: { $in: userIds } })).reduce((map, user) => map.set(user.id, user), new Map());
+                        return userMap;
+                    });
+                }
+            });
         }
     });
 }
@@ -404,6 +409,8 @@ const sendCheckoutConfirmationEmail = (user, score, testRecipient) => __awaiter(
     Und nun viel Spaß beim Proben und viel Erfolg beim Konzert!
     <p>
     Dein Hans-Sachs-Chor Notenwart
+    <p>
+    p.s.: Diese E-Mail wurde automatisch versendet
   `;
     yield sendConfirmationEmail(user, subject, html, testRecipient);
 });
@@ -423,7 +430,9 @@ const sendCheckinConfirmationEmail = (user, score, testRecipient) => __awaiter(v
   Du hast die Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit HSC-Nummer ${score.id} (andere Nummer: ${extId}) zurückgegeben. Vielen Dank!
   <p>
   Dein Hans-Sachs-Chor Notenwart
-  `;
+  <p>
+  p.s.: Diese E-Mail wurde automatisch versendet
+`;
     yield sendConfirmationEmail(user, subject, html, testRecipient);
 });
 const sendConfirmationEmail = (user, subject, html, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {

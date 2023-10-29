@@ -14,7 +14,7 @@ const score_utils_1 = require("../utils/score-utils");
 module.exports.checkouts_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = res.locals.user.id;
     const signature = score_utils_1.SIGNATURE_ALL.id;
-    const checkedOut = true;
+    const checkedOut = false;
     const admin = false;
     yield (0, scoreController_1.checkouts)(res, signature, checkedOut, admin, userId);
 });
