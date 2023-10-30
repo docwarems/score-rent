@@ -62,3 +62,7 @@ exports.score.get("/history", async (req: any, res: any) =>
   })
 );
 exports.score.post("/history", scoreController.scoreHistory_post);
+
+exports.score.get("/vue-test", async (req: any, res: any) =>
+  res.render("vue-test")
+);
