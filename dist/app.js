@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
+var ejs = require('ejs');
 const mongoose_1 = __importDefault(require("mongoose"));
 const { router } = require("./routes/authRoutes");
 const { score } = require("./routes/scoreRoutes");
@@ -61,6 +62,7 @@ app.use(middleware.handle(i18next_1.default, {
 }));
 // view engine
 app.set("view engine", "ejs");
+app.engine('vue', ejs.renderFile); // render files with ".vue" extension in views folder by EJS too
 // database connection
 const dbURI = process.env.MONGODB_URL;
 mongoose_1.default.set("strictQuery", false);
@@ -80,7 +82,7 @@ const home_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 app.get("/", requireAuth, requireUserVerified, home_get);
 app.get("/js/vue/app.js", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    return res.render("vue-app", {
+    return res.render("vue-app.vue", {
         age: 77,
     });
 }));

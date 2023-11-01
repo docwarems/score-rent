@@ -1,4 +1,5 @@
 const express = require("express");
+var ejs = require('ejs');
 import mongoose from "mongoose";
 const { router } = require("./routes/authRoutes");
 const { score } = require("./routes/scoreRoutes");
@@ -62,6 +63,7 @@ app.use(
 
 // view engine
 app.set("view engine", "ejs");
+app.engine('vue', ejs.renderFile); // render files with ".vue" extension in views folder by EJS too
 
 // database connection
 const dbURI = process.env.MONGODB_URL as string;
@@ -88,7 +90,7 @@ const home_get = async (req: any, res: any) => {
 app.get("/", requireAuth, requireUserVerified, home_get);
 
 app.get("/js/vue/app.js",  async (req: any, res: any) =>
-    res.render("vue-app", {
+    res.render("vue-app.vue", {
     age: 77,
   })
 );
