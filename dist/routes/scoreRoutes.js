@@ -54,4 +54,4 @@ exports.score.get("/history", (req, res) => __awaiter(void 0, void 0, void 0, fu
     });
 }));
 exports.score.post("/history", scoreController.scoreHistory_post);
-exports.score.get("/vue-test", (req, res) => __awaiter(void 0, void 0, void 0, function* () { return res.render("vue-test"); }));
+exports.score.get("/checkouts-vue", (req, res) => __awaiter(void 0, void 0, void 0, function* () { return res.render("checkouts-vue"); }));

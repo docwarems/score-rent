@@ -87,10 +87,16 @@ const home_get = async (req: any, res: any) => {
 };
 app.get("/", requireAuth, requireUserVerified, home_get);
 
+app.get("/js/vue/app.js",  async (req: any, res: any) =>
+    res.render("vue-app", {
+    age: 77,
+  })
+);
+
+
 app.use("/score", score);
 app.use("/user", user);
 app.use(router);
-// app.use("/foo", authRoutes); // for http://localhost:3000/foo/checkout the route handler method gets called
 // app.use("/", authRoutes); // this seems to make no difference to app.use(authRoutes)
 
 
