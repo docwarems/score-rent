@@ -81,11 +81,6 @@ const home_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.render("home", { user, qrCodeDataUrl });
 });
 app.get("/", requireAuth, requireUserVerified, home_get);
-app.get("/js/vue/app.js", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    return res.render("vue-app.vue", {
-        age: 77,
-    });
-}));
 app.use("/score", score);
 app.use("/user", user);
 app.use(router);

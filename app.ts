@@ -89,13 +89,6 @@ const home_get = async (req: any, res: any) => {
 };
 app.get("/", requireAuth, requireUserVerified, home_get);
 
-app.get("/js/vue/app.js",  async (req: any, res: any) =>
-    res.render("vue-app.vue", {
-    age: 77,
-  })
-);
-
-
 app.use("/score", score);
 app.use("/user", user);
 app.use(router);

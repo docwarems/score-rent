@@ -1,16 +1,14 @@
 const app = Vue.createApp({
     data() {
         return {
-            showBooks: true,
-            title: 'The final empire',
-            author: 'Brandon Sanderson',
-            age: <%= age %>,
-            items: [{ message: "m1"}, { message: "m2"}],
+            email: 'Mario@vue.com',
+            password: 'geheim',
+            role: '',
         }
     },
     methods: {
-        toggleShowBooks() {
-            this.showBooks = !this.showBooks
+        handleSubmit() {
+            console.log(`form submitted: email=${this.email}. password=${this.password}`);
         }
     }
 })

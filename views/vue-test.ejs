@@ -1,0 +1,45 @@
+<%- include('partials/header'); -%>
+
+    <script src='https://unpkg.com/vue@3.0.2'></script>
+
+    <h1> Hello Vue</h1>
+    
+    <div id="app">
+        <form @submit.prevent="handleSubmit">
+            <label>Email:</label>
+            <input type="email" required v-model="email">
+        
+            <label>Password:</label>
+            <input type="password" required v-model="password">
+        
+
+            <label>Role: </label>
+            <select v-model="role">
+                <option value="developer">Web Developer</option>
+                <option value="designer">Web Designer</option>
+            </select>
+
+            <button>Create an Account</button>
+        </form>
+
+        <p>Email: {{ email }}</p>
+        <p>Email: {{ password }}</p>
+        <p>Role: {{ role }}</p>
+    </div>
+
+    <p></p>
+    <div id="app1">
+        <div v-if="showBooks">
+            <p>{{ title }} - {{ author }} - {{ age }}</p>
+        </div>
+        <button @click="toggleShowBooks">
+            <span v-if="showBooks">Hide books</span>        
+            <span v-else>Show books</span>
+        </button>
+
+        <div v-show="showBooks">Currently showing books</div>
+    </div>
+
+    <script src="./vue-test.js"></script>
+
+<%- include('partials/footer'); -%>

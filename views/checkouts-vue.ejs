@@ -2,38 +2,11 @@
 
     <script src='https://unpkg.com/vue@3.0.2'></script>
 
-    <h1> Hello Vue</h1>
+    <h1> Hello Checkouts</h1>
     
     <div id="app">
-        <div v-if="showBooks">
-            <p>{{ title }} - {{ author }} - {{ age }}</p>
-        </div>
-        <button @click="toggleShowBooks">
-            <span v-if="showBooks">Hide books</span>        
-            <span v-else>Show books</span>
-        </button>
-
-        <div v-show="showBooks">Currently showing books</div>
-
-        <p></p>
-        <li v-for="item in items">
-            {{ item.message }}
-        </li>
     </div>
 
-    <p></p>
-    <div id="app1">
-        <div v-if="showBooks">
-            <p>{{ title }} - {{ author }} - {{ age }}</p>
-        </div>
-        <button @click="toggleShowBooks">
-            <span v-if="showBooks">Hide books</span>        
-            <span v-else>Show books</span>
-        </button>
-
-        <div v-show="showBooks">Currently showing books</div>
-    </div>
-
-    <script src="../../js/vue/app.js"></script>
+    <script src="./checkouts.js"></script>
 
 <%- include('partials/footer'); -%>

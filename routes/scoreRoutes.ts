@@ -63,6 +63,22 @@ exports.score.get("/history", async (req: any, res: any) =>
 );
 exports.score.post("/history", scoreController.scoreHistory_post);
 
+exports.score.get("/vue-test", async (req: any, res: any) =>
+  res.render("vue-test")
+);
+exports.score.get("/vue-test.js",  async (req: any, res: any) =>
+    res.render("vue-test.vue", {
+    age: 66,
+  })
+);
+
+
 exports.score.get("/checkouts-vue", async (req: any, res: any) =>
   res.render("checkouts-vue")
 );
+exports.score.get("/checkouts.js",  async (req: any, res: any) =>
+    res.render("checkouts.vue", {
+    age: 66,
+  })
+);
+
