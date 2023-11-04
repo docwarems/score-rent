@@ -78,7 +78,8 @@ exports.score.get("/checkouts-vue", async (req: any, res: any) =>
 );
 exports.score.get("/checkouts.js",  async (req: any, res: any) =>
     res.render("checkouts.vue", {
-    age: 66,
-  })
+      admin: true,
+      signatures: await getScoreTypes(),
+    })
 );
 
