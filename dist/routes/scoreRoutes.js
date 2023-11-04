@@ -65,5 +65,10 @@ exports.score.get("/checkouts.js", (req, res) => __awaiter(void 0, void 0, void 
     return res.render("checkouts.vue", {
         admin: true,
         signatures: JSON.stringify(yield (0, score_utils_1.getScoreTypes)()),
+        filter: JSON.stringify({ signature: "", checkedOut: true }),
+        checkouts: undefined,
+        error: undefined,
+        hasError: false,
     });
 }));
+exports.score.post("/checkouts-vue", scoreController.checkouts_vue_post);

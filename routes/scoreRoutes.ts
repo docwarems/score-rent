@@ -79,6 +79,11 @@ exports.score.get("/checkouts.js",  async (req: any, res: any) =>
     res.render("checkouts.vue", {
       admin: true,
       signatures: JSON.stringify(await getScoreTypes()),
+      filter: JSON.stringify({ signature: "", checkedOut: true }),
+      checkouts: undefined,
+      error: undefined,
+      hasError: false,
     })
 );
+score.post("/checkouts-vue", scoreController.checkouts_vue_post);
 

@@ -422,6 +422,122 @@ export async function checkouts(
   }
 }
 
+module.exports.checkouts_vue_post = async (req: any, res: any) => {
+  const { signature, checkedOut, userId } = req.body;
+  const admin = true;
+  await checkouts_vue(res, signature, checkedOut == "true", admin, userId);
+};
+
+/**
+ * Fälle
+ * - Checkouts ermitteln
+ *   - mit/ohne User Einschränkung
+ *
+ * @param res
+ * @param signature
+ * @param checkedOut
+ * @param admin
+ * @param userId
+ */
+export async function checkouts_vue(
+  res: any,
+  signature: string,
+  checkedOut: boolean,
+  admin: boolean,
+  userId: string
+) {
+  let sigFilter =
+    signature && signature !== SIGNATURE_ALL.id ? { signature } : {};
+  let scoreTypeTotalCount: number | undefined;
+  let scoreTypeTotalCheckedOutCount: number | undefined;
+  try {
+    let error = undefined;
+    if (!signature) {
+      error = "Bitte Signatur auswählen";
+    }
+
+    let checkoutsWithUser: any[] = [];
+    if (signature) {
+      const scoreType = await ScoreType.findOne({ signature });
+      scoreTypeTotalCount = scoreType?.count;
+
+      // const scores = await Score.find(filter, "checkouts") // return only checkouts property
+      const scores = await Score.find(sigFilter).populate("checkouts").exec(); // TODO: when exec and when not? // TODO: is populate() correct? See https://mongoosejs.com/docs/subdocs.html
+      const checkedOutScoreIdSet = new Set<string>();
+      checkoutsWithUser = await getCheckoutsWithUser(
+        scores,
+        checkedOutScoreIdSet,
+        checkedOut,
+        userId
+      );
+      scoreTypeTotalCheckedOutCount = checkedOutScoreIdSet.size;
+    }
+
+    res.status(201).json({ 
+      admin,
+      signatures: JSON.stringify(await getScoreTypes()),
+      signatureMap: JSON.stringify(await getScoreTypeMap()),
+      SIGNATURE_ALL,
+      filter: JSON.stringify({ signature, checkedOut }),
+      checkouts: checkoutsWithUser,
+      scoreTypeTotalCount,
+      scoreTypeTotalCheckedOutCount,
+      error,
+    });
+
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+
+  async function getCheckoutsWithUser(
+    scores: IScore[],
+    checkedOutScoreIdSet: Set<string>,
+    onlyCheckedOut: boolean,
+    onlyForUserId?: string
+  ) {
+    const userMap = await getUserMap(scores);
+    let checkoutsWithUser = [];
+    for (const score of scores) {
+      for (const checkout of score.checkouts) {
+        checkedOutScoreIdSet.add(score.id);
+        if (
+          (!onlyCheckedOut || !checkout.checkinTimestamp) &&
+          (!onlyForUserId || checkout.userId === onlyForUserId)
+        ) {
+          const user = userMap.get(checkout.userId);
+          const userName = user ? (user.firstName + " " + user.lastName) : checkout.userId;
+          const voice = user?.voice ?? "?";
+          const userNamePlusVoice = `${userName} (${voice})`;
+            checkoutsWithUser.push({
+            checkout,
+            user,
+            userName,
+            voice,
+            userNamePlusVoice,
+            scoreExtId: score.extId,
+            signature: score.signature,
+          });
+        }
+      }
+    }
+    return checkoutsWithUser;
+
+    async function getUserMap(scores: IScore[]) {
+      const userIds = []; // TODO: Set
+      for (const score of scores) {
+        for (const checkout of score.checkouts) {
+          userIds.push(checkout.userId);
+        }
+      }
+      const userMap = (await User.find({ id: { $in: userIds } })).reduce(
+        (map, user) => map.set(user.id, user),
+        new Map()
+      );
+      return userMap;
+    }
+  }
+}
+
 const sendCheckoutConfirmationEmail = async (
   user: any,
   score: IScore,

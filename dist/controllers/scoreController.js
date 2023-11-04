@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkouts = void 0;
+exports.checkouts_vue = exports.checkouts = void 0;
 const User_1 = require("../models/User");
 const Score_1 = require("../models/Score");
 const Checkout_1 = require("../models/Checkout");
@@ -393,6 +393,101 @@ function checkouts(res, signature, checkedOut, admin, userId) {
     });
 }
 exports.checkouts = checkouts;
+module.exports.checkouts_vue_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { signature, checkedOut, userId } = req.body;
+    const admin = true;
+    yield checkouts_vue(res, signature, checkedOut == "true", admin, userId);
+});
+/**
+ * Fälle
+ * - Checkouts ermitteln
+ *   - mit/ohne User Einschränkung
+ *
+ * @param res
+ * @param signature
+ * @param checkedOut
+ * @param admin
+ * @param userId
+ */
+function checkouts_vue(res, signature, checkedOut, admin, userId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let sigFilter = signature && signature !== score_utils_1.SIGNATURE_ALL.id ? { signature } : {};
+        let scoreTypeTotalCount;
+        let scoreTypeTotalCheckedOutCount;
+        try {
+            let error = undefined;
+            if (!signature) {
+                error = "Bitte Signatur auswählen";
+            }
+            let checkoutsWithUser = [];
+            if (signature) {
+                const scoreType = yield Score_1.ScoreType.findOne({ signature });
+                scoreTypeTotalCount = scoreType === null || scoreType === void 0 ? void 0 : scoreType.count;
+                // const scores = await Score.find(filter, "checkouts") // return only checkouts property
+                const scores = yield Score_1.Score.find(sigFilter).populate("checkouts").exec(); // TODO: when exec and when not? // TODO: is populate() correct? See https://mongoosejs.com/docs/subdocs.html
+                const checkedOutScoreIdSet = new Set();
+                checkoutsWithUser = yield getCheckoutsWithUser(scores, checkedOutScoreIdSet, checkedOut, userId);
+                scoreTypeTotalCheckedOutCount = checkedOutScoreIdSet.size;
+            }
+            res.status(201).json({
+                admin,
+                signatures: JSON.stringify(yield (0, score_utils_1.getScoreTypes)()),
+                signatureMap: JSON.stringify(yield (0, score_utils_1.getScoreTypeMap)()),
+                SIGNATURE_ALL: score_utils_1.SIGNATURE_ALL,
+                filter: JSON.stringify({ signature, checkedOut }),
+                checkouts: checkoutsWithUser,
+                scoreTypeTotalCount,
+                scoreTypeTotalCheckedOutCount,
+                error,
+            });
+        }
+        catch (error) {
+            res.status(500).json({ error });
+        }
+        function getCheckoutsWithUser(scores, checkedOutScoreIdSet, onlyCheckedOut, onlyForUserId) {
+            var _a;
+            return __awaiter(this, void 0, void 0, function* () {
+                const userMap = yield getUserMap(scores);
+                let checkoutsWithUser = [];
+                for (const score of scores) {
+                    for (const checkout of score.checkouts) {
+                        checkedOutScoreIdSet.add(score.id);
+                        if ((!onlyCheckedOut || !checkout.checkinTimestamp) &&
+                            (!onlyForUserId || checkout.userId === onlyForUserId)) {
+                            const user = userMap.get(checkout.userId);
+                            const userName = user ? (user.firstName + " " + user.lastName) : checkout.userId;
+                            const voice = (_a = user === null || user === void 0 ? void 0 : user.voice) !== null && _a !== void 0 ? _a : "?";
+                            const userNamePlusVoice = `${userName} (${voice})`;
+                            checkoutsWithUser.push({
+                                checkout,
+                                user,
+                                userName,
+                                voice,
+                                userNamePlusVoice,
+                                scoreExtId: score.extId,
+                                signature: score.signature,
+                            });
+                        }
+                    }
+                }
+                return checkoutsWithUser;
+                function getUserMap(scores) {
+                    return __awaiter(this, void 0, void 0, function* () {
+                        const userIds = []; // TODO: Set
+                        for (const score of scores) {
+                            for (const checkout of score.checkouts) {
+                                userIds.push(checkout.userId);
+                            }
+                        }
+                        const userMap = (yield User_1.User.find({ id: { $in: userIds } })).reduce((map, user) => map.set(user.id, user), new Map());
+                        return userMap;
+                    });
+                }
+            });
+        }
+    });
+}
+exports.checkouts_vue = checkouts_vue;
 const sendCheckoutConfirmationEmail = (user, score, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
     const subject = "Hans-Sachs-Chor Noten ausgeliehen";
     const extId = score.extId ? score.extId : "???";

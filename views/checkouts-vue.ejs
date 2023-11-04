@@ -3,10 +3,14 @@
 <script src='https://unpkg.com/vue@3.0.2'></script>
 
 <h1>Ausleihen</h1>
-
+  
 <div id="app">
+    <div v-if="hasError" class="w3-panel w3-red divError">
+        <p class="pError">{{ error }}</p>
+    </div>
+    
     <div v-if="admin" class="w3-panel w3-border">
-        <form @submit.prevent="handleCheckoutsSubmit">
+        <form @submit.prevent="postCheckouts">
             <h3>Filter</h3>
             <label>Noten Signatur</label>
         
@@ -22,8 +26,45 @@
             <p></p>
         </form>
     </div>
+
+    <div v-if="checkouts">
+        <div class="w3-left-align"><p>{{ statSummary }}</p></div>
+        <div class="w3-responsive">
+            <p></p>
+            <table class="w3-table-all" id="checkoutsTable">
+                <tr>
+                    <th v-if="filter.signature === SIGNATURE_ALL.id">Werk</th>
+                    <th>Noten Id</th>
+                    <th>Noten ext. Id</th>
+                    <th v-if="admin">Benutzer</th>
+                    <th>Ausgeliehen am</th>
+                    <th>Kommentar Ausleihe</th>
+                    <th v-if="admin"></th> <!-- Schalter Rückgabe -->
+                    <th>Rückgabe am</th>
+                    <th>Kommentar Rückgabe</th>
+                  </tr>
+                  <tr v-for="checkoutWithUser in checkouts">
+                    <td v-if="filter.signature === SIGNATURE_ALL.id">signatureMap.get(checkoutWithUser.signature)</td>
+                    <td>{{ checkoutWithUser.checkout.scoreId }}</td>
+                    <td>{{ checkoutWithUser.scoreExtId }}</td>
+                    <td v-if="admin">
+                      <button onclick="userDetails('userName', 'userEmail')" class="w3-button w3-pale-blue">{{ checkoutWithUser.userNamePlusVoice }}</button>
+                    </td>
+                    <td v-if="admin"><button onclick="editCheckout('checkout.scoreId','checkout._id','checkout.checkoutComment','checkout.checkinComment')" class="w3-button w3-pale-blue">{{ checkoutWithUser.checkout.checkoutTimestamp ? checkoutWithUser.checkout.checkoutTimestamp : "" }}</button></td>
+                    <td v-else>{{ checkoutWithUser.checkout.checkoutTimestamp ? checkoutWithUser.checkout.checkoutTimestamp.toLocaleDateString("de-DE") : "" }}</td>
+                    <td>{{ checkoutWithUser.checkout.checkoutComment }}</td>
+                    <td>
+                    </td>
+                    <td>{{ checkoutWithUser.checkout.checkinTimestamp ? checkoutWithUser.checkout.checkinTimestamp : "" }}</td>
+                    <td>{{ checkoutWithUser.checkout.checkinComment }}</td>
+                  </tr>
+            </table>          
+        </div>    
+    </div>
+    
 </div>
 
 <script src="./checkouts.js"></script>
+
 
 <%- include('partials/footer'); -%>
