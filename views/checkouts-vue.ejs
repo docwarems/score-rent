@@ -4,15 +4,15 @@
 
 <h1>Ausleihen</h1>
 
-<div vue-if="admin" id="app">
-    <div class="w3-panel w3-border divScore">
+<div id="app">
+    <div v-if="admin" class="w3-panel w3-border">
         <form @submit.prevent="handleCheckoutsSubmit">
             <h3>Filter</h3>
             <label>Noten Signatur</label>
         
-            <select class="w3-select" v-model="signature">
+            <select class="w3-select" v-model="signature">                
                 <option value="">Noten auswählen</option>
-                <option value="BRFS-AD">Braunfels Advent</option>
+                <option v-for="signature in signatures" :value="signature.id">{{signature.name}}</option>
             </select>
         
             <label>Nur offene</label>

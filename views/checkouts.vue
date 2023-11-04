@@ -3,6 +3,7 @@ const app = Vue.createApp({
         return {
             admin: <%= admin %>,
             signature: "",
+            signatures: JSON.parse('<%- signatures %>'),
             checkedOut: true,
         }
     },

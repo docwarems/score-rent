@@ -72,14 +72,13 @@ exports.score.get("/vue-test.js",  async (req: any, res: any) =>
   })
 );
 
-
 exports.score.get("/checkouts-vue", async (req: any, res: any) =>
   res.render("checkouts-vue")
 );
 exports.score.get("/checkouts.js",  async (req: any, res: any) =>
     res.render("checkouts.vue", {
       admin: true,
-      signatures: await getScoreTypes(),
+      signatures: JSON.stringify(await getScoreTypes()),
     })
 );
 

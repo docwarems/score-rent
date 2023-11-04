@@ -63,6 +63,7 @@ exports.score.get("/vue-test.js", (req, res) => __awaiter(void 0, void 0, void 0
 exports.score.get("/checkouts-vue", (req, res) => __awaiter(void 0, void 0, void 0, function* () { return res.render("checkouts-vue"); }));
 exports.score.get("/checkouts.js", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     return res.render("checkouts.vue", {
-        age: 66,
+        admin: true,
+        signatures: JSON.stringify(yield (0, score_utils_1.getScoreTypes)()),
     });
 }));
