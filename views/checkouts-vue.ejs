@@ -25,6 +25,7 @@
             <button class="w3-button w3-black btnCheckouts" type="submit">Suchen</button>
             <p></p>
         </form>
+        <p>{{ checkedOut }}</p>
     </div>
 
     <div v-if="checkouts">
@@ -43,20 +44,20 @@
                     <th>Rückgabe am</th>
                     <th>Kommentar Rückgabe</th>
                   </tr>
-                  <tr v-for="checkoutWithUser in checkouts">
-                    <td v-if="filter.signature === SIGNATURE_ALL.id">signatureMap.get(checkoutWithUser.signature)</td>
-                    <td>{{ checkoutWithUser.checkout.scoreId }}</td>
-                    <td>{{ checkoutWithUser.scoreExtId }}</td>
+                  <tr v-for="checkout in checkouts">
+                    <td v-if="filter.signature === SIGNATURE_ALL.id">signatureMap.get(checkout.signature)</td>
+                    <td>{{ checkout.scoreId }}</td>
+                    <td>{{ checkout.scoreExtId }}</td>
                     <td v-if="admin">
-                      <button onclick="userDetails('userName', 'userEmail')" class="w3-button w3-pale-blue">{{ checkoutWithUser.userNamePlusVoice }}</button>
+                      <button onclick="userDetails('userName', 'userEmail')" class="w3-button w3-pale-blue">{{ checkout.user.namePlusVoice }}</button>
                     </td>
-                    <td v-if="admin"><button onclick="editCheckout('checkout.scoreId','checkout._id','checkout.checkoutComment','checkout.checkinComment')" class="w3-button w3-pale-blue">{{ checkoutWithUser.checkout.checkoutTimestamp ? checkoutWithUser.checkout.checkoutTimestamp : "" }}</button></td>
-                    <td v-else>{{ checkoutWithUser.checkout.checkoutTimestamp ? checkoutWithUser.checkout.checkoutTimestamp.toLocaleDateString("de-DE") : "" }}</td>
-                    <td>{{ checkoutWithUser.checkout.checkoutComment }}</td>
+                    <td v-if="admin"><button onclick="editCheckout('checkout.scoreId','checkout._id','checkout.checkoutComment','checkout.checkinComment')" class="w3-button w3-pale-blue">{{ checkout.checkoutTimestamp }}</button></td>
+                    <td v-else>{{ checkout.checkoutTimestamp }}</td>
+                    <td>{{ checkout.checkoutComment }}</td>
                     <td>
                     </td>
-                    <td>{{ checkoutWithUser.checkout.checkinTimestamp ? checkoutWithUser.checkout.checkinTimestamp : "" }}</td>
-                    <td>{{ checkoutWithUser.checkout.checkinComment }}</td>
+                    <td>{{ checkout.checkinTimestamp }}</td>
+                    <td>{{ checkout.checkinComment }}</td>
                   </tr>
             </table>          
         </div>    

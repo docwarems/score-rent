@@ -396,7 +396,7 @@ exports.checkouts = checkouts;
 module.exports.checkouts_vue_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { signature, checkedOut, userId } = req.body;
     const admin = true;
-    yield checkouts_vue(res, signature, checkedOut == "true", admin, userId);
+    yield checkouts_vue(res, signature, checkedOut, admin, userId);
 });
 /**
  * Fälle
@@ -448,7 +448,7 @@ function checkouts_vue(res, signature, checkedOut, admin, userId) {
             var _a;
             return __awaiter(this, void 0, void 0, function* () {
                 const userMap = yield getUserMap(scores);
-                let checkoutsWithUser = [];
+                let checkouts = [];
                 for (const score of scores) {
                     for (const checkout of score.checkouts) {
                         checkedOutScoreIdSet.add(score.id);
@@ -457,20 +457,21 @@ function checkouts_vue(res, signature, checkedOut, admin, userId) {
                             const user = userMap.get(checkout.userId);
                             const userName = user ? (user.firstName + " " + user.lastName) : checkout.userId;
                             const voice = (_a = user === null || user === void 0 ? void 0 : user.voice) !== null && _a !== void 0 ? _a : "?";
-                            const userNamePlusVoice = `${userName} (${voice})`;
-                            checkoutsWithUser.push({
-                                checkout,
-                                user,
-                                userName,
-                                voice,
-                                userNamePlusVoice,
+                            const namePlusVoice = `${userName} (${voice})`;
+                            // deconstruction of checkout by "...checkout" seems not to work, because it's a Mongoose object?
+                            checkouts.push({
+                                checkoutTimestamp: checkout.checkoutTimestamp ? checkout.checkoutTimestamp.toLocaleDateString("de-DE") : "",
+                                checkoutComment: checkout.checkoutComment,
+                                checkinTimestamp: checkout.checkinTimestamp ? checkout.checkinTimestamp.toLocaleDateString("de-DE") : "",
+                                checkinComment: checkout.checkinComment,
                                 scoreExtId: score.extId,
                                 signature: score.signature,
+                                user: { id: checkout.userId, name: userName, namePlusVoice },
                             });
                         }
                     }
                 }
-                return checkoutsWithUser;
+                return checkouts;
                 function getUserMap(scores) {
                     return __awaiter(this, void 0, void 0, function* () {
                         const userIds = []; // TODO: Set

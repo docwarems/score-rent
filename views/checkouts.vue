@@ -34,7 +34,7 @@ const app = Vue.createApp({
                     }
                 });
                 const data = await res.json();
-                console.log("data=", data);
+                // console.log("data=", data);
                 this.admin = data.admin;
                 this.checkouts = data.checkouts;
             } catch (err) {

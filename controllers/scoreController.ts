@@ -425,7 +425,7 @@ export async function checkouts(
 module.exports.checkouts_vue_post = async (req: any, res: any) => {
   const { signature, checkedOut, userId } = req.body;
   const admin = true;
-  await checkouts_vue(res, signature, checkedOut == "true", admin, userId);
+  await checkouts_vue(res, signature, checkedOut, admin, userId);
 };
 
 /**
@@ -496,7 +496,7 @@ export async function checkouts_vue(
     onlyForUserId?: string
   ) {
     const userMap = await getUserMap(scores);
-    let checkoutsWithUser = [];
+    let checkouts = [];
     for (const score of scores) {
       for (const checkout of score.checkouts) {
         checkedOutScoreIdSet.add(score.id);
@@ -507,20 +507,21 @@ export async function checkouts_vue(
           const user = userMap.get(checkout.userId);
           const userName = user ? (user.firstName + " " + user.lastName) : checkout.userId;
           const voice = user?.voice ?? "?";
-          const userNamePlusVoice = `${userName} (${voice})`;
-            checkoutsWithUser.push({
-            checkout,
-            user,
-            userName,
-            voice,
-            userNamePlusVoice,
+          const namePlusVoice = `${userName} (${voice})`;
+          // deconstruction of checkout by "...checkout" seems not to work, because it's a Mongoose object?
+          checkouts.push({
+            checkoutTimestamp: checkout.checkoutTimestamp ? checkout.checkoutTimestamp.toLocaleDateString("de-DE") : "",
+            checkoutComment: checkout.checkoutComment,
+            checkinTimestamp: checkout.checkinTimestamp ? checkout.checkinTimestamp.toLocaleDateString("de-DE") : "",
+            checkinComment: checkout.checkinComment,
             scoreExtId: score.extId,
             signature: score.signature,
+            user: { id: checkout.userId, name: userName, namePlusVoice},
           });
         }
       }
     }
-    return checkoutsWithUser;
+    return checkouts;
 
     async function getUserMap(scores: IScore[]) {
       const userIds = []; // TODO: Set
