@@ -14,11 +14,21 @@ const app = Vue.createApp({
             error: undefined,
             SIGNATURE_ALL: { id: 'ALL', name: 'Alle'},
             userNamePlusVoice: '',
+            showUserDetails: false,
         }
     },
     methods: {
         handleCheckoutsSubmit() {
             console.log(`signature=${this.signature}, checkedOut=${this.checkedOut}`);
+        },
+        userDetails() {
+            // v-show does not work here - don't know why
+            const userDetailsModal = this.$refs["userDetailsModal"];
+            userDetailsModal.style = 'display: block';
+        },
+        closeUserDetails() {
+            const userDetailsModal = this.$refs["userDetailsModal"];
+            userDetailsModal.style = 'display: none';
         },
         async postCheckouts() {
             try {
