@@ -15,13 +15,18 @@ const app = Vue.createApp({
             SIGNATURE_ALL: { id: 'ALL', name: 'Alle'},
             userNamePlusVoice: '',
             showUserDetails: false,
+            userDetailsName: '',
+            userDetailsEmail: '',
+            userDetailsRegisterDate: 'TODO',
         }
     },
     methods: {
         handleCheckoutsSubmit() {
             console.log(`signature=${this.signature}, checkedOut=${this.checkedOut}`);
         },
-        userDetails() {
+        userDetails(user) {
+            this.userDetailsName = user.name;
+            this.userDetailsEmail = user.email;
             // v-show does not work here - don't know why
             const userDetailsModal = this.$refs["userDetailsModal"];
             userDetailsModal.style = 'display: block';

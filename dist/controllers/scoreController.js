@@ -445,7 +445,7 @@ function checkouts_vue(res, signature, checkedOut, admin, userId) {
             res.status(500).json({ error });
         }
         function getCheckoutsWithUser(scores, checkedOutScoreIdSet, onlyCheckedOut, onlyForUserId) {
-            var _a;
+            var _a, _b;
             return __awaiter(this, void 0, void 0, function* () {
                 const userMap = yield getUserMap(scores);
                 let checkouts = [];
@@ -458,6 +458,7 @@ function checkouts_vue(res, signature, checkedOut, admin, userId) {
                             const userName = user ? (user.firstName + " " + user.lastName) : checkout.userId;
                             const voice = (_a = user === null || user === void 0 ? void 0 : user.voice) !== null && _a !== void 0 ? _a : "?";
                             const namePlusVoice = `${userName} (${voice})`;
+                            const email = (_b = user === null || user === void 0 ? void 0 : user.email) !== null && _b !== void 0 ? _b : "";
                             // deconstruction of checkout by "...checkout" seems not to work, because it's a Mongoose object?
                             checkouts.push({
                                 checkoutTimestamp: checkout.checkoutTimestamp ? checkout.checkoutTimestamp.toLocaleDateString("de-DE") : "",
@@ -466,7 +467,7 @@ function checkouts_vue(res, signature, checkedOut, admin, userId) {
                                 checkinComment: checkout.checkinComment,
                                 scoreExtId: score.extId,
                                 signature: score.signature,
-                                user: { id: checkout.userId, name: userName, namePlusVoice },
+                                user: { id: checkout.userId, name: userName, namePlusVoice, email },
                             });
                         }
                     }

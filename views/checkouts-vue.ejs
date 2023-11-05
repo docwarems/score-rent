@@ -31,7 +31,7 @@
         <div class="w3-left-align"><p>{{ statSummary }}</p></div>
         <div class="w3-responsive">
             <p></p>
-            <table class="w3-table-all" id="checkoutsTable">
+            <table class="w3-table-all">
                 <tr>
                     <th v-if="filter.signature === SIGNATURE_ALL.id">Werk</th>
                     <th>Noten Id</th>
@@ -48,7 +48,7 @@
                     <td>{{ checkout.scoreId }}</td>
                     <td>{{ checkout.scoreExtId }}</td>
                     <td v-if="admin">
-                      <button @click="userDetails" class="w3-button w3-pale-blue">{{ checkout.user.namePlusVoice }}</button>
+                      <button @click="userDetails(checkout.user)" class="w3-button w3-pale-blue">{{ checkout.user.namePlusVoice }}</button>
                     </td>
                     <td v-if="admin"><button onclick="editCheckout('checkout.scoreId','checkout._id','checkout.checkoutComment','checkout.checkinComment')" class="w3-button w3-pale-blue">{{ checkout.checkoutTimestamp }}</button></td>
                     <td v-else>{{ checkout.checkoutTimestamp }}</td>
@@ -68,22 +68,18 @@
         <div class="w3-modal-content">
         <div class="w3-container">
             <span @click="closeUserDetails" class="w3-button w3-display-topright">&times;</span>
-    
-            <p class="userp2">Some text in the Modal..</p>
-    
+            <p>{{ userDetailsName }}</p>
             <table class="w3-table-all" id="checkoutsTable">
             <tr>
                 <th>E-Mail</th>
                 <th>Registriert am</th>
             </tr>
             <tr>
-                <td class="userDetailsEmail"></td>
-                <td class="userDetailsRegisterDate"></td>
+                <td class="userDetailsEmail">{{ userDetailsEmail }}</td>
+                <td class="userDetailsRegisterDate">{{userDetailsRegisterDate }}</td>
             </tr>
             </table>
-    
-            <p></p>
-    
+            <p></p>    
         </div>
         </div>
     </div>  

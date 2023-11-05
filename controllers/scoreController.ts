@@ -508,6 +508,7 @@ export async function checkouts_vue(
           const userName = user ? (user.firstName + " " + user.lastName) : checkout.userId;
           const voice = user?.voice ?? "?";
           const namePlusVoice = `${userName} (${voice})`;
+          const email = user?.email ?? "";
           // deconstruction of checkout by "...checkout" seems not to work, because it's a Mongoose object?
           checkouts.push({
             checkoutTimestamp: checkout.checkoutTimestamp ? checkout.checkoutTimestamp.toLocaleDateString("de-DE") : "",
@@ -516,7 +517,7 @@ export async function checkouts_vue(
             checkinComment: checkout.checkinComment,
             scoreExtId: score.extId,
             signature: score.signature,
-            user: { id: checkout.userId, name: userName, namePlusVoice},
+            user: { id: checkout.userId, name: userName, namePlusVoice, email },
           });
         }
       }
