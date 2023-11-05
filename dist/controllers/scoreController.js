@@ -461,10 +461,12 @@ function checkouts_vue(res, signature, checkedOut, admin, userId) {
                             const email = (_b = user === null || user === void 0 ? void 0 : user.email) !== null && _b !== void 0 ? _b : "";
                             // deconstruction of checkout by "...checkout" seems not to work, because it's a Mongoose object?
                             checkouts.push({
+                                id: checkout._id,
                                 checkoutTimestamp: checkout.checkoutTimestamp ? checkout.checkoutTimestamp.toLocaleDateString("de-DE") : "",
                                 checkoutComment: checkout.checkoutComment,
                                 checkinTimestamp: checkout.checkinTimestamp ? checkout.checkinTimestamp.toLocaleDateString("de-DE") : "",
                                 checkinComment: checkout.checkinComment,
+                                scoreId: score.id,
                                 scoreExtId: score.extId,
                                 signature: score.signature,
                                 user: { id: checkout.userId, name: userName, namePlusVoice, email },

@@ -22,7 +22,7 @@
             <label>Nur offene</label>
             <input type="checkbox" class="w3-check" v-model="checkedOut">
             <p></p>
-            <button class="w3-button w3-black btnCheckouts" type="submit">Suchen</button>
+            <button class="w3-button w3-black btnCheckouts">Suchen</button>
             <p></p>
         </form>
     </div>
@@ -50,7 +50,7 @@
                     <td v-if="admin">
                       <button @click="userDetails(checkout.user)" class="w3-button w3-pale-blue">{{ checkout.user.namePlusVoice }}</button>
                     </td>
-                    <td v-if="admin"><button onclick="editCheckout('checkout.scoreId','checkout._id','checkout.checkoutComment','checkout.checkinComment')" class="w3-button w3-pale-blue">{{ checkout.checkoutTimestamp }}</button></td>
+                    <td v-if="admin"><button @click="editCheckout(checkout)" class="w3-button w3-pale-blue">{{ checkout.checkoutTimestamp }}</button></td>
                     <td v-else>{{ checkout.checkoutTimestamp }}</td>
                     <td>{{ checkout.checkoutComment }}</td>
                     <td>
@@ -64,7 +64,7 @@
 
 
     <!-- The user details modal -->
-    <div ref="userDetailsModal" id="userDetailsModal" class="w3-modal" style="display: none;">
+    <div ref="userDetailsModal" class="w3-modal" style="display: none">
         <div class="w3-modal-content">
         <div class="w3-container">
             <span @click="closeUserDetails" class="w3-button w3-display-topright">&times;</span>
@@ -83,6 +83,65 @@
         </div>
         </div>
     </div>  
+
+    <!-- edit checkout modal -->
+    <div ref="editCheckoutModal" class="w3-modal" style="display: none">
+        <div class="w3-modal-content">
+        <div class="w3-container">
+            <span @click="closeEditCheckout" class="w3-button w3-display-topright">&times;</span>
+            <h3>Ausleihe bearbeiten</h3>
+    
+            <div v-show="showEditCheckoutModalSuccess" class="w3-panel w3-green">
+            <p>Bearbeitung erfolgreich:</p>
+            </div>
+            <div v-show="showEditCheckoutModalError" class="w3-panel w3-red">
+            <p>{{ editCheckoutModalError }}</p>
+            </div>
+    
+            <p>{{ editCheckoutScoreId }}</p>
+            <p>{{ editCheckoutId }}</p>
+    
+            <form @submit.prevent="updateCheckout">
+            <input type="hidden" v-model="editCheckoutScoreId">
+            <input type="hidden" v-model="editCheckoutId">
+            <table class="w3-table-all" id="editCheckoutTable">
+                <tr>
+                <th>Kommentar Ausleihe</th>
+                <th>Kommentar Rückgabe</th>
+                <th>User Id</th>
+                </tr>
+                <tr>
+                <td><input v-model="editCheckoutComment" class="w3-input"></td>
+                <td><input v-model="editCheckinComment" class="w3-input"></td>
+                <td><input v-model="editCheckoutUserId" class="w3-input"></td>
+                </tr>
+            </table>
+            <p></p>
+            <button class="w3-button w3-black">OK</button>
+            </form>
+    
+            <!-- <P></P>
+            <h4>User suchen</h4>
+    
+            <form action="/userSearch" id="formUserSearch">
+            <table class="w3-table-all" id="tableUserSearch">
+                <tr>
+                <th>Nachname</th>
+                </tr>
+                <tr>
+                <td><input type="text" name="lastName" class="w3-input inputLastName"></td>
+                </tr>
+            </table>
+            <p></p>
+            <button class="w3-button w3-black btnUserSearch">User suchen</button>
+            </form>
+            <table id="tableUsers" class="w3-table-all tableUsers" />
+            <p></p> -->
+    
+        </div>
+        </div>
+    </div>
+  
 
 </div>
 
