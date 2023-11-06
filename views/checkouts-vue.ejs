@@ -5,12 +5,12 @@
 <h1>Ausleihen</h1>
   
 <div id="app">
-    <div v-if="hasError" class="w3-panel w3-red divError">
-        <p class="pError">{{ error }}</p>
+    <div v-show="error" class="w3-panel w3-red">
+        <p>{{ error }}</p>
     </div>
     
     <div v-if="admin" class="w3-panel w3-border">
-        <form @submit.prevent="postCheckouts">
+        <form @submit.prevent="handleCheckoutsFilterSubmit">
             <h3>Filter</h3>
             <label>Noten Signatur</label>
         
@@ -19,10 +19,10 @@
                 <option v-for="signature in signatures" :value="signature.id">{{signature.name}}</option>
             </select>
         
-            <label>Nur offene</label>
+            <label>Nur offene&nbsp;</label>
             <input type="checkbox" class="w3-check" v-model="checkedOut">
             <p></p>
-            <button class="w3-button w3-black btnCheckouts">Suchen</button>
+            <button class="w3-button w3-black">Suchen</button>
             <p></p>
         </form>
     </div>
@@ -104,7 +104,7 @@
             <form @submit.prevent="updateCheckout">
             <input type="hidden" v-model="editCheckoutScoreId">
             <input type="hidden" v-model="editCheckoutId">
-            <table class="w3-table-all" id="editCheckoutTable">
+            <table class="w3-table-all">
                 <tr>
                 <th>Kommentar Ausleihe</th>
                 <th>Kommentar Rückgabe</th>

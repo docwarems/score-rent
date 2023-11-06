@@ -10,8 +10,7 @@ const app = Vue.createApp({
             scoreTypeTotalCount: 0,
             scoreTypeTotalCheckedOutCount: 0,
             statSummary: '',
-            hasError: false,
-            error: undefined,
+            error: '',
             SIGNATURE_ALL: { id: 'ALL', name: 'Alle'},
             userNamePlusVoice: '',
             showUserDetails: false,
@@ -30,9 +29,6 @@ const app = Vue.createApp({
         }
     },
     methods: {
-        handleCheckoutsSubmit() {
-            console.log(`signature=${this.signature}, checkedOut=${this.checkedOut}`);
-        },
         userDetails(user) {
             this.userDetailsName = user.name;
             this.userDetailsEmail = user.email;
@@ -88,7 +84,8 @@ const app = Vue.createApp({
             const editCheckoutModal = this.$refs["editCheckoutModal"];
             editCheckoutModal.style = 'display: none';
         },
-        async postCheckouts() {
+        async handleCheckoutsFilterSubmit() {
+            this.error = "";
             try {
                 const res = await fetch('/score/checkouts-vue', {
                     method: 'POST',
@@ -103,6 +100,10 @@ const app = Vue.createApp({
                 });
                 const data = await res.json();
                 // console.log("data=", data);
+                if (data.error) {
+                    this.error = data.error;
+                    return;
+                }
                 this.admin = data.admin;
                 this.checkouts = data.checkouts;
             } catch (err) {
