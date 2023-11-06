@@ -23,9 +23,10 @@ const app = Vue.createApp({
             editCheckinComment: '',
             editCheckoutUserId: '',
             showEditCheckoutModalSuccess: false,
-            showEditCheckoutModalError: false,
             showFoo: false,
             editCheckoutModalError: '',
+            users: [],
+            userLastName: '',
         }
     },
     methods: {
@@ -42,7 +43,6 @@ const app = Vue.createApp({
         },
         editCheckout(checkout) {
             this.showEditCheckoutModalSuccess = false;
-            this.showEditCheckoutModalError = false;
             this.editCheckoutId = checkout.id;
             this.editCheckoutScoreId = checkout.scoreId;
             this.editCheckoutComment = checkout.checkoutComment;
@@ -72,7 +72,6 @@ const app = Vue.createApp({
             console.log("data=", data);
 
             if (data.errors) {
-                this.showEditCheckoutModalError = true;
                 this.editCheckoutModalError = data.errors;
             }
             if (data.updateScore) {
@@ -109,7 +108,31 @@ const app = Vue.createApp({
             } catch (err) {
                 console.log("err=", err);
             }
-        }
+        },
+        async userSearch() {
+            try {
+                const res = await fetch('/score/userSearch', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                        lastName: this.userLastName,
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                console.log("data=", data);
+                if (data.errors) {
+                    this.editCheckoutModalError = data.errors;
+                    return;
+                }
+                if (data.users) {
+                    this.users = data.users;
+                }
+            } catch (err) {
+                console.log("err=", err);
+            }
+        },
     },
 })
 

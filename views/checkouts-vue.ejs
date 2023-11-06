@@ -94,7 +94,7 @@
             <div v-show="showEditCheckoutModalSuccess" class="w3-panel w3-green">
             <p>Bearbeitung erfolgreich:</p>
             </div>
-            <div v-show="showEditCheckoutModalError" class="w3-panel w3-red">
+            <div v-show="editCheckoutModalError" class="w3-panel w3-red">
             <p>{{ editCheckoutModalError }}</p>
             </div>
     
@@ -120,23 +120,28 @@
             <button class="w3-button w3-black">OK</button>
             </form>
     
-            <!-- <P></P>
+            <P></P>
             <h4>User suchen</h4>
     
-            <form action="/userSearch" id="formUserSearch">
-            <table class="w3-table-all" id="tableUserSearch">
+            <form @click.prevent="userSearch">
+            <table class="w3-table-all">
                 <tr>
                 <th>Nachname</th>
                 </tr>
                 <tr>
-                <td><input type="text" name="lastName" class="w3-input inputLastName"></td>
+                <td><input class="w3-input" v-model="userLastName"></td>
                 </tr>
             </table>
             <p></p>
-            <button class="w3-button w3-black btnUserSearch">User suchen</button>
+            <button class="w3-button w3-black">User suchen</button>
             </form>
-            <table id="tableUsers" class="w3-table-all tableUsers" />
-            <p></p> -->
+            <p></p>
+            <table class="w3-table-all">
+                <tr v-for="user in users">
+                    <td>{{ user.id }}</td>
+                </tr>
+            </table>   
+            <p></p>
     
         </div>
         </div>
