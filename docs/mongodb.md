@@ -54,3 +54,12 @@ mongorestore --uri <connect-url> --dir dump/\<target-database\>
 It's just that easy. The database "testrestore" will be created if it was not existing.
 
 **Important: don't leave the "test" folder inside the dump, otherwise mongorestore will restore to your "test" database too.**
+
+## Compass GUI
+
+Installed on pc-ms4, but today connection timeout while connection via Atlas website was working.
+However, connection worked from Home PC, so it's possible due to some Quanos restriction.
+
+## Deleting data
+
+In the Atlas GUI you can only delete one document at a time. In order to delete documents from a filter query, use Compass.

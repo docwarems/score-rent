@@ -153,6 +153,7 @@ Die passende Seite zum Hochladen der eigenen Vorlage zu finden ist etwas mühsam
 - Projektdatei (.avery) auswählen
 
 Nun ist man in der Designansicht. Die Etikettenvorlage ist automatisch eingestellt (z.B. 3427). Von hier kann gedruckt werden.
+Anpassung von fortlaufende Nummern und QR Codes siehe unten bei "Neue Vorlage erstellen".
 
 Gespeicherte Projekte in "avery-label-templates"
 
