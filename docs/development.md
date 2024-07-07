@@ -1,5 +1,28 @@
 # Development
 
+## Setup project
+
+Recently I had to setup the project again due to a pc change. At the same time the Cyclic host deployment has been abondened.
+Also I hadn't touched the development for several months. So maximum hard...
+These were the steps to get project running again.
+
+- setup WSL2 and install Ubuntu distro
+- download/install nvm: https://github.com/nvm-sh/nvm
+- install/use node.js v22 with nvm
+- install npm: https://docs.npmjs.com/downloading-and-installing-node-js-and-npm
+- clone ScoreRent from GitHub
+- npm install
+- npm run dev -> MonogoDB error
+- create .env file (unfortunately I hadn't backup up my old one - so this caused me extra pain)
+  - after creating the MONGODB_URL entry, the app started
+  - a "connection refused" to port 587 came up on console - this was from the SMTP connect; however, the app was started
+  - porward port 3000
+  - http://localhost:3000/login -> Login page
+  - Debugging
+    - use VSC "debug" link in package.json scripts and choose "npm run dev"
+  - Use "password forgotten" function to reset password of admin user
+  - configure git user name and email globally
+
 ## Remote Android Debugging
 
 - enable USB debugging in Android Dev settings
