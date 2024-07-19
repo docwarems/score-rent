@@ -22,6 +22,7 @@ These were the steps to get project running again.
     - use VSC "debug" link in package.json scripts and choose "npm run dev"
   - Use "password forgotten" function to reset password of admin user
   - configure git user name and email globally
+  - authenticate with GitHub at first push
 
 ## Remote Android Debugging
 

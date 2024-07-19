@@ -63,14 +63,16 @@ app.use(middleware.handle(i18next_1.default, {
 // view engine
 app.set("view engine", "ejs");
 app.engine('vue', ejs.renderFile); // render files with ".vue" extension in views folder by EJS too
+console.log(`about to start...`);
 // database connection
 const dbURI = process.env.MONGODB_URL;
 mongoose_1.default.set("strictQuery", false);
 // mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex:true }) // useCreateIndex not supported
 mongoose_1.default
     .connect(dbURI)
-    .then((result) => app.listen(3000))
+    .then((result) => app.listen(process.env.EXPRESS_PORT))
     .catch((err) => console.log(err));
+console.log(`app listening on port ${process.env.EXPRESS_PORT}`);
 // routes
 app.get("*", checkUser);
 const home_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
