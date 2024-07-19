@@ -65,14 +65,18 @@ app.use(
 app.set("view engine", "ejs");
 app.engine('vue', ejs.renderFile); // render files with ".vue" extension in views folder by EJS too
 
+console.log(`about to start...`)
+
 // database connection
 const dbURI = process.env.MONGODB_URL as string;
 mongoose.set("strictQuery", false);
 // mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex:true }) // useCreateIndex not supported
 mongoose
   .connect(dbURI!)
-  .then((result: any) => app.listen(3000))
+  .then((result: any) => app.listen(process.env.EXPRESS_PORT))
   .catch((err: any) => console.log(err));
+
+console.log(`app listening on port ${process.env.EXPRESS_PORT}`)
 
 // routes
 app.get("*", checkUser);
