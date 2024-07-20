@@ -67,3 +67,43 @@ Nachdem nun auch app.js aktuell war, tat sich trotzdem nichts. Neu hinzugefügte
 In der Beanstalk Console kann man die Application auswählen und dann mit Klick auf Source sich ein ZIP des Deployment herunterladen. Und da sieht man tatsächlich dass er weiterhin die app.js ohne die neue Express Port env var verwendet. Warum?
 
 Als nächstes habe ich meiner Verzweiflung die Änderungen committet und neu deployt. Und das hat tatsächlich den Unterschied gemacht.
+
+#### Health check
+
+Die Anwendung erhielt den Health status "Severe". Ursache sind 302 (redirect) health check Responses wo 2xx erwartet wurden. Vermutlich haben diese 302 responses damit zu tun dass ich noch kein Server Zertifikat eingerichtet habe.
+
+In MC / EC2 / Load Balancer / Target Groups / Health checks / Edit / Advanced habe ich den erwarteten Status code auf 302 geändert.
+
+#### Stoppen der Anwendung
+
+Unter MC / EC2 / Instances / Instance selektieren / Instance state habe ich die Instanz gestoppt und das Ergebnis auch im Browser geprüft.
+Am nächsten lief die Instanz allerdings wieder.
+
+#### HTTPS
+
+Die Anwendung läuft aktuell mit HTTP. Auch wenn ich keine Domain gekauft habe, müsste ich sein selbst-signiertes Zertifikat einsetzen können.
+Orientiert habe ich mich an dieser Beschreibung: https://docs.aws.amazon.com/de_de/elasticbeanstalk/latest/dg/configuring-https-ssl.html.
+Ich habe getestet das openssl vorhanden ist.
+
+```
+openssl version 
+```
+
+```
+eb ssh
+```
+Hier kam die Meldung: ERROR: This environment is not set up for SSH. Use "eb ssh --setup" to set up SSH for the environment.
+
+```
+eb ssh --setup
+```
+Damit habe ich dann offenbar SSH für die Instanz eingererichtet. Es wurde eine neue Instanz erstellt und danach funktionierte die App nach außen wie vorher
+
+Dann habe ich wie hier beschrieben ein selbst-signiertes Zertifikat erstellt: https://docs.aws.amazon.com/de_de/elasticbeanstalk/latest/dg/configuring-https-ssl.html.
+
+Und dann wie hier beschrieben hochgeladen: https://docs.aws.amazon.com/de_de/elasticbeanstalk/latest/dg/configuring-https-ssl-upload.html.
+Dazu hatte ich zunächst per apt den AWS Client installiert und als Credentials den Beanstalk Access-Key verwendet.
+
+Dann habe ich unter Beanstalk / Configure instance traffic and scaling / Load Balancer  einen HTTPS Listern hinzugeügt. Das eben hochgeladene Zertifikat wurde dort zur Auswahl angeboten. Danach das "apply" auf der ganzen Seite nicht vergessen!
+
+Danach war die Apps per HTTPS erreichbar. Im Browser kam natürlich die Warnung wg. dem selbst-signierten Zertifkat.
