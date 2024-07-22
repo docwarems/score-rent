@@ -107,3 +107,8 @@ Dazu hatte ich zunächst per apt den AWS Client installiert und als Credentials 
 Dann habe ich unter Beanstalk / Configure instance traffic and scaling / Load Balancer  einen HTTPS Listern hinzugeügt. Das eben hochgeladene Zertifikat wurde dort zur Auswahl angeboten. Danach das "apply" auf der ganzen Seite nicht vergessen!
 
 Danach war die Apps per HTTPS erreichbar. Im Browser kam natürlich die Warnung wg. dem selbst-signierten Zertifkat.
+
+#### Costs / Pricing
+
+I understood that Beanstalk itself it has no extra costs. Instead you are charged for the AWS standard resources it uses. For me this should be EC2 and S3. EC2 should be free for the first 12 months on a free tier level use.
+However, on the cost page I see that I'm already charged for a "Virtual Private Cloud" (VPC). I learned that Beanstalk setup a "default VPC" together with my EC2 instance. And allocation of a public IP seems to be mandatory for this VPC. On the costs page I finally found that all costs already gathered are due to the public IP. A while I tried to find out If I can maintain a EC2 instance without public IP for dev purposes, but I found no evidence. So I deleted my Beanstalk environment in us-west-2, and also the linked resources: EC2, S3, VPC. I will start all over again, next time in a europe region then.
