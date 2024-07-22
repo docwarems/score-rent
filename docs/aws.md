@@ -107,3 +107,12 @@ Dazu hatte ich zunächst per apt den AWS Client installiert und als Credentials 
 Dann habe ich unter Beanstalk / Configure instance traffic and scaling / Load Balancer  einen HTTPS Listern hinzugeügt. Das eben hochgeladene Zertifikat wurde dort zur Auswahl angeboten. Danach das "apply" auf der ganzen Seite nicht vergessen!
 
 Danach war die Apps per HTTPS erreichbar. Im Browser kam natürlich die Warnung wg. dem selbst-signierten Zertifkat.
+
+#### Costs / Pricing
+
+I understood that Beanstalk itself it has no extra costs. Instead you are charged for the AWS standard resources it uses. For me this should be EC2 and S3. EC2 should be free for the first 12 months on a free tier level use.
+However, on the cost page I see that I'm already charged for a "Virtual Private Cloud" (VPC), and I don't know what that is and where it is used. Hier https://aws.amazon.com/de/vpc/pricing/?nc1=h_ls steht dass die VPC nichts kostet.
+Hier https://us-west-2.console.aws.amazon.com/vpcconsole/home?region=us-west-2#vpcs: sehe ich dass ich eine VPC eingerichtet habe.
+Auf der Beanstalk Konsole sehe ich unter "Networking and database" den Eintrag "No options configured", also AFAIK auch kein VPC.
+Da ich in der Testphase bin, wollte ich schauen was passiert wenn ich mein VPC lösche. Wenn ich das versuche bekomme ich einen Fehler der sagt dass das VPC mit der EC2 Instanz aus meinem Beanstalk environment in Verbindung steht.
+Wenn die o.a. Aussage stimmt dass das VPC selber nichts kostet, sondern nur die darin enthaltene EC2 Instanz, würde das bedeuten dass die VPC Kosten die EC Kosten meinen. Wenn andererseits aber EC2 die ersten 12 Monate kostenlos ist, entstehen die angegebenen Kosten vielleicht gar nicht im ersten Jahr. Mal sehen ob meine Kredidkarte belastet wird. Ich habe ein Kostenalert von 1 USD / Monat eingerichtet.
