@@ -1,3 +1,4 @@
+import serverless from "serverless-http";
 const express = require("express");
 var ejs = require('ejs');
 import mongoose from "mongoose";
@@ -100,3 +101,5 @@ app.use(router);
 //   if(err) { throw err; }
 //   console.log('rename field done!');
 // });
+
+exports.handler = serverless(app);
