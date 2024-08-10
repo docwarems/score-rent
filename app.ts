@@ -71,7 +71,9 @@ const dbURI = process.env.MONGODB_URL as string;
 mongoose.set("strictQuery", false);
 // mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex:true }) // useCreateIndex not supported
 mongoose
-  .connect(dbURI!)
+  .connect(dbURI!, {
+    serverSelectionTimeoutMS: 5000,
+  })
   .then((result: any) => app.listen(3000))
   .catch((err: any) => console.log(err));
 

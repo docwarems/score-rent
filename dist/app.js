@@ -14,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const serverless_http_1 = __importDefault(require("serverless-http"));
 const express = require("express");
-var ejs = require('ejs');
+var ejs = require("ejs");
 const mongoose_1 = __importDefault(require("mongoose"));
 const { router } = require("./routes/authRoutes");
 const { score } = require("./routes/scoreRoutes");
@@ -63,13 +63,15 @@ app.use(middleware.handle(i18next_1.default, {
 }));
 // view engine
 app.set("view engine", "ejs");
-app.engine('vue', ejs.renderFile); // render files with ".vue" extension in views folder by EJS too
+app.engine("vue", ejs.renderFile); // render files with ".vue" extension in views folder by EJS too
 // database connection
 const dbURI = process.env.MONGODB_URL;
 mongoose_1.default.set("strictQuery", false);
 // mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex:true }) // useCreateIndex not supported
 mongoose_1.default
-    .connect(dbURI)
+    .connect(dbURI, {
+    serverSelectionTimeoutMS: 5000,
+})
     .then((result) => app.listen(3000))
     .catch((err) => console.log(err));
 // routes
@@ -90,4 +92,5 @@ app.use(router);
 //   if(err) { throw err; }
 //   console.log('rename field done!');
 // });
+console.log("app initialized");
 exports.handler = (0, serverless_http_1.default)(app);
