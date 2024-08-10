@@ -1,0 +1,27 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: msms843
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: app1
+
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: serverless-score-rent
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: eu-central-1
+
+functions:
+  api:
+    handler: dist/app.handler
+    environment:
+      MONGODB_URL: ${env:MONGODB_URL}
+      SMTP_HOST: ${env:SMTP_HOST}
+      SMTP_USER: ${env:SMTP_USER}
+      SMTP_PASS: ${env:SMTP_PASS}
+      SMTP_FROM: ${env:SMTP_FROM}
+      SMTP_DEBUG: ${env:SMTP_DEBUG}
+      JWT_SECRET: ${env:JWT_SECRET}
+      EMAIL_VERIFICATION_SECRET: ${env:EMAIL_VERIFICATION_SECRET}
+    events:
+      - httpApi: "*"

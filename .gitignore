@@ -125,5 +125,3 @@ dump
 /test-results/
 /playwright-report/
 /playwright/.cache/
-
-serverless.yml

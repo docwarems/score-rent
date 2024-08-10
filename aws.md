@@ -27,9 +27,6 @@ serverless deploy function -f api
 
 ## TODOs
 
-use environment variables as shown here: https://github.com/serverless/examples/tree/v4/aws-node-env-variables-encrypted-in-a-file
-Otherwise can't add the serverless.yml to Git.
-
 ## Errors
 
 ```
