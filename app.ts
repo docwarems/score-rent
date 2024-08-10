@@ -1,6 +1,6 @@
 import serverless from "serverless-http";
 const express = require("express");
-var ejs = require('ejs');
+var ejs = require("ejs");
 import mongoose from "mongoose";
 const { router } = require("./routes/authRoutes");
 const { score } = require("./routes/scoreRoutes");
@@ -64,7 +64,7 @@ app.use(
 
 // view engine
 app.set("view engine", "ejs");
-app.engine('vue', ejs.renderFile); // render files with ".vue" extension in views folder by EJS too
+app.engine("vue", ejs.renderFile); // render files with ".vue" extension in views folder by EJS too
 
 // database connection
 const dbURI = process.env.MONGODB_URL as string;
@@ -95,11 +95,10 @@ app.use("/user", user);
 app.use(router);
 // app.use("/", authRoutes); // this seems to make no difference to app.use(authRoutes)
 
-
-
 // User.updateMany({}, { $rename: { singGroup: 'voice' } }, { multi: true }, function(err, blocks) {
 //   if(err) { throw err; }
 //   console.log('rename field done!');
 // });
 
+console.log("app initialized");
 exports.handler = serverless(app);

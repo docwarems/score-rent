@@ -57,8 +57,8 @@ const userSchema = new mongoose_1.Schema({
     email: {
         type: String,
         // required: [true, "Bitte E-Mail angeben"],  // normally yes, but not all users must have one; not mandatory for manual signup by admin
-        unique: true,
-        sparse: true,
+        unique: true, // if existing
+        sparse: true, // allow multiple users with undefined email (email will not appear as property in db)
         lowercase: true,
         // validate: [isEmail, "Bitte eine gültige E-Mail-Adresse angeben"],  TODO: Validierung nur wenn nicht leer
     },

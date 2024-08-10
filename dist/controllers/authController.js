@@ -356,7 +356,7 @@ module.exports.verify_password_reset_email_get = (req, res) => __awaiter(void 0,
         };
     }
     res.render("password-reset", {
-        EmailVerificationStatus: EmailVerificationStatus,
+        EmailVerificationStatus: EmailVerificationStatus, // make enum known to EJS
         verificationResult: verificationResult,
     });
 });

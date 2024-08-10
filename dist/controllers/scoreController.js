@@ -12,7 +12,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkouts_vue = exports.checkouts = void 0;
+exports.checkouts = checkouts;
+exports.checkouts_vue = checkouts_vue;
 const User_1 = require("../models/User");
 const Score_1 = require("../models/Score");
 const Checkout_1 = require("../models/Checkout");
@@ -392,7 +393,6 @@ function checkouts(res, signature, checkedOut, admin, userId) {
         }
     });
 }
-exports.checkouts = checkouts;
 module.exports.checkouts_vue_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { signature, checkedOut, userId } = req.body;
     const admin = true;
@@ -445,8 +445,8 @@ function checkouts_vue(res, signature, checkedOut, admin, userId) {
             res.status(500).json({ error });
         }
         function getCheckoutsWithUser(scores, checkedOutScoreIdSet, onlyCheckedOut, onlyForUserId) {
-            var _a, _b;
             return __awaiter(this, void 0, void 0, function* () {
+                var _a, _b;
                 const userMap = yield getUserMap(scores);
                 let checkouts = [];
                 for (const score of scores) {
@@ -491,7 +491,6 @@ function checkouts_vue(res, signature, checkedOut, admin, userId) {
         }
     });
 }
-exports.checkouts_vue = checkouts_vue;
 const sendCheckoutConfirmationEmail = (user, score, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
     const subject = "Hans-Sachs-Chor Noten ausgeliehen";
     const extId = score.extId ? score.extId : "???";

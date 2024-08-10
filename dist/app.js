@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const serverless_http_1 = __importDefault(require("serverless-http"));
 const express = require("express");
 var ejs = require('ejs');
 const mongoose_1 = __importDefault(require("mongoose"));
@@ -36,7 +37,7 @@ i18next_1.default.use(middleware.LanguageDetector).init({
 // we must ensure that no write access to the file system is needed; as we are running on a readonly serverless platform
 i18next_1.default.init({
     // lng: "de-DE", // if you're using a language detector, do not define the lng option
-    fallbackLng: "en",
+    fallbackLng: "en", // general fallback language
     // debug: true,
     resources: {
         en: en_json_1.default,
@@ -57,7 +58,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(middleware.handle(i18next_1.default, {
-    ignoreRoutes: ["/foo"],
+    ignoreRoutes: ["/foo"], // or function(req, res, options, i18next) { /* return true to ignore */ }
     removeLngFromUrl: false, // removes the language from the url when language detected in path
 }));
 // view engine
@@ -89,3 +90,4 @@ app.use(router);
 //   if(err) { throw err; }
 //   console.log('rename field done!');
 // });
+exports.handler = (0, serverless_http_1.default)(app);
