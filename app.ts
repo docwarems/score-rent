@@ -69,13 +69,30 @@ app.engine("vue", ejs.renderFile); // render files with ".vue" extension in view
 // database connection
 const dbURI = process.env.MONGODB_URL as string;
 mongoose.set("strictQuery", false);
-// mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex:true }) // useCreateIndex not supported
-mongoose
-  .connect(dbURI!, {
-    serverSelectionTimeoutMS: 5000,
-  })
-  .then((result: any) => app.listen(3000))
-  .catch((err: any) => console.log(err));
+
+// AWS will cache global variables, i.a. also the mongoose connection
+// see https://mongoosejs.com/docs/lambda.html
+let conn: any = null;
+const connect = async function () {
+  if (conn == null) {
+    conn = mongoose
+      .connect(dbURI, {
+        serverSelectionTimeoutMS: 5000,
+      })
+      .then(() => mongoose);
+
+    // `await`ing connection after assigning to the `conn` variable
+    // to avoid multiple function calls creating new connections
+    console.log("MongoDB connecting...");
+    await conn;
+    console.log("MongoDB connected");
+  }
+
+  return conn;
+};
+
+// my idea (no top-level await allowed)
+connect().then(() => app.listen(3000));
 
 // routes
 app.get("*", checkUser);

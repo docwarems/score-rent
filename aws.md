@@ -6,10 +6,6 @@ The score-rent code, including the MongoDB and mail server connection, we used f
 
 However, according to the Mongoose document here https://mongoosejs.com/docs/lambda.html it is recommended to make use of Lambda global scope where Lambda will cache the MongoDB connection, which will avoid recreate the connection too often. Creating connections take time, and time costs money at Lambda.
 
-Problem so far, I don't know how tom se the provided sample code as it involves a top-level async function and we know top-level await aren't allowed without a configuration nightmare.
-
-I can use this in an example like here https://github.com/serverless/examples/blob/v4/aws-node-mongodb-atlas/handler.js where the connect() is called everytime in the http get handler (i.e. no top-level await). But this is not what I want in score-rent where we have a lot of handlers, and I don't want to call connect all the time.
-
 Also it seems to be extremely important to reduce the default connection timeout of 30s by option 'serverSelectionTimeoutMS' - otherwise AWS will bill you also for 30s doing nothing.
 
 ## Serverless framework notes
