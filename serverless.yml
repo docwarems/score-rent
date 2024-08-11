@@ -14,6 +14,7 @@ provider:
 functions:
   api:
     handler: dist/app.handler
+    memorySize: 512
     environment:
       MONGODB_URL: ${env:MONGODB_URL}
       SMTP_HOST: ${env:SMTP_HOST}

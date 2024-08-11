@@ -8,6 +8,10 @@ However, according to the Mongoose document here https://mongoosejs.com/docs/lam
 
 Also it seems to be extremely important to reduce the default connection timeout of 30s by option 'serverSelectionTimeoutMS' - otherwise AWS will bill you also for 30s doing nothing.
 
+## Memory limit
+
+AWS will bill you for execution duration times memory limit. Default in serverless.yml ist 1024 MB. AWS Cloudwatch always logs less than 130 MB used memory. So I reduced the memory limit to 512 MB. I also tried even 256 MB, but with this limit the execution duration increased considerably.
+
 ## Serverless framework notes
 
 ### serverless dev
