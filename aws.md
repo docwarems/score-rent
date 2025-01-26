@@ -1,5 +1,10 @@
 # AWS Lambda using the Serverless framework
 
+## Resetup after 6 months
+
+After 6 months of not using score-rent, I tested AWS and Serverless Logins and Deployment.
+The "serverless" command was no longer existing - a "npm i serverless -g" brought i back. "serverless info" showed that setup and credentials were still existing. I successfully removed the app using "serverless remove". "serverless deploy" brought it back. However, I decided to finanally remove the app using "serverless remove" because currently the Score-Rent development und usage is paused.
+
 ## MongoDB connection
 
 The score-rent code, including the MongoDB and mail server connection, we used for the Cyclic hosting worked immediately without any modification with AWS Lambda / Serverless Framework.
