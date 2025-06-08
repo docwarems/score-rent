@@ -87,6 +87,17 @@ You're billed for:
 
 ## Serverless framework notes
 
+### Deployment / Undeployment
+
+- serverless deploy
+- serverless remove
+
+### Packaging
+
+By default serverless will package the whole project which is a waste of space and quickly will reach the lambda function size limit.
+Tests showed we need only to include the folders dist, views, node_modules (including their subdirectories).
+The package size is less than 1 MB compared to several 10 MB without package excludes.
+
 ### serverless dev
 
 Will redirect AWS Lambda request to your local project.

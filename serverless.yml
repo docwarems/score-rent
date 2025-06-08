@@ -32,3 +32,12 @@ functions:
       EMAIL_VERIFICATION_SECRET: ${env:EMAIL_VERIFICATION_SECRET}
     events:
       - httpApi: "*"
+
+package:
+  exclude:
+    - "**"
+  include:
+    - dist/**
+    - views/**
+    - package.json
+    - node_modules/**
