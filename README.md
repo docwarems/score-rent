@@ -91,9 +91,11 @@ As a maintainer I need to get a view of all checkouts.
 
 [Development](docs/development.md)
 
-## Create Etiketten
+## Etiketten erstellen
 
 ### Mit Word Vorlage
+
+`Diese Variante ist nicht mehr in Verwendung. Stattdessen siehe unten bei Avery-Zweckform Vorlagen`
 
 How to create Etiketten im Seriendruck mit Word
 Based on this tutorial: https://qr1.at/help/article/etiketten-druck-fuer-serien-qr-codes#beginnen-sie-mit-dem-serien-druck
@@ -142,18 +144,17 @@ Nun sollten die Platzhalter mit dem QRCode und dem QRCode Test gefüllt werden
 
 #### Bestehende Vorlage verwenden
 
-Die passende Seite zum Hochladen der eigenen Vorlage zu finden ist etwas mühsam. Zunächst muss man über eine Vorlagennummer navigieren und hat von da aus die Möglichkeit eine gespeicherte Vorlage hochzuladen.
+Die passende Seite zum Hochladen der eigenen Vorlage zu finden ist etwas mühsam. Zunächst muss man über eine Vorlagennummer navigieren und hat von da aus die Möglichkeit eine gespeicherte Vorlage hochzuladen. Die Seitenstruktur scheint sich auch laufend zu ändern.
 
 - https://www.avery-zweckform.com
-- Link "Vorlagen und Software"
-- Vorlage "3427" wählen (welche ist egal weil wir im nächsten Schritt ein gespeichertes Projekt öffnen) -> man landet auf der Seite "2 Design auswählen"
-- "Startseite" klicken
-- Schalter "Gespeichertes Projekt" öffnen
-- Anmeldung/Registrierung ignorieren und Schalter "Projekt vom Computer laden"
-- Projektdatei (.avery) auswählen
-
-Nun ist man in der Designansicht. Die Etikettenvorlage ist automatisch eingestellt (z.B. 3427). Von hier kann gedruckt werden.
-Anpassung von fortlaufende Nummern und QR Codes siehe unten bei "Neue Vorlage erstellen".
+- Link "Vorlagen"
+- in Suchfeld "Produktnummer oder Softwarecode" eingeben (siehe unten "Vorlagen" für Nummer) und "Start"
+- Link "Kostenlos online starten"
+- Registrierung mit "Kein Interesse" überspringen -> wir sollten auf einer Seite landen wo der Tab "2 - Design auswählen" selektiert ist.
+- Ausrichtung wählen passend zur Vorlage (z.B. Querformat für Leihzettel)
+- "Datei hochladen": siehe unten "Vorlagen" -> wir sehen die Vorschau
+- Wechsel auf Tab "3 - Anpassen": Hier könnten wir nun die Vorlage anpassen (z.B. QRCode und Nummerierung). Siehe unten bei "Neue Vorlage erstellen"
+- Wechsel auf Tab "4 - Vorschau und Drucken"; hier sollten wir die A4 Vorschau sehen; es sollten so viele Seiten verfügbar sein dass der definierte Nummernbereich abgedeckt ist.
 
 Gespeicherte Projekte in "avery-label-templates"
 
@@ -216,7 +217,7 @@ Etiketten müssen mit dem Einzeleinzug des Laserdruckers gedruckt werden, da sic
 - PDF-Datei mit Etiketten wie oben erzeugt auswählen
 - weitere Einstellungen / über Systemdialog drucken
 - gewünschte Seitennummer auswählen
-- Enstellungen -> Brother Einstellungen öffnen sich
+- Einstellungen -> Brother Einstellungen öffnen sich
 - Papierquelle manuell
 - Drucker einschalten
 - Etikettenseite mit Druckseite oben in den manuellen Einzug einlegen bis sie etwas vom Drucker eingezogen wird
