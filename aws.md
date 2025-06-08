@@ -29,6 +29,62 @@ Some weeks later I logged in and could resume the cluster without any problems.
 
 AWS will bill you for execution duration times memory limit. Default in serverless.yml ist 1024 MB. AWS Cloudwatch always logs less than 130 MB used memory. So I reduced the memory limit to 512 MB. I also tried even 256 MB, but with this limit the execution duration increased considerably.
 
+## Simple E-Mail Service (SES)
+
+I heard about SES and wondered if I could sent via it, rather than my private e-mail provider where, as I experienced, the number of e-Mails sent per day is quite limited (less than 100).
+ChatGPT quickly provided me with the necessary information
+
+- register the "from" e-mail adress in AWS account
+- add the necessary info to serverless.yml
+- use SES with nodemailer
+
+It just worked immediately.
+
+## Log files
+
+Log files can be found at lambda / \<function\> / monitor / View CloudWatch logs
+
+## Costs
+
+Cost explorer shows that 6 services are in use.
+
+### Lambda execution time
+
+What you're billed for:
+
+- Number of invocations
+
+- Duration (in milliseconds), based on memory and compute allocated
+
+Free tier:
+
+- 1 million requests/month
+
+- 400,000 GB-seconds of compute/month
+
+Example:
+
+If your function uses 128 MB memory and runs for 200 ms, AWS bills for:
+
+```
+(200 ms / 1000) * (128 MB / 1024) = 0.025 GB-seconds per invocation
+```
+
+### SES
+
+You're billed for:
+
+- $0.10 per 1,000 emails sent
+
+- Free for first 62,000 emails/month if SES is invoked from an EC2, Lambda, or other AWS service
+
+### Other services
+
+- CloudWatch
+- Tax
+- CloudFormation
+- API Gateway
+
 ## Serverless framework notes
 
 ### serverless dev
