@@ -4,6 +4,7 @@
   "description": "",
   "main": "dist/app.js",
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.826.0",
     "bcrypt": "^5.1.0",
     "cookie-parser": "^1.4.5",
     "csv-parse": "^5.4.0",
@@ -18,9 +19,9 @@
     "mongoose": "^6.11.4",
     "nodemailer": "^6.9.3",
     "qrcode": "^1.5.3",
+    "serverless-http": "^3.2.0",
     "short-uuid": "^4.2.2",
     "uuid": "^9.0.0",
-    "serverless-http": "^3.2.0",
     "validator": "^13.9.0"
   },
   "devDependencies": {
