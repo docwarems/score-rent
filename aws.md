@@ -3,7 +3,7 @@
 ## Resetup after 6 months
 
 After 6 months of not using score-rent, I tested AWS and Serverless Logins and Deployment.
-The "serverless" command was no longer existing - a "npm i serverless -g" brought i back. "serverless info" showed that setup and credentials were still existing. I successfully removed the app using "serverless remove". "serverless deploy" brought it back. However, I decided to finanally remove the app using "serverless remove" because currently the Score-Rent development und usage is paused.
+The "serverless" command was no longer existing - a "npm i serverless -g" brought it back. "serverless info" showed that setup and credentials were still existing. I successfully removed the app using "serverless remove". "serverless deploy" brought it back. However, I decided to finanally remove the app using "serverless remove" because currently the Score-Rent development und usage is paused.
 
 Another 3 months later I tried again
 

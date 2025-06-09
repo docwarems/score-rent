@@ -37,7 +37,7 @@ i18next_1.default.use(middleware.LanguageDetector).init({
 // we must ensure that no write access to the file system is needed; as we are running on a readonly serverless platform
 i18next_1.default.init({
     // lng: "de-DE", // if you're using a language detector, do not define the lng option
-    fallbackLng: "en", // general fallback language
+    fallbackLng: "en",
     // debug: true,
     resources: {
         en: en_json_1.default,
@@ -58,7 +58,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(middleware.handle(i18next_1.default, {
-    ignoreRoutes: ["/foo"], // or function(req, res, options, i18next) { /* return true to ignore */ }
+    ignoreRoutes: ["/foo"],
     removeLngFromUrl: false, // removes the language from the url when language detected in path
 }));
 // view engine
@@ -73,9 +73,11 @@ let conn = null;
 const connect = function () {
     return __awaiter(this, void 0, void 0, function* () {
         if (conn == null) {
-            conn = mongoose_1.default.connect(dbURI, {
-                serverSelectionTimeoutMS: 5000
-            }).then(() => mongoose_1.default);
+            conn = mongoose_1.default
+                .connect(dbURI, {
+                serverSelectionTimeoutMS: 5000,
+            })
+                .then(() => mongoose_1.default);
             // `await`ing connection after assigning to the `conn` variable
             // to avoid multiple function calls creating new connections
             console.log("MongoDB connecting...");
@@ -86,8 +88,7 @@ const connect = function () {
     });
 };
 // my idea (no top-level await allowed)
-connect()
-    .then(() => app.listen(3000));
+connect().then(() => app.listen(3000));
 // routes
 app.get("*", checkUser);
 const home_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {

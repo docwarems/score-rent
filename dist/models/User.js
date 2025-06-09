@@ -34,7 +34,7 @@ var Voice;
     Voice["ALTO"] = "A";
     Voice["TENOR"] = "T";
     Voice["BASS"] = "B";
-})(Voice || (exports.Voice = Voice = {}));
+})(Voice = exports.Voice || (exports.Voice = {}));
 exports.voiceMap = new Map();
 exports.voiceMap.set(Voice.SOPRANO, "Sopran");
 exports.voiceMap.set(Voice.ALTO, "Alt");
@@ -45,7 +45,7 @@ var MemberState;
     MemberState["MEMBER"] = "M";
     MemberState["STUDENT"] = "S";
     MemberState["GUEST"] = "G";
-})(MemberState || (exports.MemberState = MemberState = {}));
+})(MemberState = exports.MemberState || (exports.MemberState = {}));
 const userSchema = new mongoose_1.Schema({
     id: {
         // vv.nnnnnn z.B. mi.suedka; wird als Referenz zu anderen Objekten verwendet, damit diese sprechend ist
@@ -57,8 +57,8 @@ const userSchema = new mongoose_1.Schema({
     email: {
         type: String,
         // required: [true, "Bitte E-Mail angeben"],  // normally yes, but not all users must have one; not mandatory for manual signup by admin
-        unique: true, // if existing
-        sparse: true, // allow multiple users with undefined email (email will not appear as property in db)
+        unique: true,
+        sparse: true,
         lowercase: true,
         // validate: [isEmail, "Bitte eine gültige E-Mail-Adresse angeben"],  TODO: Validierung nur wenn nicht leer
     },

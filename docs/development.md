@@ -16,7 +16,7 @@ These were the steps to get project running again.
 - create .env file (unfortunately I hadn't backup up my old one - so this caused me extra pain)
   - after creating the MONGODB_URL entry, the app started
   - a "connection refused" to port 587 came up on console - this was from the SMTP connect; however, the app was started
-  - porward port 3000
+  - forward port 3000
   - http://localhost:3000/login -> Login page
   - Debugging
     - use VSC "debug" link in package.json scripts and choose "npm run dev"

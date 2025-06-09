@@ -9,9 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SIGNATURE_ALL = void 0;
-exports.getScoreTypes = getScoreTypes;
-exports.getScoreTypeMap = getScoreTypeMap;
+exports.getScoreTypeMap = exports.getScoreTypes = exports.SIGNATURE_ALL = void 0;
 const Score_1 = require("../models/Score");
 exports.SIGNATURE_ALL = { id: "ALL", name: "Alle" };
 function getScoreTypes() {
@@ -27,6 +25,7 @@ function getScoreTypes() {
         return signatures;
     });
 }
+exports.getScoreTypes = getScoreTypes;
 function getScoreTypeMap() {
     return __awaiter(this, void 0, void 0, function* () {
         const scoreTypeMap = new Map();
@@ -37,3 +36,4 @@ function getScoreTypeMap() {
         return scoreTypeMap;
     });
 }
+exports.getScoreTypeMap = getScoreTypeMap;
