@@ -16,7 +16,7 @@ provider:
         - "ses:SendEmail"
         - "ses:SendRawEmail"
       Resource:
-        - arn:aws:ses:eu-central-1:891376994214:identity/${env:SMTP_USER}
+        - arn:aws:ses:${env:AWS_REGION}:${env:AWS_ID}:identity/${env:SMTP_USER}
 functions:
   api:
     handler: dist/app.handler
