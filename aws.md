@@ -87,6 +87,44 @@ You're billed for:
 
 ## Serverless framework notes
 
+### Create appropriate AWS User
+
+It's not advisable to use the AWS root access.
+
+#### Create User with policy
+
+- AWS-Console -> IAM Users
+- create User
+- name: serverless-deployer
+- assign managed policy AdministratorAccess
+
+I tried to create a custom policy ChatGPT suggested, but the serverless deployment failed with access denied error.
+
+#### Generate and store access key and secret
+
+#### Set up AWS CLI credentials
+
+- aws configure --profile serverless-deployer
+- enter access key, secret, region
+- output format: json
+
+#### User the profile in serverless framework
+
+Add ` profile: serverless-deployer` to provider
+
+#### Deployment
+
+sls deploy --aws-profile serverless-deployer
+
+Unfortunately the undeployment gave an error, so I undeployed as root again.
+
+```
+✖ TypeError: Cannot read properties of undefined (reading 'code')
+    at AwsRemove.setServerlessDeploymentBucketName (file:///home/ms/.serverless/releases/4.17.0/package/dist/sf-core.js:1196:21463)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    ....
+```
+
 ### Deployment / Undeployment
 
 - serverless deploy
