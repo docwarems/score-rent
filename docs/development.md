@@ -25,10 +25,11 @@ These were the steps to get project running again.
 
 ## Remote Android Debugging
 
-- enable USB debugging in Android Dev settings
+- enable USB debugging in Android Settings
   . Einstellungen / Zusätzliche Einstellungen / Entwickleroptionen / USB Debugging
-- connect device with USB to pc
-- URL chrome://inspect/#devices
+- connect device with USB to pc (recently there's also a "debugging via WLAN option") which I havent't tested yet
+- PC Chrome: URL chrome://inspect/#devices
+- on Android device confirm "allow USD debugging"
 - the device type should appear on the page
 - if not, try
   - reload the inspect page
@@ -39,7 +40,7 @@ These were the steps to get project running again.
 Allows to run the app on ypur devive against the pc dev environment
 
 - Port: port on device
-- IP address and port: adress on the pc
+- IP address and port: adress on the pc (score-rent will run on localhost:3000)
 - yellow bar on the top should confirm port porwarding and next to the device name a green dot with port should appear
 
 ![Chrome remote debugging](./remote-debugging.png)

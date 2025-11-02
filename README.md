@@ -9,7 +9,7 @@ A challenge is the managing of rental scores. i.e. scores which must, once a con
 
 Traditionally this has been the workflow:
 
-- I receive a certain number (say 120) copies of the coral score from our score dealer
+- I receive a certain number (say 120) copies of the choral score from our score dealer
 - these copies are hand written numbered by the publisher or by previous lenders (but the problem is: double numberings occur, and due to several numbering systems, you do not always know which number to use as the reference)
 - the choir singers each fill out a checkout sheet by hand, providing their contact data. Also the score number was written on the sheet
 - once the concert was over, the scores are collected in a box, and it is up to me the score manager to map scores and checkout sheets; due to the problems above the mapping is not easy and sometimes errors occur.
@@ -41,7 +41,7 @@ Because I'm professional web developer (previously Java fullstack, today nodejs 
 
 - mandatory are
   - e-mail address (which must be validated)
-  - sing group (soprano, alto, tenor, bass)
+  - vocal group (soprano, alto, tenor, bass)
   - member state (choir member, guest, student)
   - we build a human readable user id from user's first and last name
   - once signed up, the user must confirm the e-mail by confirming a link in a-mail sent after signup

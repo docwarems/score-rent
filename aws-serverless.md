@@ -1,16 +1,30 @@
 # AWS Lambda using the Serverless framework
 
-## Resetup after 6 months
+## Resetup
+
+### After 6 months
 
 After 6 months of not using score-rent, I tested AWS and Serverless Logins and Deployment.
 The "serverless" command was no longer existing - a "npm i serverless -g" brought it back. "serverless info" showed that setup and credentials were still existing. I successfully removed the app using "serverless remove". "serverless deploy" brought it back. However, I decided to finanally remove the app using "serverless remove" because currently the Score-Rent development und usage is paused.
 
-Another 3 months later I tried again
+### Another 3 months later I tried again
 
 - "serverless info": error "ServerlessError2: Stack with id serverless-score-rent-dev does not exist"
 - "serverless deploy" ok
 - Score Rent accessible; Login OK
 - serverless.com login OK
+
+### Update 02.11.2025
+
+- MongoDB cluster unpaused
+- serverless deploy OK
+- app working in browser
+- scan function doesn't work (at least not in mobile Chrome; can't remember if it worked last time)
+- serverless remove OK
+  - in AWS Console you still see resources coming from the serverless deployment (unsure however, how cost relevant they are). What I deleted manually was
+    - s3 bucket
+  - no VPC resources in Frankfurt (but in other regions; as seen last time when I wanted to remove everything because free plan was expiring)
+  - no costs expected on "Billing and cost management"
 
 ## MongoDB connection
 
@@ -118,7 +132,7 @@ Using the a special profile
 ### Packaging
 
 By default serverless will package the whole project which is a waste of space and quickly will reach the lambda function size limit.
-Tests showed we need only to include the folders dist, views, node_modules (including their subdirectories).
+Tests showed we need only to include the folders dist, views, node_modules (including their subdirectories). Configured in serverless.yml.
 The package size is less than 1 MB compared to several 10 MB without package excludes.
 
 ### serverless dev
