@@ -14,7 +14,7 @@
     "html5-qrcode": "^2.3.8",
     "i18next": "^23.5.1",
     "i18next-http-middleware": "^3.4.1",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",
     "mongoose": "^6.11.4",
     "nodemailer": "^6.9.3",
