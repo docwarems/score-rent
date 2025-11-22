@@ -91,8 +91,8 @@ const connect = async function () {
   return conn;
 };
 
-// my idea (no top-level await allowed)
-connect().then(() => app.listen(3000));
+// Connect on cold start (module initialization)
+connect();
 
 // routes
 app.get("*", checkUser);
