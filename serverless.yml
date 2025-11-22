@@ -11,6 +11,13 @@ provider:
   runtime: nodejs20.x
   region: eu-central-1
   profile: serverless-deployer
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "ses:SendEmail"
+        - "ses:SendRawEmail"
+      Resource:
+        - "arn:aws:ses:eu-central-1:891376994214:identity/*"
 
 functions:
   api:

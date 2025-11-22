@@ -87,8 +87,8 @@ const connect = function () {
         return conn;
     });
 };
-// my idea (no top-level await allowed)
-connect().then(() => app.listen(3000));
+// Connect on cold start (module initialization)
+connect();
 // routes
 app.get("*", checkUser);
 const home_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {

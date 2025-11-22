@@ -29,13 +29,22 @@ aws sts get-caller-identity
 ## Simple E-Mail Service (SES)
 
 I heard about SES and wondered if I could sent via it, rather than my private e-mail provider where, as I experienced, the number of e-Mails sent per day is quite limited (less than 100).
-ChatGPT quickly provided me with the necessary information
 
-- register the "from" e-mail adress in AWS account
-- add the necessary info to serverless.yml
-- use SES with nodemailer
+- Each email address used as "from", "sender" or the like must be registered as identity in SES.
+- when working in sandbox also each "to" adress must be registered unless using the AWS mailbox simulator (not tested yet)
 
-It just worked immediately.
+### Register email adress
+
+- Configuration / Identities
+- AWS will send a verification email - click the link to verify
+
+### Use with Serverless
+
+Copilot will help you...
+
+### Use with Nodemailer
+
+Copilot will help you...
 
 ## Log files
 

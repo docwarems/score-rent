@@ -1,18 +1,22 @@
 # AWS Lambda using the Serverless framework
 
+## Quick restart
+
+- $ tsc (to ensure the latest TS state gets deployed - hence serverless will deploy the JS application; there are errors from the i18next module which can be ignored)
+- export AWS_PROFILE=serverless-deployer
+- serverless deploy
+- serverless remove (when done)
+
 ## Resetup
 
-### After 6 months
+### Update 22.11.2025
 
-After 6 months of not using score-rent, I tested AWS and Serverless Logins and Deployment.
-The "serverless" command was no longer existing - a "npm i serverless -g" brought it back. "serverless info" showed that setup and credentials were still existing. I successfully removed the app using "serverless remove". "serverless deploy" brought it back. However, I decided to finanally remove the app using "serverless remove" because currently the Score-Rent development und usage is paused.
-
-### Another 3 months later I tried again
-
-- "serverless info": error "ServerlessError2: Stack with id serverless-score-rent-dev does not exist"
-- "serverless deploy" ok
-- Score Rent accessible; Login OK
-- serverless.com login OK
+- serverless deploy OK
+- app working in browser
+- sending registered email registered in SES via SES worked
+- scan function doesn't work neither mobile nor web (last time it worked partially)
+- partially Mongo DB connection errors (lead to billed durations 2-3s)
+- serverless remove OK
 
 ### Update 02.11.2025
 
@@ -26,13 +30,25 @@ The "serverless" command was no longer existing - a "npm i serverless -g" brough
   - no VPC resources in Frankfurt (but in other regions; as seen last time when I wanted to remove everything because free plan was expiring)
   - no costs expected on "Billing and cost management"
 
+### Another 3 months (02.11.2025) later I tried again
+
+- "serverless info": error "ServerlessError2: Stack with id serverless-score-rent-dev does not exist" (-> this is normal after a "serverless remove" because the serverless application does not exist in AWS)
+- "serverless deploy" ok
+- Score Rent accessible; Login OK
+- serverless.com login OK
+
+### After 6 months (26.01.2025)
+
+After 6 months of not using score-rent, I tested AWS and Serverless Logins and Deployment.
+The "serverless" command was no longer existing - a "npm i serverless -g" brought it back. "serverless info" showed that setup and credentials were still existing. I successfully removed the app using "serverless remove". "serverless deploy" brought it back. However, I decided to finanally remove the app using "serverless remove" because currently the Score-Rent development und usage is paused.
+
 ## MongoDB connection
 
 The score-rent code, including the MongoDB and mail server connection, we used for the Cyclic hosting worked immediately without any modification with AWS Lambda / Serverless Framework.
 
-However, according to the Mongoose document here https://mongoosejs.com/docs/lambda.html it is recommended to make use of Lambda global scope where Lambda will cache the MongoDB connection, which will avoid recreate the connection too often. Creating connections take time, and time costs money at Lambda.
+However, according to the Mongoose document here https://mongoosejs.com/docs/lambda.html it is recommended to make use of Lambda global scope where Lambda will cache the MongoDB connection, which will avoid recreate the connection too often. Creating connections take time, and time costs money at Lambda. -> DONE (conn variable with global scope in app.ts)
 
-Also it seems to be extremely important to reduce the default connection timeout of 30s by option 'serverSelectionTimeoutMS' - otherwise AWS will bill you also for 30s doing nothing.
+Also it seems to be extremely important to reduce the default connection timeout of 30s by option 'serverSelectionTimeoutMS' - otherwise AWS will bill you also for 30s doing nothing. -> DONE
 
 ### Cluster paused
 
@@ -157,6 +173,8 @@ SMTP_HOST: ${env:SMTP_HOST}
 During deloyment will get the actual values from the .env file
 
 ## TODOs
+
+- remove JS files from repo (this was only necessary for Cyclic because it deployed from the GitHub repo)
 
 ## Errors
 
