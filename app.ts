@@ -101,15 +101,14 @@ const connect = async function (): Promise<typeof mongoose> {
   return conn;
 };
 
-if (process.env.AWS_LAMBDA_FUNCTION_NAME) {
-  // This will be true when running in Lambda
-  // Value will be: "serverless-score-rent-dev-api"
-  // Connect on cold start (module initialization)
-  connect();
-} else {
-  // This will be true when running locally
-  // my idea (no top-level await allowed)
-  connect().then(() => app.listen(3000));
+// Connect on cold start (module initialization)
+connect();
+
+// For local development, also listen
+if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  app.listen(3000, () => {
+    console.log("Server listening on http://localhost:3000");
+  });
 }
 
 // routes
@@ -138,4 +137,10 @@ app.use(router);
 // });
 
 console.log("app initialized");
-exports.handler = serverless(app);
+
+// Wrap handler to ensure connection on every invocation
+const originalHandler = serverless(app);
+exports.handler = async (event: any, context: any) => {
+  await connect(); // Check connection on every invocation
+  return originalHandler(event, context);
+};

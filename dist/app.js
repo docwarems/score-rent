@@ -99,16 +99,13 @@ const connect = function () {
         return conn;
     });
 };
-if (process.env.AWS_LAMBDA_FUNCTION_NAME) {
-    // This will be true when running in Lambda
-    // Value will be: "serverless-score-rent-dev-api"
-    // Connect on cold start (module initialization)
-    connect();
-}
-else {
-    // This will be true when running locally
-    // my idea (no top-level await allowed)
-    connect().then(() => app.listen(3000));
+// Connect on cold start (module initialization)
+connect();
+// For local development, also listen
+if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    app.listen(3000, () => {
+        console.log("Server listening on http://localhost:3000");
+    });
 }
 // routes
 app.get("*", checkUser);
@@ -129,4 +126,9 @@ app.use(router);
 //   console.log('rename field done!');
 // });
 console.log("app initialized");
-exports.handler = (0, serverless_http_1.default)(app);
+// Wrap handler to ensure connection on every invocation
+const originalHandler = (0, serverless_http_1.default)(app);
+exports.handler = (event, context) => __awaiter(void 0, void 0, void 0, function* () {
+    yield connect(); // Check connection on every invocation
+    return originalHandler(event, context);
+});
