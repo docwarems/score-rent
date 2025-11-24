@@ -170,7 +170,7 @@ In serverless.yml environment variables are defined like
 SMTP_HOST: ${env:SMTP_HOST}
 ```
 
-During deloyment will get the actual values from the .env file
+During deloyment they will get the actual values from the .env file
 
 ## TODOs
 
@@ -189,3 +189,21 @@ MongooseServerSelectionError: Could not connect to any servers in your MongoDB A
 ```
 
 I had this error randomly when doing the first tests with the Lamba deployment. I never this error with the Cylic deployment. AWS will usually bill you for 6000ms before the timeout aborts the request.
+
+## How to go into production?
+
+### Custom domain
+
+Since the app is intended for an existing non-profit organisation, the best approach is request a DNS record from the maintainer to setup a sub-domain, like score.non-profit.org. Domain and SSL certificate will actually costs 0.
+
+Recommendation is to deploy as usual and get an API Gateway URL like https://abc123xyz.execute-api.eu-central-1.amazonaws.com/.
+Once everything is tested and running fine, this URL can't be registered with the non-profit custom sub domain.
+
+### prod stage
+
+serverless deploy --stage prod
+
+### SES
+
+- AWS Console → SES → Account dashboard → Request production access
+- This allows sending to any email address (not just verified ones)
