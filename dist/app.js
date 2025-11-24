@@ -84,11 +84,32 @@ const connect = function () {
             yield conn;
             console.log("MongoDB connected");
         }
+        else {
+            // Check if connection is still alive on warm starts
+            try {
+                yield mongoose_1.default.connection.db.admin().ping();
+                console.log("MongoDB connection reused (warm start)");
+            }
+            catch (error) {
+                console.log("MongoDB connection stale, reconnecting...");
+                conn = null;
+                return connect(); // Recursively reconnect
+            }
+        }
         return conn;
     });
 };
-// Connect on cold start (module initialization)
-connect();
+if (process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    // This will be true when running in Lambda
+    // Value will be: "serverless-score-rent-dev-api"
+    // Connect on cold start (module initialization)
+    connect();
+}
+else {
+    // This will be true when running locally
+    // my idea (no top-level await allowed)
+    connect().then(() => app.listen(3000));
+}
 // routes
 app.get("*", checkUser);
 const home_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {

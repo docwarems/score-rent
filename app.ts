@@ -73,7 +73,7 @@ mongoose.set("strictQuery", false);
 // AWS will cache global variables, i.a. also the mongoose connection
 // see https://mongoosejs.com/docs/lambda.html
 let conn: any = null;
-const connect = async function () {
+const connect = async function (): Promise<typeof mongoose> {
   if (conn == null) {
     conn = mongoose
       .connect(dbURI, {
@@ -86,13 +86,31 @@ const connect = async function () {
     console.log("MongoDB connecting...");
     await conn;
     console.log("MongoDB connected");
+  } else {
+    // Check if connection is still alive on warm starts
+    try {
+      await mongoose.connection.db.admin().ping();
+      console.log("MongoDB connection reused (warm start)");
+    } catch (error) {
+      console.log("MongoDB connection stale, reconnecting...");
+      conn = null;
+      return connect(); // Recursively reconnect
+    }
   }
 
   return conn;
 };
 
-// Connect on cold start (module initialization)
-connect();
+if (process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  // This will be true when running in Lambda
+  // Value will be: "serverless-score-rent-dev-api"
+  // Connect on cold start (module initialization)
+  connect();
+} else {
+  // This will be true when running locally
+  // my idea (no top-level await allowed)
+  connect().then(() => app.listen(3000));
+}
 
 // routes
 app.get("*", checkUser);
