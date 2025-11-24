@@ -10,6 +10,7 @@ provider:
   name: aws
   runtime: nodejs20.x
   region: eu-central-1
+  stage: ${opt:stage, 'dev'}  # Allow --stage flag
   profile: serverless-deployer
   iamRoleStatements:
     - Effect: "Allow"
@@ -24,7 +25,8 @@ functions:
     handler: dist/app.handler
     memorySize: 512
     environment:
-      MONGODB_URL: ${env:MONGODB_URL}
+      STAGE: ${self:provider.stage} 
+      MONGODB_URL: ${env:MONGODB_URL_${self:provider.stage}}    
       SMTP_HOST: ${env:SMTP_HOST}
       SMTP_USER: ${env:SMTP_USER}
       SMTP_PASS: ${env:SMTP_PASS}
@@ -32,6 +34,7 @@ functions:
       SMTP_DEBUG: ${env:SMTP_DEBUG}
       JWT_SECRET: ${env:JWT_SECRET}
       EMAIL_VERIFICATION_SECRET: ${env:EMAIL_VERIFICATION_SECRET}
+      CYCLIC_URL: ${env:CYCLIC_URL}
     events:
       - httpApi: "*"
 
