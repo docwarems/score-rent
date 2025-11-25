@@ -251,7 +251,7 @@ module.exports.signup_post = async (req: any, res: any) => {
 
     let isManuallyRegistered;
     if (byAdmin) {
-      password = "jdj849kddwerß02340wasdölad";
+      password = `${process.env.MANUAL_REGISTRATION_PASSWORD}`; // not critical because e-mail verification required to activate account
       isManuallyRegistered = true;
       if (email == "") {
         email = undefined; // will avoid duplicate key error
