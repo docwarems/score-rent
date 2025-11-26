@@ -1,6 +1,7 @@
 {
   "translation": {
     "app.name": "HSC rental score management",
+    "login.title": "Login",
     "scores": "Scores",
     "scores.register": "Register rental scores",
     "score.checkout": "Checkout score",

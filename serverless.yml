@@ -34,7 +34,7 @@ functions:
       SMTP_DEBUG: ${env:SMTP_DEBUG}
       JWT_SECRET: ${env:JWT_SECRET}
       EMAIL_VERIFICATION_SECRET: ${env:EMAIL_VERIFICATION_SECRET}
-      CYCLIC_URL: ${env:CYCLIC_URL}
+      CYCLIC_URL: ${env:CYCLIC_URL_${self:provider.stage}}
       MANUAL_REGISTRATION_SECRET: ${env:MANUAL_REGISTRATION_SECRET}
 
     events:

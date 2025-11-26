@@ -1,6 +1,7 @@
 {
   "translation": {
     "app.name": "HSC Leihnoten Verwaltung",
+    "login.title": "Login",
     "checkouts.show": "Ausleihen anzeigen",
     "checkout": "Ausleihe",
     "login.show.qrcode": "QRCode für Login anzeigen",

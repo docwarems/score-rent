@@ -12,20 +12,22 @@
 
 <ul class="w3-ul w3-border">
   <% if (user.isAdmin) { %>
-  <h3><%= t('scores') %></h3>
-  <li><a href="/score/register" class="w3-button w3-black"><%= t('scores.register') %></a></li>
-  <li><a href="/score/checkout" class="w3-button w3-black"><%= t('score.checkout') %></a></li>
-  <li><a href="/score/checkin" class="w3-button w3-black"><%= t('score.checkin') %></a></li>
-  <li><a href="/score/checkouts" class="w3-button w3-black"><%= t('checkouts.show') %></a></li>
-  <li><a href="/score/history" class="w3-button w3-black"><%= t('score.history') %></a></li>
-  <h3><%= t('user') %></h3>
-  <li><a href="/signup-user" class="w3-button w3-black"><%= t('user.register') %></a></li>
-  <li><a href="/score/users" class="w3-button w3-black"><%= t('user.list') %></a></li>
-  <li><a href="/score/vue-test" class="w3-button w3-red">Vue test</a></li>
-  <li><a href="/score/checkouts-vue" class="w3-button w3-red">Checkouts(Vue)</a></li>
+    <h3><%= t('scores') %></h3>
+    <li><a href="/score/register" class="w3-button w3-black"><%= t('scores.register') %></a></li>
+    <li><a href="/score/checkout" class="w3-button w3-black"><%= t('score.checkout') %></a></li>
+    <li><a href="/score/checkin" class="w3-button w3-black"><%= t('score.checkin') %></a></li>
+    <li><a href="/score/checkouts" class="w3-button w3-black"><%= t('checkouts.show') %></a></li>
+    <li><a href="/score/history" class="w3-button w3-black"><%= t('score.history') %></a></li>
+    <h3><%= t('user') %></h3>
+    <li><a href="/signup-user" class="w3-button w3-black"><%= t('user.register') %></a></li>
+    <li><a href="/score/users" class="w3-button w3-black"><%= t('user.list') %></a></li>
+    <% if (process.env.STAGE !== 'prod') { %>
+      <li><a href="/score/vue-test" class="w3-button w3-red">Vue test</a></li>
+      <li><a href="/score/checkouts-vue" class="w3-button w3-red">Checkouts(Vue)</a></li>
+    <% } %>
   <% } else { %>
-  <li><a href="/user/checkouts" class="w3-button w3-black"><%= t('checkouts.show') %></a></li>
-  <li><a href="#" onClick="document.querySelector('.divQrCode').style='display: block'" class="w3-button w3-black"><%= t('login.show.qrcode') %></a></li>
+    <li><a href="/user/checkouts" class="w3-button w3-black"><%= t('checkouts.show') %></a></li>
+    <li><a href="#" onClick="document.querySelector('.divQrCode').style='display: block'" class="w3-button w3-black"><%= t('login.show.qrcode') %></a></li>
   <% } %>
 </ul>
 
