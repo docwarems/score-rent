@@ -275,17 +275,52 @@ module.exports.signup_post = async (req: any, res: any) => {
     const verificationToken = byAdmin
       ? undefined
       : Math.random().toString(36).substring(2);
-    const user = await User.create({
-      id: userId,
-      email,
-      password,
-      firstName,
-      lastName,
-      voice,
-      verificationToken,
-      isManuallyRegistered,
-    });
-    res.status(201).json({ user: user._id });
+
+    try {
+      const user = await User.create({
+        id: userId,
+        email,
+        password,
+        firstName,
+        lastName,
+        voice,
+        verificationToken,
+        isManuallyRegistered,
+      });
+      res.status(201).json({ user: user._id });
+    } catch (createError: any) {
+      // Check if it's a duplicate key error for userId
+      if (createError.code === 11000 && createError.keyValue?.id) {
+        // Find the existing user with this userId
+        const existingUser = await User.findOne({ id: userId });
+
+        // Check if it's a manually registered user with empty email
+        if (
+          existingUser &&
+          existingUser.isManuallyRegistered &&
+          !existingUser.email
+        ) {
+          // Update the existing user with new data
+          existingUser.email = email;
+          existingUser.password = password;
+          existingUser.firstName = firstName;
+          existingUser.lastName = lastName;
+          existingUser.voice = voice;
+          existingUser.verificationToken = verificationToken;
+          existingUser.isManuallyRegistered = isManuallyRegistered;
+          existingUser.isPasswordHashed = false; // Will trigger re-hashing
+
+          await existingUser.save();
+          res.status(201).json({ user: existingUser._id });
+        } else {
+          // It's a real duplicate - throw the error to be handled below
+          throw createError;
+        }
+      } else {
+        // Other errors - throw to be handled below
+        throw createError;
+      }
+    }
   } catch (err: any) {
     let type: string | undefined = undefined;
     if (err.keyValue?.id) {
@@ -326,7 +361,7 @@ module.exports.password_forgotten_post = async (req: any, res: any) => {
       await sendPasswordResetEmail(user);
       console.log("password reset successfully requested for: ", email);
     } else {
-      console.log("password reset requested for unknown: ", email);
+      console.log("password reset requested for unknown e-mail address: ", email);
     }
     res.status(201).json({});
   } catch (err) {}

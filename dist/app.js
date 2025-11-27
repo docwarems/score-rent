@@ -52,12 +52,12 @@ i18next_1.default.init({
     },
 });
 // Override app name based on stage
-const stage = process.env.STAGE || 'dev';
-if (stage === 'dev') {
-    i18next_1.default.addResource('de', 'translation', 'app.name', 'HSC Leihnoten Verwaltung (TEST)');
-    i18next_1.default.addResource('en', 'translation', 'app.name', 'HSC Score Rent (TEST)');
-    i18next_1.default.addResource('de', 'translation', 'login.title', 'Login (TEST)');
-    i18next_1.default.addResource('en', 'translation', 'login.title', 'Login (TEST)');
+const stage = process.env.STAGE || "dev";
+if (stage === "dev") {
+    i18next_1.default.addResource("de", "translation", "app.name", "HSC Leihnoten Verwaltung (TEST)");
+    i18next_1.default.addResource("en", "translation", "app.name", "HSC Score Rent (TEST)");
+    i18next_1.default.addResource("de", "translation", "login.title", "Login (TEST)");
+    i18next_1.default.addResource("en", "translation", "login.title", "Login (TEST)");
 }
 const app = express();
 // middleware

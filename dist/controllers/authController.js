@@ -151,8 +151,8 @@ const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void
         const html = `
     Du wurdest erfolgreich in der Noten Ausleihe Datenbank des Hans-Sachs-Chor registriert.<br>
     <a href="${process.env.CYCLIC_URL}">Zum Login</a><br><br>
-    Bitte speichere den folgenden QR Code. Er vereinfacht das künftige Ausleihen von Noten (kein Leihzettel mehr nötig).<br>
-    Der QR Code kann aber auch jederzeit in der App angezeigt werden.
+    Bitte speichere den folgenden QR Code wenn du dazu in der Lage bist. Er vereinfacht das künftige Ausleihen von Noten (kein Leihzettel mehr nötig).<br>
+    Der QR Code kann aber auch jederzeit nach dem Login in der App angezeigt werden.
     <p></p>
     E-Mail: ${user.email}<br>
     Name: ${user.fullName()}
@@ -221,7 +221,7 @@ module.exports.verify_email_get = (req, res) => __awaiter(void 0, void 0, void 0
  * Signup by admin will not trigger e-mail verification
  */
 module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a, _b, _c;
     let { email, password, passwordRepeat, firstName, // TODO: Mindestlänge 2 wg. User Id
     lastName, voice, } = req.body;
     try {
@@ -251,24 +251,57 @@ module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, fun
         const verificationToken = byAdmin
             ? undefined
             : Math.random().toString(36).substring(2);
-        const user = yield User_1.User.create({
-            id: userId,
-            email,
-            password,
-            firstName,
-            lastName,
-            voice,
-            verificationToken,
-            isManuallyRegistered,
-        });
-        res.status(201).json({ user: user._id });
+        try {
+            const user = yield User_1.User.create({
+                id: userId,
+                email,
+                password,
+                firstName,
+                lastName,
+                voice,
+                verificationToken,
+                isManuallyRegistered,
+            });
+            res.status(201).json({ user: user._id });
+        }
+        catch (createError) {
+            // Check if it's a duplicate key error for userId
+            if (createError.code === 11000 && ((_a = createError.keyValue) === null || _a === void 0 ? void 0 : _a.id)) {
+                // Find the existing user with this userId
+                const existingUser = yield User_1.User.findOne({ id: userId });
+                // Check if it's a manually registered user with empty email
+                if (existingUser &&
+                    existingUser.isManuallyRegistered &&
+                    !existingUser.email) {
+                    // Update the existing user with new data
+                    existingUser.email = email;
+                    existingUser.password = password;
+                    existingUser.firstName = firstName;
+                    existingUser.lastName = lastName;
+                    existingUser.voice = voice;
+                    existingUser.verificationToken = verificationToken;
+                    existingUser.isManuallyRegistered = isManuallyRegistered;
+                    existingUser.isPasswordHashed = false; // Will trigger re-hashing
+                    yield existingUser.save();
+                    res.status(201).json({ user: existingUser._id });
+                }
+                else {
+                    // It's a real duplicate - throw the error to be handled below
+                    throw createError;
+                }
+            }
+            else {
+                // Other errors - throw to be handled below
+                throw createError;
+            }
+        }
     }
     catch (err) {
         let type = undefined;
-        if ((_a = err.keyValue) === null || _a === void 0 ? void 0 : _a.id) {
+        if ((_b = err.keyValue) === null || _b === void 0 ? void 0 : _b.id) {
             type = "userId";
         }
-        else if ((_b = err.keyValue) === null || _b === void 0 ? void 0 : _b.email) {
+        else if ((_c = err.keyValue) === null || _c === void 0 ? void 0 : _c.email) {
             type = "email";
         }
         const errors = handleSaveErrors(err, type);
