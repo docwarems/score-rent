@@ -82,7 +82,8 @@ app.set("view engine", "ejs");
 app.engine("vue", ejs.renderFile); // render files with ".vue" extension in views folder by EJS too
 
 // database connection
-const dbURI = process.env.MONGODB_URL as string;
+const dbURI = (process.env.MONGODB_URL ||
+  process.env[`MONGODB_URL_${stage}`]) as string;
 mongoose.set("strictQuery", false);
 
 // AWS will cache global variables, i.a. also the mongoose connection

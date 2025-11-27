@@ -19,7 +19,7 @@ These were the steps to get project running again.
   - forward port 3000
   - http://localhost:3000/login -> Login page
   - Debugging
-    - use VSC "debug" link in package.json scripts and choose "npm run dev"
+    - use VSC "debug" link in package.json scripts and choose "nodemon app.ts"
   - Use "password forgotten" function to reset password of admin user
   - configure git user name and email globally
 

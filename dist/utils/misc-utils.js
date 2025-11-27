@@ -8,10 +8,10 @@ const nodemailer_1 = __importDefault(require("nodemailer"));
 const { SESClient, SendRawEmailCommand } = require("@aws-sdk/client-ses");
 const { defaultProvider } = require("@aws-sdk/credential-provider-node");
 require("dotenv").config();
-const ses = new SESClient({
-    region: "eu-central-1",
-    credentialDefaultProvider: defaultProvider(),
-});
+// const ses = new SESClient({
+//   region: "eu-central-1",
+//   credentialDefaultProvider: defaultProvider(),
+// });
 // SES currently sandbox only
 // export const mailTransporter = nodemailer.createTransport({
 //   SES: { ses, aws: { SendRawEmailCommand } },

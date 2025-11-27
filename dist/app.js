@@ -73,7 +73,8 @@ app.use(middleware.handle(i18next_1.default, {
 app.set("view engine", "ejs");
 app.engine("vue", ejs.renderFile); // render files with ".vue" extension in views folder by EJS too
 // database connection
-const dbURI = process.env.MONGODB_URL;
+const dbURI = (process.env.MONGODB_URL ||
+    process.env[`MONGODB_URL_${stage}`]);
 mongoose_1.default.set("strictQuery", false);
 // AWS will cache global variables, i.a. also the mongoose connection
 // see https://mongoosejs.com/docs/lambda.html
