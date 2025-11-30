@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 require("dotenv").config();
 import { mailTransporter } from "../utils/misc-utils";
 import { v4 as uuidv4 } from "uuid";
+import i18next from "i18next";
 import {
   getScoreTypes,
   SIGNATURE_ALL,
@@ -26,6 +27,12 @@ const handleSaveErrors = (err: any, type: string | undefined) => {
   }
 
   return errors;
+};
+
+const t = (req: any, key: string, options?: any) => {
+  const acceptLang = req.headers["accept-language"] || "de";
+  const lng = acceptLang.startsWith("en") ? "en" : "de";
+  return i18next.t(key, { ...options, lng });
 };
 
 module.exports.register_score_get = (req: any, res: any) => {
@@ -144,7 +151,10 @@ module.exports.checkout_post = async (req: any, res: any) => {
           }
         } else {
           res.status(400).json({
-            errors: `User with Id ${userId} has already checked out score Id ${checkedOutScoresOfCurrentType.id}. To allow another checkout check checkbox and specify reason in comment field.`,
+            // errors: `User with Id ${userId} has already checked out score Id ${checkedOutScoresOfCurrentType.id}. To allow another checkout check checkbox and specify reason in comment field.`,
+            errors: t(req, "score.checkout.double", {
+              scoreId: checkedOutScoresOfCurrentType.id,
+            }),
           });
         }
       }
@@ -473,7 +483,7 @@ export async function checkouts_vue(
       scoreTypeTotalCheckedOutCount = checkedOutScoreIdSet.size;
     }
 
-    res.status(201).json({ 
+    res.status(201).json({
       admin,
       signatures: JSON.stringify(await getScoreTypes()),
       signatureMap: JSON.stringify(await getScoreTypeMap()),
@@ -484,7 +494,6 @@ export async function checkouts_vue(
       scoreTypeTotalCheckedOutCount,
       error,
     });
-
   } catch (error) {
     res.status(500).json({ error });
   }
@@ -505,16 +514,22 @@ export async function checkouts_vue(
           (!onlyForUserId || checkout.userId === onlyForUserId)
         ) {
           const user = userMap.get(checkout.userId);
-          const userName = user ? (user.firstName + " " + user.lastName) : checkout.userId;
+          const userName = user
+            ? user.firstName + " " + user.lastName
+            : checkout.userId;
           const voice = user?.voice ?? "?";
           const namePlusVoice = `${userName} (${voice})`;
           const email = user?.email ?? "";
           // deconstruction of checkout by "...checkout" seems not to work, because it's a Mongoose object?
           checkouts.push({
             id: checkout._id,
-            checkoutTimestamp: checkout.checkoutTimestamp ? checkout.checkoutTimestamp.toLocaleDateString("de-DE") : "",
+            checkoutTimestamp: checkout.checkoutTimestamp
+              ? checkout.checkoutTimestamp.toLocaleDateString("de-DE")
+              : "",
             checkoutComment: checkout.checkoutComment,
-            checkinTimestamp: checkout.checkinTimestamp ? checkout.checkinTimestamp.toLocaleDateString("de-DE") : "",
+            checkinTimestamp: checkout.checkinTimestamp
+              ? checkout.checkinTimestamp.toLocaleDateString("de-DE")
+              : "",
             checkinComment: checkout.checkinComment,
             scoreId: score.id,
             scoreExtId: score.extId,
@@ -568,7 +583,7 @@ const sendCheckoutConfirmationEmail = async (
     <p>
     Dein Hans-Sachs-Chor Notenwart
     <p>
-    p.s.: Diese E-Mail wurde automatisch versendet
+    P.S.: Diese E-Mail wurde automatisch versendet
   `;
 
   await sendConfirmationEmail(user, subject, html, testRecipient);

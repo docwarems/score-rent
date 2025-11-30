@@ -8,6 +8,7 @@
     "scores": "Noten",
     "scores.register": "Leihnoten registrieren",
     "score.checkout": "Noten Ausleihe",
+    "score.checkout.double": "Der Benutzer hat bereits die Noten mit Id {{scoreId}} ausgeliehen. Um eine weitere Ausleihe zu erlauben wähle die Option 'Doppelte Ausleihe erlauben' aus und gebe den Grund im Kommentarfeld an.",
     "score.checkin": "Noten Rückgabe",
     "score.history": "Noten History",
     "user": "Benutzer",
@@ -22,6 +23,9 @@
     "user.search.by.name": "User über Namen suchen",
     "user.not.found": "Benutzer nicht gefunden",
     "home": "Startseite",
-    "scan.score": "Noten scannen"
+    "scan.score": "Noten scannen",
+    "score.search.by.id": "Noten über ID suchen",
+    "score.not.found": "Noten nicht gefunden",
+    "score.id": "Noten ID"
   }
 }

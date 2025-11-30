@@ -5,6 +5,7 @@
         "scores": "Scores",
         "scores.register": "Register rental scores",
         "score.checkout": "Checkout score",
+        "score.checkout.double": "The user has already checked out score Id {{scoreId}}. To allow another checkout check checkbox 'allow double checkout' and specify reason in comment field.",
         "score.checkin": "Return score",
         "score.history": "Score history",
         "checkouts.show": "Show checkouts",

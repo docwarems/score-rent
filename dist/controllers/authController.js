@@ -335,7 +335,7 @@ module.exports.password_forgotten_post = (req, res) => __awaiter(void 0, void 0,
             console.log("password reset successfully requested for: ", email);
         }
         else {
-            console.log("password reset requested for unknown: ", email);
+            console.log("password reset requested for unknown e-mail address: ", email);
         }
         res.status(201).json({});
     }

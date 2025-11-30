@@ -28,6 +28,7 @@
   <p id="scan.score"><%= t('scan.score') %></p>
   <p id="checkout.success"><%= t('checkout.success') %></p>
   <p id="checkout.scan.user.sheet"><%= t('checkout.scan.user.sheet') %></p>
+  <p id="score.checkout.double"><%= t('score.checkout.double') %></p>
   <p id="user.not.found"><%= t('user.not.found') %></p>
 </div>
 
@@ -223,6 +224,7 @@ const formScan = document.querySelector('#formScan');
         console.error(data.errors);
         const pError = document.querySelector('.pError');
         pError.textContent = data.errors;
+        divError.style = "display: block";
         return false;
       }
       if ((userId && data.checkoutUser) || (userJwtOrCheckoutId && data.checkoutUser)) {

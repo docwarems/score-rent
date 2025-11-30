@@ -20,6 +20,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 require("dotenv").config();
 const misc_utils_1 = require("../utils/misc-utils");
 const uuid_1 = require("uuid");
+const i18next_1 = __importDefault(require("i18next"));
 const score_utils_1 = require("../utils/score-utils");
 const handleSaveErrors = (err, type) => {
     console.log(err.message, err.code);
@@ -35,6 +36,11 @@ const handleSaveErrors = (err, type) => {
         return errors;
     }
     return errors;
+};
+const t = (req, key, options) => {
+    const acceptLang = req.headers["accept-language"] || "de";
+    const lng = acceptLang.startsWith("en") ? "en" : "de";
+    return i18next_1.default.t(key, Object.assign(Object.assign({}, options), { lng }));
 };
 module.exports.register_score_get = (req, res) => {
     res.redirect("/register-score");
@@ -128,7 +134,10 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                 }
                 else {
                     res.status(400).json({
-                        errors: `User with Id ${userId} has already checked out score Id ${checkedOutScoresOfCurrentType.id}. To allow another checkout check checkbox and specify reason in comment field.`,
+                        // errors: `User with Id ${userId} has already checked out score Id ${checkedOutScoresOfCurrentType.id}. To allow another checkout check checkbox and specify reason in comment field.`,
+                        errors: t(req, "score.checkout.double", {
+                            scoreId: checkedOutScoresOfCurrentType.id,
+                        }),
                     });
                 }
             }
@@ -455,16 +464,22 @@ function checkouts_vue(res, signature, checkedOut, admin, userId) {
                         if ((!onlyCheckedOut || !checkout.checkinTimestamp) &&
                             (!onlyForUserId || checkout.userId === onlyForUserId)) {
                             const user = userMap.get(checkout.userId);
-                            const userName = user ? (user.firstName + " " + user.lastName) : checkout.userId;
+                            const userName = user
+                                ? user.firstName + " " + user.lastName
+                                : checkout.userId;
                             const voice = (_a = user === null || user === void 0 ? void 0 : user.voice) !== null && _a !== void 0 ? _a : "?";
                             const namePlusVoice = `${userName} (${voice})`;
                             const email = (_b = user === null || user === void 0 ? void 0 : user.email) !== null && _b !== void 0 ? _b : "";
                             // deconstruction of checkout by "...checkout" seems not to work, because it's a Mongoose object?
                             checkouts.push({
                                 id: checkout._id,
-                                checkoutTimestamp: checkout.checkoutTimestamp ? checkout.checkoutTimestamp.toLocaleDateString("de-DE") : "",
+                                checkoutTimestamp: checkout.checkoutTimestamp
+                                    ? checkout.checkoutTimestamp.toLocaleDateString("de-DE")
+                                    : "",
                                 checkoutComment: checkout.checkoutComment,
-                                checkinTimestamp: checkout.checkinTimestamp ? checkout.checkinTimestamp.toLocaleDateString("de-DE") : "",
+                                checkinTimestamp: checkout.checkinTimestamp
+                                    ? checkout.checkinTimestamp.toLocaleDateString("de-DE")
+                                    : "",
                                 checkinComment: checkout.checkinComment,
                                 scoreId: score.id,
                                 scoreExtId: score.extId,
@@ -509,7 +524,7 @@ const sendCheckoutConfirmationEmail = (user, score, testRecipient) => __awaiter(
     <p>
     Dein Hans-Sachs-Chor Notenwart
     <p>
-    p.s.: Diese E-Mail wurde automatisch versendet
+    P.S.: Diese E-Mail wurde automatisch versendet
   `;
     yield sendConfirmationEmail(user, subject, html, testRecipient);
 });
