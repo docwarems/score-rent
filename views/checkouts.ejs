@@ -102,7 +102,7 @@
       <% if (!admin) { %>
       <td><%= checkoutTimestamp %></td>
       <% } else { %>
-      <td><button onclick="editCheckout('<%= checkout.scoreId %>','<%= checkout._id %>','<%= checkout.checkoutComment %>','<%= checkout.checkinComment %>')" class="w3-button w3-pale-blue"><%= checkoutTimestamp %></button></td>
+      <td><button onclick="editCheckout('<%= checkout.scoreId %>','<%= checkout._id %>','<%= checkout.checkoutComment %>','<%= checkout.checkinComment %>','<%= checkout.userId %>')" class="w3-button w3-pale-blue"><%= checkoutTimestamp %></button></td>
       <% } %>
       <td><%= checkout.checkoutComment %></td>
       <td>
@@ -207,7 +207,8 @@
           </tr>
         </table>
         <p></p>
-        <button class="w3-button w3-black btnUpdateCheckout">OK</button>
+        <button type="submit" class="w3-button w3-black btnUpdateCheckout">OK</button>
+        <button type="button" class="w3-button w3-black btnEditCheckoutClose">Schließen</button>
       </form>
 
       <P></P>
@@ -342,13 +343,9 @@
     document.getElementById('userDetailsModal').style.display = 'block';
   }
 
-  function editCheckout(scoreId, checkoutId, checkoutComment, checkinComment) {
-    // console.log(checkoutId);
-
-    // const inputScoreId = document.querySelector('.scoreId');
-    // inputScoreId.value = scoreId;
-    // const inputComment = document.querySelector('.comment');
-    // inputComment.value = "";
+  function editCheckout(scoreId, checkoutId, checkoutComment, checkinComment, userId) {
+    divEditCheckoutModalSuccess.style = "display: none";
+    divEditCheckoutModalError.style = "display: none";
 
     const p1 = document.querySelector('.editCheckoutP1');
     const p2 = document.querySelector('.editCheckoutP2');
@@ -363,15 +360,22 @@
     inputCheckoutComment.value = checkoutComment;
     const inputCheckinComment = document.querySelector('.editCheckoutCommentCheckin');
     inputCheckinComment.value = checkinComment;
+    const inputUserId = document.querySelector('.editCheckoutUserId');
+    inputUserId.value = userId;   
 
     divModalSuccess.style = "display: none";
     divModalError.style = "display: none";
+
+    const inputLastName = document.querySelector('.inputLastName');
+    inputLastName.value = "";
+    const tableUsers = document.querySelector('.tableUsers');
+    tableUsers.innerHTML = "";
+
     document.getElementById('editCheckoutModal').style.display = 'block';
   }
 
   formEditCheckout.addEventListener('submit', async (e) => {
     e.preventDefault();
-    // divError.style = "display: none";
 
     const inputScoreId = document.querySelector('.editCheckoutScoreId');
     const inputCheckoutId = document.querySelector('.editCheckoutCheckoutId');
@@ -381,6 +385,13 @@
 
     await postUpdateCheckout(inputScoreId.value, inputCheckoutId.value, inputCommentCheckout.value, inputCommentCheckin.value, inputUserId.value);
   });
+
+  const btnEditCheckoutClose = document.querySelector('.btnEditCheckoutClose');
+  if (btnEditCheckoutClose) {
+    btnEditCheckoutClose.addEventListener('click', () => {
+      document.getElementById('editCheckoutModal').style.display = 'none';
+    });
+  }
 
   async function postUpdateCheckout(scoreId, checkoutId, checkoutComment, checkinComment, userId) {
     try {
@@ -470,4 +481,6 @@
     const inputUserId = document.querySelector('.editCheckoutUserId');
     inputUserId.value = userId;
   }
+
+
 </script>
