@@ -8,7 +8,7 @@ service: serverless-score-rent
 
 provider:
   name: aws
-  runtime: nodejs20.x
+  runtime: nodejs24.x
   region: eu-central-1
   stage: ${opt:stage, 'dev'} # Allow --stage flag
   profile: serverless-deployer

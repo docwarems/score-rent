@@ -50,6 +50,12 @@ Copilot will help you...
 
 Log files can be found at lambda / \<function\> / monitor / View CloudWatch logs
 
+### via CLI
+
+```
+aws logs filter-log-events   --region eu-central-1   --log-group-name "/aws/lambda/serverless-score-rent-prod-api"   --filter-pattern "ERROR"   --start-time $(date -d '2 day ago' +%s)000
+```
+
 ## Costs
 
 Cost explorer shows that 6 services are in use.
