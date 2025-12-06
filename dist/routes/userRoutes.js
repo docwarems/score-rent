@@ -11,8 +11,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.user = void 0;
 const { Router } = require("express");
-const userController = require("../controllers/userController");
-const { requireAuth, checkUser, requireUserVerified, } = require("../middleware/authMiddleware");
+// const userController = require("../controllers/userController");
+const { userController, email_queue_stats_get } = require("../controllers/userController");
+const { requireAuth, requireAdmin, checkUser, requireUserVerified, } = require("../middleware/authMiddleware");
 const score_utils_1 = require("../utils/score-utils");
 // end user routes
 exports.user = Router();
@@ -24,3 +25,4 @@ const signatures = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.user.get("/checkouts", userController.checkouts_get);
 exports.user.post("/checkouts", userController.checkouts_post);
+exports.user.get('/email-queue-stats', requireAuth, requireAdmin, email_queue_stats_get);

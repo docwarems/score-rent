@@ -11,6 +11,7 @@ import {
   SIGNATURE_ALL,
   getScoreTypeMap,
 } from "../utils/score-utils";
+import { emailQueueService } from '../utils/email-queue-utils';
 
 const handleSaveErrors = (err: any, type: string | undefined) => {
   console.log(err.message, err.code);
@@ -637,9 +638,11 @@ const sendConfirmationEmail = async (
       html,
     };
 
-    const result = await mailTransporter.sendMail(mailOptions);
+    // const result = await mailTransporter.sendMail(mailOptions);
+    const result = await emailQueueService.queueEmail(mailOptions);
+
     if (mailTransporter.logger) {
-      console.log("Score confirmation e-mail:", result);
+      console.log("Queued confirmation e-mail:", result);
     }
   } else {
     console.log(

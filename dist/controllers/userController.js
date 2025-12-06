@@ -9,8 +9,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.email_queue_stats_get = void 0;
 const scoreController_1 = require("./scoreController");
 const score_utils_1 = require("../utils/score-utils");
+const email_queue_utils_1 = require("../utils/email-queue-utils");
 module.exports.checkouts_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = res.locals.user.id;
     const signature = score_utils_1.SIGNATURE_ALL.id;
@@ -24,3 +26,14 @@ module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, 
     const { signature, checkedOut } = req.body;
     yield (0, scoreController_1.checkouts)(res, signature, checkedOut, admin, userId);
 });
+const email_queue_stats_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const stats = yield email_queue_utils_1.emailQueueService.getQueueStats();
+        const canSend = yield email_queue_utils_1.emailQueueService.canSendEmail();
+        res.json(Object.assign(Object.assign({}, stats), { canSendMore: canSend }));
+    }
+    catch (error) {
+        res.status(500).json({ error });
+    }
+});
+exports.email_queue_stats_get = email_queue_stats_get;

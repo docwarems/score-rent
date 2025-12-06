@@ -31,6 +31,7 @@ const i18next_1 = __importDefault(require("i18next"));
 var middleware = require("i18next-http-middleware");
 const en_json_1 = __importDefault(require("./locales/en.json"));
 const de_json_1 = __importDefault(require("./locales/de.json"));
+const email_queue_utils_1 = require("./utils/email-queue-utils");
 i18next_1.default.use(middleware.LanguageDetector).init({
     preload: ["de"],
     // ...otherOptions
@@ -88,6 +89,13 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(middleware.handle(i18next_1.default, {
     ignoreRoutes: ["/foo"],
     removeLngFromUrl: false, // removes the language from the url when language detected in path
+}));
+app.use((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    // Process queue in background (don't wait for completion)
+    email_queue_utils_1.emailQueueService.processQueue().catch(error => {
+        console.error('Error processing email queue:', error);
+    });
+    next();
 }));
 // view engine
 app.set("view engine", "ejs");

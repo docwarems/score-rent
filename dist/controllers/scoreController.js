@@ -22,6 +22,7 @@ const misc_utils_1 = require("../utils/misc-utils");
 const uuid_1 = require("uuid");
 const i18next_1 = __importDefault(require("i18next"));
 const score_utils_1 = require("../utils/score-utils");
+const email_queue_utils_1 = require("../utils/email-queue-utils");
 const handleSaveErrors = (err, type) => {
     console.log(err.message, err.code);
     let errors = {
@@ -558,9 +559,10 @@ const sendConfirmationEmail = (user, subject, html, testRecipient) => __awaiter(
             subject,
             html,
         };
-        const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions);
+        // const result = await mailTransporter.sendMail(mailOptions);
+        const result = yield email_queue_utils_1.emailQueueService.queueEmail(mailOptions);
         if (misc_utils_1.mailTransporter.logger) {
-            console.log("Score confirmation e-mail:", result);
+            console.log("Queued confirmation e-mail:", result);
         }
     }
     else {

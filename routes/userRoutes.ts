@@ -1,7 +1,9 @@
 const { Router } = require("express");
-const userController = require("../controllers/userController");
+// const userController = require("../controllers/userController");
+const { userController, email_queue_stats_get } = require("../controllers/userController");
 const {
   requireAuth,
+  requireAdmin,
   checkUser,
   requireUserVerified,
 } = require("../middleware/authMiddleware");
@@ -20,3 +22,5 @@ const signatures = async () => {
 
 user.get("/checkouts", userController.checkouts_get);
 user.post("/checkouts", userController.checkouts_post);
+
+user.get('/email-queue-stats', requireAuth, requireAdmin, email_queue_stats_get);

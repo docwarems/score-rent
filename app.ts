@@ -22,6 +22,8 @@ import i18next from "i18next";
 var middleware = require("i18next-http-middleware");
 import en from "./locales/en.json";
 import de from "./locales/de.json";
+import { User } from "./models/User";
+import { emailQueueService } from './utils/email-queue-utils';
 
 i18next.use(middleware.LanguageDetector).init({
   preload: ["de"],
@@ -97,6 +99,14 @@ app.use(
     removeLngFromUrl: false, // removes the language from the url when language detected in path
   })
 );
+
+app.use(async (req: any, res: any, next: any) => {
+  // Process queue in background (don't wait for completion)
+  emailQueueService.processQueue().catch(error => {
+    console.error('Error processing email queue:', error);
+  });
+  next();
+});
 
 // view engine
 app.set("view engine", "ejs");
