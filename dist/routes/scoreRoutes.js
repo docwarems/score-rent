@@ -16,8 +16,8 @@ const { requireAuth, checkUser, requireUserVerified, requireAdmin, } = require("
 const score_utils_1 = require("../utils/score-utils");
 exports.score = Router();
 // wildcard for all get/post actions
-exports.score.get("*", checkUser, requireAuth, requireAdmin);
-exports.score.post("*", checkUser, requireAuth, requireAdmin);
+exports.score.get("*", requireAuth, requireAdmin);
+exports.score.post("*", requireAuth, requireAdmin);
 exports.score.get("/register", (req, res) => res.render("register-score", { scoreType: res.locals.scoreType }));
 exports.score.post("/register", scoreController.register_score_post);
 exports.score.get("/checkout", (req, res) => res.render("checkout", {

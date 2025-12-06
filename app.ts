@@ -65,6 +65,27 @@ if (stage === "dev") {
 
 const app = express();
 
+/**
+ * About routes
+ * (line numbers from time of writing)
+ *
+ * Request arrives
+ *     ↓
+ * Express static files (line 91)
+ *    ↓
+ * JSON/Cookie parsers (line 93)
+ *    ↓
+ * i18n middleware (line 95ff)
+ *    ↓
+ * View engine setup (line 102ff)
+ *    ↓
+ * checkUser (line 153)
+ *    ↓
+ * Route-specific handlers
+ *     ↓
+ * Response sent
+ */
+
 // middleware
 app.use(express.static("public"));
 app.use(express.json());
@@ -128,7 +149,7 @@ if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
 }
 
 // routes
-app.get("*", checkUser);
+app.use("*", checkUser);
 
 const home_get = async (req: any, res: any) => {
   const user = res.locals.user;

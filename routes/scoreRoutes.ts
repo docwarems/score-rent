@@ -11,8 +11,8 @@ import { getScoreTypes } from "../utils/score-utils";
 export const score = Router();
 
 // wildcard for all get/post actions
-score.get("*", checkUser, requireAuth, requireAdmin);
-score.post("*", checkUser, requireAuth, requireAdmin);
+score.get("*", requireAuth, requireAdmin);
+score.post("*", requireAuth, requireAdmin);
 
 score.get("/register", (req: any, res: any) =>
   res.render("register-score", { scoreType: res.locals.scoreType })
@@ -66,8 +66,8 @@ exports.score.post("/history", scoreController.scoreHistory_post);
 exports.score.get("/vue-test", async (req: any, res: any) =>
   res.render("vue-test")
 );
-exports.score.get("/vue-test.js",  async (req: any, res: any) =>
-    res.render("vue-test.vue", {
+exports.score.get("/vue-test.js", async (req: any, res: any) =>
+  res.render("vue-test.vue", {
     age: 66,
   })
 );
@@ -75,15 +75,14 @@ exports.score.get("/vue-test.js",  async (req: any, res: any) =>
 exports.score.get("/checkouts-vue", async (req: any, res: any) =>
   res.render("checkouts-vue")
 );
-exports.score.get("/checkouts.js",  async (req: any, res: any) =>
-    res.render("checkouts.vue", {
-      admin: true,
-      signatures: JSON.stringify(await getScoreTypes()),
-      filter: JSON.stringify({ signature: "", checkedOut: true }),
-      checkouts: undefined,
-      error: undefined,
-      hasError: false,
-    })
+exports.score.get("/checkouts.js", async (req: any, res: any) =>
+  res.render("checkouts.vue", {
+    admin: true,
+    signatures: JSON.stringify(await getScoreTypes()),
+    filter: JSON.stringify({ signature: "", checkedOut: true }),
+    checkouts: undefined,
+    error: undefined,
+    hasError: false,
+  })
 );
 score.post("/checkouts-vue", scoreController.checkouts_vue_post);
-

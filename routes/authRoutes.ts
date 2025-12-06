@@ -9,7 +9,6 @@ const {
 
 export const router = Router();
 
-router.post("*", checkUser);
 router.get("/signup", authController.signup_get);
 router.post("/signup", authController.signup_post);
 router.get("/signup-success", authController.signup_success_get);

@@ -17,8 +17,8 @@ const score_utils_1 = require("../utils/score-utils");
 // end user routes
 exports.user = Router();
 // wildcard for all get/post actions
-exports.user.get("*", checkUser, requireAuth, requireUserVerified);
-exports.user.post("*", checkUser, requireAuth, requireUserVerified);
+exports.user.get("*", requireAuth, requireUserVerified);
+exports.user.post("*", requireAuth, requireUserVerified);
 const signatures = () => __awaiter(void 0, void 0, void 0, function* () {
     return yield (0, score_utils_1.getScoreTypes)();
 });

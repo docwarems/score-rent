@@ -11,8 +11,8 @@ import { getScoreTypes } from "../utils/score-utils";
 export const user = Router();
 
 // wildcard for all get/post actions
-user.get("*", checkUser, requireAuth, requireUserVerified);
-user.post("*", checkUser, requireAuth, requireUserVerified);
+user.get("*", requireAuth, requireUserVerified);
+user.post("*", requireAuth, requireUserVerified);
 
 const signatures = async () => {
   return await getScoreTypes();

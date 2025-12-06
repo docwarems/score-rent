@@ -5,7 +5,6 @@ const { Router } = require("express");
 const authController = require("../controllers/authController");
 const { requireAuth, checkUser, requireUserVerified, requireAdmin, } = require("../middleware/authMiddleware");
 exports.router = Router();
-exports.router.post("*", checkUser);
 exports.router.get("/signup", authController.signup_get);
 exports.router.post("/signup", authController.signup_post);
 exports.router.get("/signup-success", authController.signup_success_get);
