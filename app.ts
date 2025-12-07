@@ -86,9 +86,12 @@ const app = express();
  * Response sent
  */
 
-// middleware
-app.use(express.static("public"));
+// Serve static files from dist/public (copied by TypeScript compilation)
+app.use(express.static(path.join(__dirname, "public")));
+
+
 app.use(express.json());
+
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
@@ -176,7 +179,11 @@ app.use(router);
 console.log("app initialized");
 
 // Wrap handler to ensure connection on every invocation
-const originalHandler = serverless(app);
+// without favicon files get currupted
+// Copilot says: The issue was API Gateway converting binary image files to text/base64, corrupting them.
+const originalHandler = serverless(app, {
+  binary: ["image/png", "image/x-icon", "image/jpeg", "image/jpg", "image/gif"],
+});
 exports.handler = async (event: any, context: any) => {
   await connect(); // Check connection on every invocation
   return originalHandler(event, context);
