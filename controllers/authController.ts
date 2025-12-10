@@ -3,12 +3,12 @@ import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import type { StringValue } from "ms";
 import { mailTransporter } from "../utils/misc-utils";
-import { stage, getEnvVar } from "../app";
+import { getEnvVar } from "../app";
 require("dotenv").config();
 var QRCode = require("qrcode");
 
 const handleSaveErrors = (err: any, type: string | undefined) => {
-  console.log(err.message, err.code);
+  console.error(err.message, err.code);
   let errors = {
     userId: "",
     email: "",
@@ -428,17 +428,15 @@ module.exports.password_forgotten_success_get = (req: any, res: any) => {
 
 module.exports.verify_password_reset_email_get = async (req: any, res: any) => {
   let verificationResult: {
-    userId: string | undefined;
     status: EmailVerificationStatus;
     message: string;
   } = {
-    userId: undefined,
     status: EmailVerificationStatus.UNKNOWN,
     message: "unknown error",
   };
 
+  const token = req.query.token as string;
   try {
-    const token = req.query.token as string;
     const decodedToken = jwt.verify(
       token,
       process.env.EMAIL_VERIFICATION_SECRET!
@@ -447,28 +445,24 @@ module.exports.verify_password_reset_email_get = async (req: any, res: any) => {
     const user = await User.findById(decodedToken.userId);
     if (user) {
       verificationResult = {
-        userId: user.id,
         status: EmailVerificationStatus.OK,
         message: "Die E-Mail Adresse wurde erfolgreich verifiziert",
       };
     } else {
       verificationResult = {
-        userId: undefined,
         status: EmailVerificationStatus.NOT_REGISTERED,
         message: "Benutzer nicht gefunden",
       };
     }
   } catch (e: any) {
-    console.error(`e=${e}`);
+    console.error(`verify_password_reset_email_get error: ${e}`);
     if (e.name && e.name === "TokenExpiredError") {
       verificationResult = {
-        userId: undefined,
         status: EmailVerificationStatus.TOKEN_EXPIRED,
         message: "Die Gültigkeit des Link ist abgelaufen",
       };
     } else if (e.name && e.name === "JsonWebTokenError") {
       verificationResult = {
-        userId: undefined,
         status: EmailVerificationStatus.INVALID_SIGNATURE,
         message: "Der Link ist ungültig",
       };
@@ -477,21 +471,26 @@ module.exports.verify_password_reset_email_get = async (req: any, res: any) => {
     res.render("password-reset", {
       EmailVerificationStatus: EmailVerificationStatus, // make enum known to EJS
       verificationResult,
+      token,
     });
   }
 };
 
 module.exports.password_reset_post = async (req: any, res: any) => {
-  let { userId, password, passwordRepeat } = req.body;
-
-  // TODO: insecure; anyone can reset a password if the person knows a valid userId
+  let { token, password, passwordRepeat } = req.body;
 
   try {
+    const decodedToken = jwt.verify(
+      token,
+      process.env.EMAIL_VERIFICATION_SECRET!
+    ) as { userId: string };
+
     if (password !== passwordRepeat) {
       throw new Error("repeated password wrong");
     }
 
-    const user = await User.findOne({ id: userId });
+    // const user = await User.findOne({ id: decodedToken.userId });
+    const user = await User.findById(decodedToken.userId);
     if (user) {
       user.password = password;
       user.isPasswordHashed = false;
@@ -507,11 +506,20 @@ module.exports.password_reset_post = async (req: any, res: any) => {
 
       res.status(201).json({ user: user.id });
     } else {
-      res.status(400).json({ errors: `User with Id ${userId} not found` });
+      res
+        .status(400)
+        .json({ errors: `User with Id ${decodedToken.userId} not found` });
     }
-  } catch (err: any) {
+  } catch (e: any) {
+    if (e.name && e.name === "TokenExpiredError") {
+      res.status(400).json({ errors: `Password reset request expired` });
+    } else if (e.name && e.name === "JsonWebTokenError") {
+      res.status(400).json({ errors: `Password reset request invalid` });
+    }
+
+    // other errors TODO: fragwürdig ob das hier passt
     let type: string | undefined = undefined;
-    const errors = handleSaveErrors(err, type);
+    const errors = handleSaveErrors(e, type);
     res.status(400).json({ errors });
   }
 };
