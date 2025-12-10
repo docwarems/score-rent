@@ -13,7 +13,6 @@ const {
   requireUserVerified,
 } = require("./middleware/authMiddleware");
 require("dotenv").config();
-import nodemailer from "nodemailer";
 const bodyParser = require("body-parser");
 import jwt from "jsonwebtoken";
 var QRCode = require("qrcode");
@@ -23,7 +22,6 @@ import i18next from "i18next";
 var middleware = require("i18next-http-middleware");
 import en from "./locales/en.json";
 import de from "./locales/de.json";
-import { User } from "./models/User";
 
 i18next.use(middleware.LanguageDetector).init({
   preload: ["de"],
@@ -48,8 +46,8 @@ i18next.init({
   },
 });
 
-// Override app name based on stage
-const stage = process.env.STAGE || "dev";
+export const stage = process.env.STAGE || "dev";
+
 if (stage === "dev") {
   i18next.addResource(
     "de",
@@ -89,7 +87,6 @@ const app = express();
 // Serve static files from dist/public (copied by TypeScript compilation)
 app.use(express.static(path.join(__dirname, "public")));
 
-
 app.use(express.json());
 
 app.use(cookieParser());
@@ -106,8 +103,7 @@ app.set("view engine", "ejs");
 app.engine("vue", ejs.renderFile); // render files with ".vue" extension in views folder by EJS too
 
 // database connection
-const dbURI = (process.env.MONGODB_URL ||
-  process.env[`MONGODB_URL_${stage}`]) as string;
+const dbURI = getEnvVar("MONGODB_URL");
 mongoose.set("strictQuery", false);
 
 // AWS will cache global variables, i.a. also the mongoose connection
@@ -159,7 +155,7 @@ const home_get = async (req: any, res: any) => {
   const userToken = jwt.sign(
     { id: user.id, email: user.email },
     process.env.JWT_SECRET!,
-    { expiresIn: "5y" } // TODO: check in "y" valid
+    { expiresIn: "5y" }
   );
   const qrCodeDataUrl = await QRCode.toDataURL(userToken);
   res.render("home", { user, qrCodeDataUrl });
@@ -188,3 +184,15 @@ exports.handler = async (event: any, context: any) => {
   await connect(); // Check connection on every invocation
   return originalHandler(event, context);
 };
+
+/**
+ * Get stage specific env var
+ *
+ * @param envName e.g. MONGODB_URL
+ * @param stage  e.g. dev
+ * @returns
+ */
+export function getEnvVar(envName: string) {
+  return (process.env[`${envName}`] || // Lambda (deployed)
+    process.env[`${envName}_${stage}`]) as string; // Local dev
+}

@@ -16,6 +16,7 @@ const User_1 = require("../models/User");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const uuid_1 = require("uuid");
 const misc_utils_1 = require("../utils/misc-utils");
+const app_1 = require("../app");
 require("dotenv").config();
 var QRCode = require("qrcode");
 const handleSaveErrors = (err, type) => {
@@ -60,11 +61,11 @@ const handleSaveErrors = (err, type) => {
     }
     return errors;
 };
-// create json web token
-const maxAge = 60 * 60;
+// age in min of auth JWT and cookie
+const maxAgeMin = 60 * 60;
 const createToken = (id) => {
     return jsonwebtoken_1.default.sign({ id }, process.env.JWT_SECRET, {
-        expiresIn: maxAge,
+        expiresIn: maxAgeMin,
     });
 };
 // controller actions
@@ -93,9 +94,12 @@ module.exports.login_get = (req, res) => {
 };
 var EmailVerificationStatus;
 (function (EmailVerificationStatus) {
-    EmailVerificationStatus[EmailVerificationStatus["OK"] = 0] = "OK";
-    EmailVerificationStatus[EmailVerificationStatus["NOT_REGISTERED"] = 1] = "NOT_REGISTERED";
-    EmailVerificationStatus[EmailVerificationStatus["ALREADY_VERFIED"] = 2] = "ALREADY_VERFIED";
+    EmailVerificationStatus[EmailVerificationStatus["UNKNOWN"] = 0] = "UNKNOWN";
+    EmailVerificationStatus[EmailVerificationStatus["OK"] = 1] = "OK";
+    EmailVerificationStatus[EmailVerificationStatus["NOT_REGISTERED"] = 2] = "NOT_REGISTERED";
+    EmailVerificationStatus[EmailVerificationStatus["ALREADY_VERFIED"] = 3] = "ALREADY_VERFIED";
+    EmailVerificationStatus[EmailVerificationStatus["TOKEN_EXPIRED"] = 4] = "TOKEN_EXPIRED";
+    EmailVerificationStatus[EmailVerificationStatus["INVALID_SIGNATURE"] = 5] = "INVALID_SIGNATURE";
 })(EmailVerificationStatus || (EmailVerificationStatus = {}));
 /**
  * Create a espass (electronic smart pass) file to be opened with PassAndroid (and obviously only with this app)
@@ -139,8 +143,7 @@ function createEspassFile(token) {
 // Send email to the user after successful registration and verification
 const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void 0, function* () {
     // we encode the user data into a JWT in order to prohibit manual QRCode creation outside the app
-    const token = jsonwebtoken_1.default.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "5y" } // TODO: check in "y" valid
-    );
+    const token = jsonwebtoken_1.default.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "5y" });
     // das sparen wir uns vorerst mal
     // await createEspassFile(token); // TODO: in Memory statt speichern
     try {
@@ -177,44 +180,64 @@ const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void
     }
 });
 module.exports.verify_email_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const token = req.query.token;
-    const decodedToken = jsonwebtoken_1.default.verify(
-    // TODO: handle Exception if JWT expired
-    token, process.env.EMAIL_VERIFICATION_SECRET);
-    let verificationResult;
-    const user = yield User_1.User.findById(decodedToken.userId);
-    if (!user) {
-        verificationResult = {
-            status: EmailVerificationStatus.NOT_REGISTERED,
-            message: "Benutzer nicht gefunden",
-        };
-    }
-    else if (user.isVerified) {
-        verificationResult = {
-            status: EmailVerificationStatus.ALREADY_VERFIED,
-            message: "Die E-Mail Adresse wurde bereits verifiziert",
-        };
-    }
-    else {
-        user.isVerified = true;
-        user.verificationToken = undefined;
-        try {
-            yield user.save();
-            yield sendVerificationSuccessfulEmail(user);
+    let verificationResult = {
+        status: EmailVerificationStatus.UNKNOWN,
+        message: "unknown error",
+    };
+    try {
+        const token = req.query.token;
+        const decodedToken = jsonwebtoken_1.default.verify(token, process.env.EMAIL_VERIFICATION_SECRET);
+        const user = yield User_1.User.findById(decodedToken.userId);
+        if (!user) {
             verificationResult = {
-                status: EmailVerificationStatus.OK,
-                message: "Die E-Mail Adresse wurde erfolgreich verifiziert",
+                status: EmailVerificationStatus.NOT_REGISTERED,
+                message: "Benutzer nicht gefunden",
             };
         }
-        catch (error) {
-            console.error("Error verifying email", error);
-            return res.status(500).json({ message: "Internal server error" });
+        else if (user.isVerified) {
+            verificationResult = {
+                status: EmailVerificationStatus.ALREADY_VERFIED,
+                message: "Die E-Mail Adresse wurde bereits verifiziert",
+            };
+        }
+        else {
+            user.isVerified = true;
+            user.verificationToken = undefined;
+            try {
+                yield user.save();
+                yield sendVerificationSuccessfulEmail(user);
+                verificationResult = {
+                    status: EmailVerificationStatus.OK,
+                    message: "Die E-Mail Adresse wurde erfolgreich verifiziert",
+                };
+            }
+            catch (error) {
+                console.error("Error verifying email", error);
+                return res.status(500).json({ message: "Internal server error" });
+            }
         }
     }
-    res.render("verify-email", {
-        EmailVerificationStatus: EmailVerificationStatus,
-        verificationResult: verificationResult,
-    });
+    catch (e) {
+        console.error(`e=${e}`);
+        if (e.name && e.name === "TokenExpiredError") {
+            verificationResult = {
+                status: EmailVerificationStatus.TOKEN_EXPIRED,
+                message: "Die Gültigkeit des Link ist abgelaufen",
+            };
+        }
+        else if (e.name && e.name === "JsonWebTokenError") {
+            verificationResult = {
+                status: EmailVerificationStatus.INVALID_SIGNATURE,
+                message: "Der Link ist ungültig",
+            };
+        }
+    }
+    finally {
+        res.render("verify-email", {
+            EmailVerificationStatus: EmailVerificationStatus,
+            verificationResult,
+        });
+    }
 });
 /**
  * User signup (optionally by admin)
@@ -313,7 +336,7 @@ module.exports.login_post = (req, res) => __awaiter(void 0, void 0, void 0, func
     try {
         const user = yield User_1.User.login(email, password);
         const token = createToken(user._id);
-        res.cookie("jwt", token, { httpOnly: true, maxAge: maxAge * 1000 });
+        res.cookie("jwt", token, { httpOnly: true, maxAge: maxAgeMin * 1000 });
         res.status(200).json({ user: user._id });
     }
     catch (err) {
@@ -343,7 +366,7 @@ module.exports.password_forgotten_post = (req, res) => __awaiter(void 0, void 0,
 });
 function sendPasswordResetEmail(user) {
     return __awaiter(this, void 0, void 0, function* () {
-        const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.EMAIL_VERIFICATION_SECRET, { expiresIn: "1h" });
+        const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.EMAIL_VERIFICATION_SECRET, { expiresIn: ((0, app_1.getEnvVar)("EMAIL_JWT_EXPIRY") || "24h") });
         const resetPasswordUrl = `${process.env.CYCLIC_URL}/verify-password-reset-email?token=${token}`;
         const email = user.email;
         const subject = "Passwort Zurücksetzen";
@@ -368,33 +391,57 @@ module.exports.password_forgotten_success_get = (req, res) => {
     res.render("password-forgotten-success");
 };
 module.exports.verify_password_reset_email_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const token = req.query.token;
-    const decodedToken = jsonwebtoken_1.default.verify(
-    // TODO: handle Exception if JWT expired
-    token, process.env.EMAIL_VERIFICATION_SECRET);
-    let verificationResult;
-    const user = yield User_1.User.findById(decodedToken.userId);
-    if (user) {
-        verificationResult = {
-            userId: user.id,
-            status: EmailVerificationStatus.OK,
-            message: "Die E-Mail Adresse wurde erfolgreich verifiziert",
-        };
+    let verificationResult = {
+        userId: undefined,
+        status: EmailVerificationStatus.UNKNOWN,
+        message: "unknown error",
+    };
+    try {
+        const token = req.query.token;
+        const decodedToken = jsonwebtoken_1.default.verify(token, process.env.EMAIL_VERIFICATION_SECRET);
+        const user = yield User_1.User.findById(decodedToken.userId);
+        if (user) {
+            verificationResult = {
+                userId: user.id,
+                status: EmailVerificationStatus.OK,
+                message: "Die E-Mail Adresse wurde erfolgreich verifiziert",
+            };
+        }
+        else {
+            verificationResult = {
+                userId: undefined,
+                status: EmailVerificationStatus.NOT_REGISTERED,
+                message: "Benutzer nicht gefunden",
+            };
+        }
     }
-    else {
-        verificationResult = {
-            userId: undefined,
-            status: EmailVerificationStatus.NOT_REGISTERED,
-            message: "Benutzer nicht gefunden",
-        };
+    catch (e) {
+        console.error(`e=${e}`);
+        if (e.name && e.name === "TokenExpiredError") {
+            verificationResult = {
+                userId: undefined,
+                status: EmailVerificationStatus.TOKEN_EXPIRED,
+                message: "Die Gültigkeit des Link ist abgelaufen",
+            };
+        }
+        else if (e.name && e.name === "JsonWebTokenError") {
+            verificationResult = {
+                userId: undefined,
+                status: EmailVerificationStatus.INVALID_SIGNATURE,
+                message: "Der Link ist ungültig",
+            };
+        }
     }
-    res.render("password-reset", {
-        EmailVerificationStatus: EmailVerificationStatus,
-        verificationResult: verificationResult,
-    });
+    finally {
+        res.render("password-reset", {
+            EmailVerificationStatus: EmailVerificationStatus,
+            verificationResult,
+        });
+    }
 });
 module.exports.password_reset_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let { userId, password, passwordRepeat } = req.body;
+    // TODO: insecure; anyone can reset a password if the person knows a valid userId
     try {
         if (password !== passwordRepeat) {
             throw new Error("repeated password wrong");

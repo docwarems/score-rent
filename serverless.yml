@@ -33,6 +33,7 @@ functions:
       SMTP_FROM: ${env:SMTP_FROM}
       SMTP_DEBUG: ${env:SMTP_DEBUG}
       JWT_SECRET: ${env:JWT_SECRET}
+      EMAIL_JWT_EXPIRY: ${env:EMAIL_JWT_EXPIRY_${self:provider.stage}}
       EMAIL_VERIFICATION_SECRET: ${env:EMAIL_VERIFICATION_SECRET}
       CYCLIC_URL: ${env:CYCLIC_URL_${self:provider.stage}}
       MANUAL_REGISTRATION_SECRET: ${env:MANUAL_REGISTRATION_SECRET}

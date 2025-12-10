@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getEnvVar = exports.stage = void 0;
 const serverless_http_1 = __importDefault(require("serverless-http"));
 const express = require("express");
 var ejs = require("ejs");
@@ -51,9 +52,8 @@ i18next_1.default.init({
         de: de_json_1.default,
     },
 });
-// Override app name based on stage
-const stage = process.env.STAGE || "dev";
-if (stage === "dev") {
+exports.stage = process.env.STAGE || "dev";
+if (exports.stage === "dev") {
     i18next_1.default.addResource("de", "translation", "app.name", "HSC Leihnoten Verwaltung (TEST)");
     i18next_1.default.addResource("en", "translation", "app.name", "HSC Score Rent (TEST)");
     i18next_1.default.addResource("de", "translation", "login.title", "Login (TEST)");
@@ -93,8 +93,7 @@ app.use(middleware.handle(i18next_1.default, {
 app.set("view engine", "ejs");
 app.engine("vue", ejs.renderFile); // render files with ".vue" extension in views folder by EJS too
 // database connection
-const dbURI = (process.env.MONGODB_URL ||
-    process.env[`MONGODB_URL_${stage}`]);
+const dbURI = getEnvVar("MONGODB_URL");
 mongoose_1.default.set("strictQuery", false);
 // AWS will cache global variables, i.a. also the mongoose connection
 // see https://mongoosejs.com/docs/lambda.html
@@ -140,8 +139,7 @@ if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
 app.use("*", checkUser);
 const home_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = res.locals.user;
-    const userToken = jsonwebtoken_1.default.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "5y" } // TODO: check in "y" valid
-    );
+    const userToken = jsonwebtoken_1.default.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "5y" });
     const qrCodeDataUrl = yield QRCode.toDataURL(userToken);
     res.render("home", { user, qrCodeDataUrl });
 });
@@ -165,3 +163,15 @@ exports.handler = (event, context) => __awaiter(void 0, void 0, void 0, function
     yield connect(); // Check connection on every invocation
     return originalHandler(event, context);
 });
+/**
+ * Get stage specific env var
+ *
+ * @param envName e.g. MONGODB_URL
+ * @param stage  e.g. dev
+ * @returns
+ */
+function getEnvVar(envName) {
+    return (process.env[`${envName}`] || // Lambda (deployed)
+        process.env[`${envName}_${exports.stage}`]); // Local dev
+}
+exports.getEnvVar = getEnvVar;

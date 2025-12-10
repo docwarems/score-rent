@@ -2,7 +2,9 @@ import { Model, Schema, model } from "mongoose";
 const { isEmail } = require("validator");
 import bcrypt from "bcrypt";
 import jwt, { sign } from "jsonwebtoken";
+import type { StringValue } from "ms";
 import { mailTransporter } from "../utils/misc-utils";
+import { stage, getEnvVar } from "../app";
 require("dotenv").config();
 
 // the adding of a static User Method from the JS code had to be rewritten according to
@@ -190,7 +192,7 @@ async function sendVerificationEmail(user: any) {
   const token = jwt.sign(
     { userId: user._id },
     process.env.EMAIL_VERIFICATION_SECRET!,
-    { expiresIn: "1h" }
+    { expiresIn: (getEnvVar("EMAIL_JWT_EXPIRY") || "24h") as StringValue }
   );
   const verificationUrl = `${process.env.CYCLIC_URL}/verify-email?token=${token}`;
   const email = user.email;
