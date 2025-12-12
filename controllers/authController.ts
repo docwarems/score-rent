@@ -262,8 +262,18 @@ module.exports.verify_email_get = async (req: any, res: any) => {
 /**
  * User signup (optionally by admin)
  * Signup by admin will not trigger e-mail verification
+ *
+ * TODO: jeder kann hier die Clientseitigen Prüfungen umgehen
  */
 module.exports.signup_post = async (req: any, res: any) => {
+  await signup(req, res);
+};
+
+module.exports.signup_user_post = async (req: any, res: any) => {
+  await signup(req, res, true);
+};
+
+const signup = async (req: any, res: any, byAdmin = false) => {
   let {
     email,
     password,
@@ -274,7 +284,9 @@ module.exports.signup_post = async (req: any, res: any) => {
   } = req.body;
 
   try {
-    const byAdmin = !password;
+    if (byAdmin && (!res.locals.user || !res.locals.user.isAdmin)) {
+      return res.status(403).json({ errors: "Admin access required" });
+    }
 
     let isManuallyRegistered;
     if (byAdmin) {

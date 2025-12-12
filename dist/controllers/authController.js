@@ -242,13 +242,23 @@ module.exports.verify_email_get = (req, res) => __awaiter(void 0, void 0, void 0
 /**
  * User signup (optionally by admin)
  * Signup by admin will not trigger e-mail verification
+ *
+ * TODO: jeder kann hier die Clientseitigen Prüfungen umgehen
  */
 module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    yield signup(req, res);
+});
+module.exports.signup_user_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    yield signup(req, res, true);
+});
+const signup = (req, res, byAdmin = false) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
     let { email, password, passwordRepeat, firstName, // TODO: Mindestlänge 2 wg. User Id
     lastName, voice, } = req.body;
     try {
-        const byAdmin = !password;
+        if (byAdmin && (!res.locals.user || !res.locals.user.isAdmin)) {
+            return res.status(403).json({ errors: "Admin access required" });
+        }
         let isManuallyRegistered;
         if (byAdmin) {
             password = `${process.env.MANUAL_REGISTRATION_PASSWORD}`; // not critical because e-mail verification required to activate account

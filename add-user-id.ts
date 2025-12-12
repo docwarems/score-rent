@@ -87,6 +87,7 @@ function convertToGermanCharacterRules(name: string): string {
     .replace(/[äöüß]/g, (match) => germanRulesMap[match] || "");
 }
 
+// TODO check required lengths
 function generateUserId(firstName: string, lastName: string): string {
   firstName = convertToGermanCharacterRules(firstName);
   lastName = convertToGermanCharacterRules(lastName).replace(" ", "");

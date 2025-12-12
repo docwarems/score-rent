@@ -18,10 +18,15 @@ router.get(
   requireAdmin,
   authController.signup_user_get
 );
-router.post("/signup-user", authController.signup_post);
+router.post(
+  "/signup-user",
+  requireAuth,
+  requireAdmin,
+  authController.signup_user_post
+);
 router.get("/login", authController.login_get);
 router.post("/login", authController.login_post);
-router.get("/logout", authController.logout_get);
+router.get("/logout", requireAuth, authController.logout_get);
 router.get("/verify-email", authController.verify_email_get);
 router.get("/password-forgotten", (req: any, res: any) => {
   res.render("password-forgotten", {});
@@ -43,4 +48,4 @@ router.get(
 router.get("/not-verified", (req: any, res: any) => {
   res.render("not-verified", {});
 });
-router.post("/not-verified", authController.not_verified_post);
+router.post("/not-verified", requireAuth, authController.not_verified_post);

@@ -86,6 +86,7 @@ function convertToGermanCharacterRules(name) {
         .toLowerCase()
         .replace(/[äöüß]/g, (match) => germanRulesMap[match] || "");
 }
+// TODO check required lengths
 function generateUserId(firstName, lastName) {
     firstName = convertToGermanCharacterRules(firstName);
     lastName = convertToGermanCharacterRules(lastName).replace(" ", "");
