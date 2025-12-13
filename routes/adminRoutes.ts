@@ -91,3 +91,5 @@ admin.get("/users.js", async (req: any, res: any) =>
     users: [], // Will be loaded via AJAX
   })
 );
+admin.post("/users-vue", scoreController.users_vue_post);
+

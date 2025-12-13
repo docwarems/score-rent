@@ -792,3 +792,21 @@ module.exports.users_vue_get = async (req: any, res: any) => {
     users: [], // Initial empty, will be loaded via AJAX on mount
   });
 };
+
+module.exports.users_vue_post = async (req: any, res: any) => {
+  const { active } = req.body;
+  const users = await User.find({ $or: [{ active }, { active: null }] }).sort(
+    "lastName"
+  );
+  res.status(201).json({ 
+    users: users.map(u => ({
+      id: u.id,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      email: u.email,
+      voice: u.voice,
+      memberState: u.memberState,
+      active: u.active ?? true,
+    }))
+  });
+};

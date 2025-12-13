@@ -1,7 +1,7 @@
 const app = Vue.createApp({
     data() {
         return {
-            filter: { active: <%= filter.active %> },
+            filter: JSON.parse('<%- filter %>'),
             users: JSON.parse('<%- JSON.stringify(users) %>'),
             error: '',
             searchLastName: '',
@@ -26,7 +26,7 @@ const app = Vue.createApp({
         async handleFilterSubmit() {
             this.error = '';
             try {
-                const res = await fetch('/admin/users', {
+                const res = await fetch('/admin/users-vue', {
                     method: 'POST',
                     body: JSON.stringify({
                         active: this.filter.active,
@@ -91,6 +91,10 @@ const app = Vue.createApp({
                 this.editUserError = err.message;
             }
         }
+    },
+    mounted() {
+        // Load users on initial page load
+        this.handleFilterSubmit();
     }
 });
 
