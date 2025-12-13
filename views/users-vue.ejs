@@ -58,7 +58,7 @@
     </div>
 
     <!-- Edit user modal -->
-    <div v-show="showEditUserModal" class="w3-modal">
+    <div class="w3-modal" :style="{ display: showEditUserModal ? 'block' : 'none' }">
         <div class="w3-modal-content">
             <div class="w3-container">
                 <span @click="closeEditUser" class="w3-button w3-display-topright">&times;</span>
