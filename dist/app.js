@@ -18,7 +18,7 @@ const express = require("express");
 var ejs = require("ejs");
 const mongoose_1 = __importDefault(require("mongoose"));
 const { router } = require("./routes/authRoutes");
-const { score } = require("./routes/scoreRoutes");
+const { admin } = require("./routes/adminRoutes");
 const { user } = require("./routes/userRoutes");
 const cookieParser = require("cookie-parser");
 const { requireAuth, checkUser, requireAdmin, requireUserVerified, } = require("./middleware/authMiddleware");
@@ -144,7 +144,7 @@ const home_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.render("home", { user, qrCodeDataUrl });
 });
 app.get("/", requireAuth, requireUserVerified, home_get);
-app.use("/score", score);
+app.use("/admin", admin);
 app.use("/user", user);
 app.use(router);
 // app.use("/", authRoutes); // this seems to make no difference to app.use(authRoutes)

@@ -3,7 +3,7 @@ const express = require("express");
 var ejs = require("ejs");
 import mongoose from "mongoose";
 const { router } = require("./routes/authRoutes");
-const { score } = require("./routes/scoreRoutes");
+const { admin } = require("./routes/adminRoutes");
 const { user } = require("./routes/userRoutes");
 const cookieParser = require("cookie-parser");
 const {
@@ -162,7 +162,7 @@ const home_get = async (req: any, res: any) => {
 };
 app.get("/", requireAuth, requireUserVerified, home_get);
 
-app.use("/score", score);
+app.use("/admin", admin);
 app.use("/user", user);
 app.use(router);
 // app.use("/", authRoutes); // this seems to make no difference to app.use(authRoutes)

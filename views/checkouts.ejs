@@ -10,7 +10,7 @@
 
 <% if (admin) { %>
 <div class="w3-panel w3-border divScore">
-  <% const route = admin ? "score" : "user"; %>
+  <% const route = admin ? "admin" : "user"; %>
   <form action="/<%= route %>/checkouts" method="POST" id="formFilter">
     <h3>Filter</h3>
     <label>Noten Signatur</label>
@@ -294,7 +294,7 @@
 
   async function postCheckin(scoreId, comment) {
     try {
-      const res = await fetch('/score/checkin', {
+      const res = await fetch('/admin/checkin', {
         method: 'POST',
         body: JSON.stringify({
           scoreId,
@@ -397,7 +397,7 @@
     try {
       console.log(scoreId, checkoutId, checkoutComment, checkinComment, userId);
 
-      const res = await fetch('/score/updateCheckout', {
+      const res = await fetch('/admin/updateCheckout', {
         method: 'POST',
         body: JSON.stringify({
           scoreId,
@@ -442,7 +442,7 @@
 
   async function postUserSearch(lastName) {
     try {
-      const res = await fetch('/score/userSearch', {
+      const res = await fetch('/admin/userSearch', {
         method: 'POST',
         body: JSON.stringify({
           lastName,
