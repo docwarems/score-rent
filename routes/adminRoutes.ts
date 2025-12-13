@@ -83,3 +83,11 @@ exports.admin.get("/checkouts.js", async (req: any, res: any) =>
   })
 );
 admin.post("/checkouts-vue", scoreController.checkouts_vue_post);
+
+admin.get("/users-vue", scoreController.users_vue_get);
+admin.get("/users.js", async (req: any, res: any) =>
+  res.render("users.vue", {
+    filter: JSON.stringify({ active: true }),
+    users: [], // Will be loaded via AJAX
+  })
+);

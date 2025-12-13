@@ -1,0 +1,95 @@
+<%- include('partials/header'); -%>
+
+<script src='https://unpkg.com/vue@3.0.2'></script>
+
+<h1>Benutzer</h1>
+
+<div id="app">
+    <div v-show="error" class="w3-panel w3-red">
+        <p>{{ error }}</p>
+    </div>
+
+    <div class="w3-responsive">
+        <form @submit.prevent="handleFilterSubmit">
+            <label>Nur aktive&nbsp;</label>
+            <input type="checkbox" v-model="filter.active" class="w3-check">
+            <p></p>
+            <button class="w3-button w3-black" type="submit">Suchen</button>
+            <p></p>
+        </form>
+
+        <p></p>
+        <table class="w3-table-all">
+            <tr>
+                <th>User Id</th>
+                <th>Vorname</th>
+                <th>Nachname</th>
+                <th>Email</th>
+                <th>Stimmgruppe</th>
+                <th>M-Status</th>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <th>
+                    <input 
+                        class="w3-input w3-border w3-padding" 
+                        type="text" 
+                        placeholder="Filtern.." 
+                        v-model="searchLastName">
+                </th>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr v-for="user in filteredUsers" :key="user.id">
+                <td>{{ user.id }}</td>
+                <td>{{ user.firstName }}</td>
+                <td>
+                    <button @click="editUser(user)" class="w3-button">
+                        {{ user.lastName }}
+                    </button>
+                </td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.voice }}</td>
+                <td>{{ user.memberState }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Edit user modal -->
+    <div v-show="showEditUserModal" class="w3-modal" style="display: block;">
+        <div class="w3-modal-content">
+            <div class="w3-container">
+                <span @click="closeEditUser" class="w3-button w3-display-topright">&times;</span>
+                <h3>Benutzer bearbeiten</h3>
+
+                <div v-show="editUserSuccess" class="w3-panel w3-green">
+                    <p>Bearbeitung erfolgreich</p>
+                </div>
+                <div v-show="editUserError" class="w3-panel w3-red">
+                    <p>{{ editUserError }}</p>
+                </div>
+
+                <p>User Id: {{ editUserId }}</p>
+
+                <form @submit.prevent="updateUser">
+                    <label>E-Mail</label>
+                    <input type="text" v-model="editUserEmail" class="w3-input">
+                    
+                    <input type="checkbox" v-model="editUserActive" class="w3-check" id="editUserActive">
+                    <label for="editUserActive">Aktiv</label>
+
+                    <p></p>
+                    <button class="w3-button w3-black" type="submit">OK</button>
+                </form>
+
+                <p></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/users.js"></script>
+
+<%- include('partials/footer'); -%>

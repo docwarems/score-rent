@@ -784,3 +784,11 @@ module.exports.scoreHistory_post = async (req: any, res: any) => {
     error,
   });
 };
+
+
+module.exports.users_vue_get = async (req: any, res: any) => {
+  res.render("users-vue", {
+    filter: { active: true },
+    users: [], // Initial empty, will be loaded via AJAX on mount
+  });
+};
