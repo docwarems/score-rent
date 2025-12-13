@@ -784,3 +784,28 @@ module.exports.scoreHistory_post = async (req: any, res: any) => {
     error,
   });
 };
+
+module.exports.users_vue_get = async (req: any, res: any) => {
+  res.render("users-vue", {
+    filter: JSON.stringify({ active: true }),
+    users: [],
+  });
+};
+
+module.exports.users_vue_post = async (req: any, res: any) => {
+  const { active } = req.body;
+  const users = await User.find({ $or: [{ active }, { active: null }] }).sort(
+    "lastName"
+  );
+  res.status(201).json({
+    users: users.map((u) => ({
+      id: u.id,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      email: u.email,
+      voice: u.voice,
+      memberState: u.memberState,
+      active: u.active ?? true,
+    })),
+  });
+};

@@ -2,6 +2,8 @@
 
 <script src='https://unpkg.com/vue@3.0.2'></script>
 
+<%- include('components/DataTable.vue.ejs'); %>
+
 <h1>Ausleihen</h1>
   
 <div id="app">
@@ -29,42 +31,20 @@
 
     <div v-if="checkouts">
         <div class="w3-left-align"><p>{{ statSummary }}</p></div>
-        <div class="w3-responsive">
-            <p></p>
-            <table class="w3-table-all">
-                <tr>
-                    <th v-if="filter.signature === SIGNATURE_ALL.id">Werk</th>
-                    <th>Noten Id</th>
-                    <th>Noten ext. Id</th>
-                    <th v-if="admin">Benutzer</th>
-                    <th>Ausgeliehen am</th>
-                    <th>Kommentar Ausleihe</th>
-                    <th v-if="admin"></th> <!-- Schalter Rückgabe -->
-                    <th>Rückgabe am</th>
-                    <th>Kommentar Rückgabe</th>
-                  </tr>
-                  <tr v-for="checkout in checkouts">
-                    <td v-if="filter.signature === SIGNATURE_ALL.id">signatureMap.get(checkout.signature)</td>
-                    <td>{{ checkout.scoreId }}</td>
-                    <td>{{ checkout.scoreExtId }}</td>
-                    <td v-if="admin">
-                      <button @click="userDetails(checkout.user)" class="w3-button w3-pale-blue">{{ checkout.user.namePlusVoice }}</button>
-                    </td>
-                    <td v-if="admin"><button @click="editCheckout(checkout)" class="w3-button w3-pale-blue">{{ checkout.checkoutTimestamp }}</button></td>
-                    <td v-else>{{ checkout.checkoutTimestamp }}</td>
-                    <td>{{ checkout.checkoutComment }}</td>
-                    <td>
-                    </td>
-                    <td>{{ checkout.checkinTimestamp }}</td>
-                    <td>{{ checkout.checkinComment }}</td>
-                  </tr>
-            </table>          
-        </div>    
+        <data-table
+            :columns="checkoutColumns"
+            :rows="checkouts"
+            row-key="id"
+            @cell-click="handleCellClick"
+        ></data-table>
     </div>
 
 
     <!-- The user details modal -->
-    <div ref="userDetailsModal" class="w3-modal" style="display: none">
+    <div
+        class="w3-modal"
+        :style="{ display: showUserDetailsModal ? 'block' : 'none' }"
+    >
         <div class="w3-modal-content">
         <div class="w3-container">
             <span @click="closeUserDetails" class="w3-button w3-display-topright">&times;</span>
@@ -85,7 +65,10 @@
     </div>  
 
     <!-- edit checkout modal -->
-    <div ref="editCheckoutModal" class="w3-modal" style="display: none">
+    <div
+        class="w3-modal"
+        :style="{ display: showEditCheckoutModal ? 'block' : 'none' }"
+    >
         <div class="w3-modal-content">
         <div class="w3-container">
             <span @click="closeEditCheckout" class="w3-button w3-display-topright">&times;</span>
@@ -136,9 +119,13 @@
             <button class="w3-button w3-black">User suchen</button>
             </form>
             <p></p>
-            <table class="w3-table-all">
-                <tr v-for="user in users">
-                    <td>{{ user.id }}</td>
+            <table class="w3-table-all tableUsers">
+                <tr v-for="user in users" :key="user.id">
+                    <td>
+                        <button @click="chooseUser(user.id)" class="w3-button w3-pale-blue">
+                            {{ user.firstName }} {{ user.lastName }}
+                        </button>
+                    </td>
                 </tr>
             </table>   
             <p></p>
@@ -150,7 +137,190 @@
 
 </div>
 
-<script src="./checkouts.js"></script>
-
-
 <%- include('partials/footer'); -%>
+
+<script>
+
+const app = Vue.createApp({
+    components: {
+        DataTable
+    },
+    data() {
+        return {
+            admin: JSON.parse('<%- admin %>'),
+            signature: "",
+            signatures: JSON.parse('<%- signatures %>'),
+            filter: JSON.parse('<%- filter %>'),
+            checkouts: undefined,
+            checkedOut: true,
+            scoreTypeTotalCount: 0,
+            scoreTypeTotalCheckedOutCount: 0,
+            statSummary: '',
+            error: '',
+            SIGNATURE_ALL: { id: 'ALL', name: 'Alle'},
+            userNamePlusVoice: '',
+            showUserDetailsModal: false,
+            userDetailsName: '',
+            userDetailsEmail: '',
+            userDetailsRegisterDate: 'TODO',
+            editCheckoutId: '',
+            editCheckoutScoreId: '',
+            editCheckoutComment: '',
+            editCheckinComment: '',
+            editCheckoutUserId: '',
+            showEditCheckoutModal: false,
+            showEditCheckoutModalSuccess: false,
+            showFoo: false,
+            editCheckoutModalError: '',
+            users: [],
+            userLastName: '',
+        }
+    },
+    computed: {
+        checkoutColumns() {
+            return [
+                { 
+                    key: 'signature', 
+                    label: 'Werk', 
+                    visible: this.filter.signature === this.SIGNATURE_ALL.id,
+                    formatter: (val, row) => row.signature // Add signatureMap lookup if needed
+                },
+                { key: 'scoreId', label: 'Noten Id' },
+                { key: 'scoreExtId', label: 'Noten ext. Id', filterable: true },
+                { 
+                    key: 'userName', 
+                    label: 'Benutzer', 
+                    visible: this.admin,
+                    clickable: true,
+                    filterable: true,
+                    formatter: (val, row) => row.user.namePlusVoice
+                },
+                { 
+                    key: 'checkoutTimestamp', 
+                    label: 'Ausgeliehen am',
+                    clickable: this.admin
+                },
+                { key: 'checkoutComment', label: 'Kommentar Ausleihe' },
+                { key: 'checkinTimestamp', label: 'Rückgabe am' },
+                { key: 'checkinComment', label: 'Kommentar Rückgabe' }
+            ];
+        }
+    },
+    methods: {
+        handleCellClick({ row, column }) {
+            if (column.key === 'userName') {
+                this.userDetails(row.user);
+            } else if (column.key === 'checkoutTimestamp') {
+                this.editCheckout(row);
+            }
+        },
+        userDetails(user) {
+            this.userDetailsName = user.name;
+            this.userDetailsEmail = user.email;
+            this.showUserDetailsModal = true;
+        },
+        closeUserDetails() {
+            this.showUserDetailsModal = false;
+        },
+        editCheckout(checkout) {
+            this.showEditCheckoutModalSuccess = false;
+            this.editCheckoutId = checkout.id;
+            this.editCheckoutScoreId = checkout.scoreId;
+            this.editCheckoutComment = checkout.checkoutComment;
+            this.editCheckinComment = checkout.checkinComment;
+            this.editCheckoutUserId = checkout.user.id;
+            this.showEditCheckoutModal = true;
+        },
+        async updateCheckout() {
+            console.log("editCheckoutComment", this.editCheckoutComment, "editCheckinComment=", this.editCheckinComment, "editCheckoutUserId=", this.editCheckoutUserId);
+
+            const res = await fetch('/admin/updateCheckout', {
+                method: 'POST',
+                body: JSON.stringify({
+                    scoreId: this.editCheckoutScoreId,
+                    checkoutId: this.editCheckoutId,
+                    checkoutComment: this.editCheckoutComment,
+                    checkinComment: this.editCheckinComment,
+                    userId: this.editCheckoutUserId,
+                }),
+                    headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await res.json();
+            console.log("data=", data);
+
+            if (data.errors) {
+                this.editCheckoutModalError = data.errors;
+            }
+            if (data.updateScore) {
+                this.showEditCheckoutModalSuccess = true;
+                // TODO: update filtered checkouts list
+            }
+        },
+        closeEditCheckout() {
+            this.showEditCheckoutModal = false;
+        },
+        async handleCheckoutsFilterSubmit() {
+            this.error = "";
+            try {
+                const res = await fetch('/admin/checkouts-vue', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        signature: this.signature,
+                        checkedOut: this.checkedOut,
+                        userId: undefined,
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                // console.log("data=", data);
+                if (data.error) {
+                    this.error = data.error;
+                    return;
+                }
+                this.admin = data.admin;
+                this.checkouts = data.checkouts;
+            } catch (err) {
+                console.log("err=", err);
+                this.error = err.message;
+            }
+        },
+        async userSearch() {
+            try {
+                const res = await fetch('/admin/userSearch', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                        lastName: this.userLastName,
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                console.log("data=", data);
+                if (data.errors) {
+                    this.editCheckoutModalError = data.errors;
+                    return;
+                }
+                if (data.users) {
+                    this.users = data.users;
+                }
+            } catch (err) {
+                console.log("err=", err);
+                this.editCheckoutModalError = err.message;
+            }
+        },
+        chooseUser(userId) {
+            this.editCheckoutUserId = userId;
+        }
+    },
+})
+
+app.mount('#app')    
+</script>
+
+
+

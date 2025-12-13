@@ -70,10 +70,7 @@ exports.admin.get("/vue-test.js", async (req: any, res: any) =>
 );
 
 exports.admin.get("/checkouts-vue", async (req: any, res: any) =>
-  res.render("checkouts-vue")
-);
-exports.admin.get("/checkouts.js", async (req: any, res: any) =>
-  res.render("checkouts.vue", {
+  res.render("checkouts-vue", {
     admin: true,
     signatures: JSON.stringify(await getScoreTypes()),
     filter: JSON.stringify({ signature: "", checkedOut: true }),
@@ -83,3 +80,10 @@ exports.admin.get("/checkouts.js", async (req: any, res: any) =>
   })
 );
 admin.post("/checkouts-vue", scoreController.checkouts_vue_post);
+
+admin.get("/users-vue", scoreController.users_vue_get);
+admin.post("/users-vue", scoreController.users_vue_post);
+
+admin.get("/register-score-vue", (req: any, res: any) =>
+  res.render("register-score-vue")
+);

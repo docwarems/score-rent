@@ -61,9 +61,8 @@ exports.admin.get("/vue-test.js", (req, res) => __awaiter(void 0, void 0, void 0
         age: 66,
     });
 }));
-exports.admin.get("/checkouts-vue", (req, res) => __awaiter(void 0, void 0, void 0, function* () { return res.render("checkouts-vue"); }));
-exports.admin.get("/checkouts.js", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    return res.render("checkouts.vue", {
+exports.admin.get("/checkouts-vue", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    return res.render("checkouts-vue", {
         admin: true,
         signatures: JSON.stringify(yield (0, score_utils_1.getScoreTypes)()),
         filter: JSON.stringify({ signature: "", checkedOut: true }),
@@ -73,3 +72,6 @@ exports.admin.get("/checkouts.js", (req, res) => __awaiter(void 0, void 0, void 
     });
 }));
 exports.admin.post("/checkouts-vue", scoreController.checkouts_vue_post);
+exports.admin.get("/users-vue", scoreController.users_vue_get);
+exports.admin.post("/users-vue", scoreController.users_vue_post);
+exports.admin.get("/register-score-vue", (req, res) => res.render("register-score-vue"));

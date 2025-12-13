@@ -1,0 +1,200 @@
+<%- include('partials/header'); -%>
+
+<script src="https://unpkg.com/vue@3.0.2"></script>
+
+<%- include('components/DataTable.vue.ejs'); %>
+
+<h1>Benutzer</h1>
+
+<div id="app">
+  <div v-show="error" class="w3-panel w3-red">
+    <p>{{ error }}</p>
+  </div>
+
+  <div class="w3-responsive">
+    <form @submit.prevent="handleFilterSubmit">
+      <label>Nur aktive&nbsp;</label>
+      <input type="checkbox" v-model="filter.active" class="w3-check" />
+      <p></p>
+      <button class="w3-button w3-black" type="submit">Suchen</button>
+      <p></p>
+    </form>
+
+    <p></p>
+
+    <data-table
+      :columns="userColumns"
+      :rows="users"
+      row-key="id"
+      @cell-click="handleCellClick"
+    ></data-table>
+
+  </div>
+
+  <!-- Edit user modal -->
+  <div
+    class="w3-modal"
+    :style="{ display: showEditUserModal ? 'block' : 'none' }"
+  >
+    <div class="w3-modal-content">
+      <div class="w3-container">
+        <span @click="closeEditUser" class="w3-button w3-display-topright"
+          >&times;</span
+        >
+        <h3>Benutzer bearbeiten</h3>
+
+        <div v-show="editUserSuccess" class="w3-panel w3-green">
+          <p>Bearbeitung erfolgreich</p>
+        </div>
+        <div v-show="editUserError" class="w3-panel w3-red">
+          <p>{{ editUserError }}</p>
+        </div>
+
+        <p>User Id: {{ editUserId }}</p>
+
+        <form @submit.prevent="updateUser">
+          <label>E-Mail</label>
+          <input type="text" v-model="editUserEmail" class="w3-input" />
+
+          <input
+            type="checkbox"
+            v-model="editUserActive"
+            class="w3-check"
+            id="editUserActive"
+          />
+          <label for="editUserActive">Aktiv</label>
+
+          <p></p>
+          <button class="w3-button w3-black" type="submit">OK</button>
+        </form>
+
+        <p></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer'); -%>
+
+<script>
+  const app = Vue.createApp({
+    components: {
+        DataTable
+    },
+    data() {
+      return {
+        filter: JSON.parse('<%- filter %>'),
+        users: JSON.parse('<%- JSON.stringify(users) %>'),
+        error: "",
+        searchLastName: "",
+        showEditUserModal: false,
+        editUserId: "",
+        editUserEmail: "",
+        editUserActive: false,
+        editUserSuccess: false,
+        editUserError: "",
+
+        // Table configuration
+        userColumns: [
+          { key: 'id', label: 'User Id', visible: true },
+          { key: 'firstName', label: 'Vorname', visible: true, filterable: true },
+          { key: 'lastName', label: 'Nachname', visible: true, clickable: true, filterable: true },
+          { key: 'email', label: 'Email', visible: true },
+          { key: 'voice', label: 'Stimmgruppe', visible: true },
+          { key: 'memberState', label: 'M-Status', visible: true }
+        ]
+
+      };
+    },
+    computed: {
+      filteredUsers() {
+        if (!this.searchLastName) return this.users;
+        const search = this.searchLastName.toUpperCase();
+        return this.users.filter((user) =>
+          user.lastName.toUpperCase().includes(search)
+        );
+      },
+    },
+    methods: {
+      async handleFilterSubmit() {
+        this.error = "";
+        try {
+          const res = await fetch("/admin/users-vue", {
+            method: "POST",
+            body: JSON.stringify({
+              active: this.filter.active,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          const data = await res.json();
+
+          if (data.errors) {
+            this.error = data.errors;
+          } else if (data.users) {
+            this.users = data.users;
+            this.searchLastName = "";
+          }
+        } catch (err) {
+          this.error = err.message;
+        }
+      },
+      handleCellClick({ row, column }) {
+        if (column.key === 'lastName') {
+            this.editUser(row);
+        }
+      },
+      editUser(user) {
+        this.editUserId = user.id;
+        this.editUserEmail = user.email;
+        this.editUserActive = user.active;
+        this.editUserSuccess = false;
+        this.editUserError = "";
+        this.showEditUserModal = true;
+      },
+      closeEditUser() {
+        this.showEditUserModal = false;
+      },
+      async updateUser() {
+        this.editUserError = "";
+        this.editUserSuccess = false;
+
+        try {
+          const res = await fetch("/admin/updateUser", {
+            method: "POST",
+            body: JSON.stringify({
+              id: this.editUserId,
+              email: this.editUserEmail,
+              active: this.editUserActive,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          const data = await res.json();
+
+          if (data.errors) {
+            this.editUserError = data.errors;
+          } else if (data.updateUser) {
+            this.editUserSuccess = true;
+            // Update user in list
+            const user = this.users.find((u) => u.id === this.editUserId);
+            if (user) {
+              user.email = this.editUserEmail;
+              user.active = this.editUserActive;
+            }
+          }
+        } catch (err) {
+          this.editUserError = err.message;
+        }
+      },
+    },
+    mounted() {
+      // Load users on initial page load
+      this.handleFilterSubmit();
+    },
+  });
+
+  app.mount("#app");
+</script>

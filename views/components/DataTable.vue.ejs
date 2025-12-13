@@ -1,0 +1,110 @@
+<script>
+const DataTable = {
+  name: 'DataTable',
+  props: {
+    columns: {
+      type: Array,
+      required: true,
+      // Format: [{ key: 'id', label: 'User Id', visible: true, clickable: false, filterable: false }]
+    },
+    rows: {
+      type: Array,
+      required: true,
+      // Format: [{ id: 'user1', firstName: 'John', ... }]
+    },
+    rowKey: {
+      type: String,
+      default: 'id'
+    }
+  },
+  data() {
+    return {
+      filters: {},
+      sortColumn: null,
+      sortDirection: 'asc'
+    };
+  },
+  computed: {
+    visibleColumns() {
+      return this.columns.filter(col => col.visible !== false);
+    },
+    filterableColumns() {
+      return this.visibleColumns.filter(col => col.filterable);
+    },
+    filteredRows() {
+        let filtered = this.rows;
+        
+        // Apply filters
+        Object.keys(this.filters).forEach(key => {
+            const filterValue = this.filters[key];
+            if (filterValue) {
+                const search = filterValue.toUpperCase();
+                const column = this.columns.find(col => col.key === key);
+                
+                filtered = filtered.filter(row => {
+                    // Use formatter if available, otherwise direct key lookup
+                    const value = column && column.formatter 
+                    ? String(column.formatter(row[key], row) || '')
+                    : String(row[key] || '');
+                    return value.toUpperCase().includes(search);
+                });
+            }
+        });
+
+        return filtered;
+    },
+  },
+  methods: {
+    getCellValue(row, column) {
+      if (column.formatter) {
+        return column.formatter(row[column.key], row);
+      }
+      return row[column.key] || '';
+    },
+    handleCellClick(row, column) {
+      if (column.clickable) {
+        this.$emit('cell-click', { row, column });
+      }
+    }
+  },
+  template: `
+    <div class="w3-responsive">
+      <table class="w3-table-all">
+        <thead>
+          <tr>
+            <th v-for="col in visibleColumns" :key="col.key">
+              {{ col.label }}
+            </th>
+          </tr>
+          <tr v-if="filterableColumns.length > 0">
+            <th v-for="col in visibleColumns" :key="'filter-' + col.key">
+              <input 
+                v-if="col.filterable"
+                v-model="filters[col.key]"
+                class="w3-input w3-border w3-padding" 
+                type="text" 
+                :placeholder="'Filtern...'"
+              />
+              <span v-else>&nbsp;</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in filteredRows" :key="row[rowKey]">
+            <td v-for="col in visibleColumns" :key="col.key">
+              <button 
+                v-if="col.clickable"
+                @click="handleCellClick(row, col)"
+                class="w3-button w3-pale-blue"
+              >
+                {{ getCellValue(row, col) }}
+              </button>
+              <span v-else>{{ getCellValue(row, col) }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `
+};
+</script>

@@ -688,3 +688,27 @@ module.exports.scoreHistory_post = (req, res) => __awaiter(void 0, void 0, void 
         error,
     });
 });
+module.exports.users_vue_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    res.render("users-vue", {
+        filter: JSON.stringify({ active: true }),
+        users: [],
+    });
+});
+module.exports.users_vue_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { active } = req.body;
+    const users = yield User_1.User.find({ $or: [{ active }, { active: null }] }).sort("lastName");
+    res.status(201).json({
+        users: users.map((u) => {
+            var _a;
+            return ({
+                id: u.id,
+                firstName: u.firstName,
+                lastName: u.lastName,
+                email: u.email,
+                voice: u.voice,
+                memberState: u.memberState,
+                active: (_a = u.active) !== null && _a !== void 0 ? _a : true,
+            });
+        }),
+    });
+});
