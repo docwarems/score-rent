@@ -69,7 +69,7 @@
 </table>
 <% } else { %>
 <div class="divUserSearch" style="display: block">
-  <form action="/score/checkout" id="formUserSearch" method="post">
+  <form action="/admin/checkout" id="formUserSearch" method="post">
     <label><%= t('name.last') %></label>
     <input type="text" name="userLastName" value="" class="w3-input userSearchLastName" required>
     <p></p>
@@ -120,7 +120,7 @@
 
 <div class="divHome" style="display: none">
   <p></p>
-  <a href="/score/checkout" class="w3-button w3-black"><%= t('checkout.another') %></a>
+  <a href="/admin/checkout" class="w3-button w3-black"><%= t('checkout.another') %></a>
   <p></p>
   <a href="/" class="w3-button w3-black"><%= t('home') %></a>
 </div>
@@ -200,7 +200,7 @@ const formScan = document.querySelector('#formScan');
     } = input;
     // console.log("submitScanResult: userId=" + userId + ", lastName=" + userLastName + ", scoreId=" + scoreId, ", allowDoubleCheckout=", allowDoubleCheckout);
     try {
-      const res = await fetch('/score/checkout', {
+      const res = await fetch('/admin/checkout', {
         method: 'POST',
         body: JSON.stringify({
           userJwtOrCheckoutId,

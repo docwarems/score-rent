@@ -10,7 +10,7 @@
 
 <div class="w3-responsive">
 
-  <form action="/score/users" method="POST" id="formFilter">
+  <form action="/admin/users" method="POST" id="formFilter">
     <label>Nur aktive</label>
     <input type="checkbox" name="cbActive" value="true" <%= filter.active ? "checked" : "" %> class="w3-check cbActive">
     <p></p>
@@ -151,7 +151,7 @@
     try {
       console.log(`postUpdateUser: id=${id}, email=${email}, active=${active}`);
 
-      const res = await fetch('/score/updateUser', {
+      const res = await fetch('/admin/updateUser', {
         method: 'POST',
         body: JSON.stringify({
           id,

@@ -67,7 +67,7 @@
 
 <div class="divHome" style="display: none">
   <p></p>
-  <a href="/score/checkin" class="w3-button w3-black">Weitere Rückgabe</a>
+  <a href="/admin/checkin" class="w3-button w3-black">Weitere Rückgabe</a>
   <p></p>
   <a href="/" class="w3-button w3-black">Startseite</a>
 </div>
@@ -114,7 +114,7 @@
   async function postCheckin(scoreId, comment) {
     console.log("submitScanResult: scoreId=" + scoreId);
     try {
-      const res = await fetch('/score/checkin', {
+      const res = await fetch('/admin/checkin', {
         method: 'POST',
         body: JSON.stringify({
           scoreId,
