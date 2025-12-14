@@ -1,95 +1,208 @@
 <%- include('partials/header'); -%>
 
-<script src='https://unpkg.com/vue@3.0.2'></script>
+<script src="https://unpkg.com/vue@3.0.2"></script>
 
 <h1>Benutzer</h1>
 
 <div id="app">
-    <div v-show="error" class="w3-panel w3-red">
-        <p>{{ error }}</p>
-    </div>
+  <div v-show="error" class="w3-panel w3-red">
+    <p>{{ error }}</p>
+  </div>
 
-    <div class="w3-responsive">
-        <form @submit.prevent="handleFilterSubmit">
-            <label>Nur aktive&nbsp;</label>
-            <input type="checkbox" v-model="filter.active" class="w3-check">
-            <p></p>
-            <button class="w3-button w3-black" type="submit">Suchen</button>
-            <p></p>
+  <div class="w3-responsive">
+    <form @submit.prevent="handleFilterSubmit">
+      <label>Nur aktive&nbsp;</label>
+      <input type="checkbox" v-model="filter.active" class="w3-check" />
+      <p></p>
+      <button class="w3-button w3-black" type="submit">Suchen</button>
+      <p></p>
+    </form>
+
+    <p></p>
+    <table class="w3-table-all">
+      <tr>
+        <th>User Id</th>
+        <th>Vorname</th>
+        <th>Nachname</th>
+        <th>Email</th>
+        <th>Stimmgruppe</th>
+        <th>M-Status</th>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <th>
+          <input
+            class="w3-input w3-border w3-padding"
+            type="text"
+            placeholder="Filtern.."
+            v-model="searchLastName"
+          />
+        </th>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr v-for="user in filteredUsers" :key="user.id">
+        <td>{{ user.id }}</td>
+        <td>{{ user.firstName }}</td>
+        <td>
+          <button @click="editUser(user)" class="w3-button">
+            {{ user.lastName }}
+          </button>
+        </td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.voice }}</td>
+        <td>{{ user.memberState }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Edit user modal -->
+  <div
+    class="w3-modal"
+    :style="{ display: showEditUserModal ? 'block' : 'none' }"
+  >
+    <div class="w3-modal-content">
+      <div class="w3-container">
+        <span @click="closeEditUser" class="w3-button w3-display-topright"
+          >&times;</span
+        >
+        <h3>Benutzer bearbeiten</h3>
+
+        <div v-show="editUserSuccess" class="w3-panel w3-green">
+          <p>Bearbeitung erfolgreich</p>
+        </div>
+        <div v-show="editUserError" class="w3-panel w3-red">
+          <p>{{ editUserError }}</p>
+        </div>
+
+        <p>User Id: {{ editUserId }}</p>
+
+        <form @submit.prevent="updateUser">
+          <label>E-Mail</label>
+          <input type="text" v-model="editUserEmail" class="w3-input" />
+
+          <input
+            type="checkbox"
+            v-model="editUserActive"
+            class="w3-check"
+            id="editUserActive"
+          />
+          <label for="editUserActive">Aktiv</label>
+
+          <p></p>
+          <button class="w3-button w3-black" type="submit">OK</button>
         </form>
 
         <p></p>
-        <table class="w3-table-all">
-            <tr>
-                <th>User Id</th>
-                <th>Vorname</th>
-                <th>Nachname</th>
-                <th>Email</th>
-                <th>Stimmgruppe</th>
-                <th>M-Status</th>
-            </tr>
-            <tr>
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
-                <th>
-                    <input 
-                        class="w3-input w3-border w3-padding" 
-                        type="text" 
-                        placeholder="Filtern.." 
-                        v-model="searchLastName">
-                </th>
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
-            </tr>
-            <tr v-for="user in filteredUsers" :key="user.id">
-                <td>{{ user.id }}</td>
-                <td>{{ user.firstName }}</td>
-                <td>
-                    <button @click="editUser(user)" class="w3-button">
-                        {{ user.lastName }}
-                    </button>
-                </td>
-                <td>{{ user.email }}</td>
-                <td>{{ user.voice }}</td>
-                <td>{{ user.memberState }}</td>
-            </tr>
-        </table>
+      </div>
     </div>
-
-    <!-- Edit user modal -->
-    <div class="w3-modal" :style="{ display: showEditUserModal ? 'block' : 'none' }">
-        <div class="w3-modal-content">
-            <div class="w3-container">
-                <span @click="closeEditUser" class="w3-button w3-display-topright">&times;</span>
-                <h3>Benutzer bearbeiten</h3>
-
-                <div v-show="editUserSuccess" class="w3-panel w3-green">
-                    <p>Bearbeitung erfolgreich</p>
-                </div>
-                <div v-show="editUserError" class="w3-panel w3-red">
-                    <p>{{ editUserError }}</p>
-                </div>
-
-                <p>User Id: {{ editUserId }}</p>
-
-                <form @submit.prevent="updateUser">
-                    <label>E-Mail</label>
-                    <input type="text" v-model="editUserEmail" class="w3-input">
-                    
-                    <input type="checkbox" v-model="editUserActive" class="w3-check" id="editUserActive">
-                    <label for="editUserActive">Aktiv</label>
-
-                    <p></p>
-                    <button class="w3-button w3-black" type="submit">OK</button>
-                </form>
-
-                <p></p>
-            </div>
-        </div>
-    </div>
+  </div>
 </div>
 
-<script src="/admin/users.js"></script>
-
 <%- include('partials/footer'); -%>
+
+<script>
+  const app = Vue.createApp({
+    data() {
+      return {
+        filter: JSON.parse('<%- filter %>'),
+        users: JSON.parse('<%- JSON.stringify(users) %>'),
+        error: "",
+        searchLastName: "",
+        showEditUserModal: false,
+        editUserId: "",
+        editUserEmail: "",
+        editUserActive: false,
+        editUserSuccess: false,
+        editUserError: "",
+      };
+    },
+    computed: {
+      filteredUsers() {
+        if (!this.searchLastName) return this.users;
+        const search = this.searchLastName.toUpperCase();
+        return this.users.filter((user) =>
+          user.lastName.toUpperCase().includes(search)
+        );
+      },
+    },
+    methods: {
+      async handleFilterSubmit() {
+        this.error = "";
+        try {
+          const res = await fetch("/admin/users-vue", {
+            method: "POST",
+            body: JSON.stringify({
+              active: this.filter.active,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          const data = await res.json();
+
+          if (data.errors) {
+            this.error = data.errors;
+          } else if (data.users) {
+            this.users = data.users;
+            this.searchLastName = "";
+          }
+        } catch (err) {
+          this.error = err.message;
+        }
+      },
+      editUser(user) {
+        this.editUserId = user.id;
+        this.editUserEmail = user.email;
+        this.editUserActive = user.active;
+        this.editUserSuccess = false;
+        this.editUserError = "";
+        this.showEditUserModal = true;
+      },
+      closeEditUser() {
+        this.showEditUserModal = false;
+      },
+      async updateUser() {
+        this.editUserError = "";
+        this.editUserSuccess = false;
+
+        try {
+          const res = await fetch("/admin/updateUser", {
+            method: "POST",
+            body: JSON.stringify({
+              id: this.editUserId,
+              email: this.editUserEmail,
+              active: this.editUserActive,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          const data = await res.json();
+
+          if (data.errors) {
+            this.editUserError = data.errors;
+          } else if (data.updateUser) {
+            this.editUserSuccess = true;
+            // Update user in list
+            const user = this.users.find((u) => u.id === this.editUserId);
+            if (user) {
+              user.email = this.editUserEmail;
+              user.active = this.editUserActive;
+            }
+          }
+        } catch (err) {
+          this.editUserError = err.message;
+        }
+      },
+    },
+    mounted() {
+      // Load users on initial page load
+      this.handleFilterSubmit();
+    },
+  });
+
+  app.mount("#app");
+</script>
