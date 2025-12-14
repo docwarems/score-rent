@@ -1,0 +1,106 @@
+<%- include('partials/header'); -%>
+
+<script src="https://unpkg.com/vue@3.0.2"></script>
+
+<h1>Registrierung Noten</h1>
+
+<div id="app">
+  <div v-show="error" class="w3-panel w3-red">
+    <p>{{ error }}</p>
+  </div>
+
+  <div v-show="success" class="w3-panel w3-green">
+    <p>Noten erfolgreich registriert!</p>
+  </div>
+
+  <form @submit.prevent="handleSubmit">
+    <label>Komponist*</label>
+    <input type="text" v-model="composer" class="w3-input" required />
+    <div v-show="errors.composer" class="w3-red">{{ errors.composer }}</div>
+
+    <label>Werk*</label>
+    <input type="text" v-model="work" class="w3-input" required />
+    <div v-show="errors.work" class="w3-red">{{ errors.work }}</div>
+
+    <label>Signatur*</label>
+    <input type="text" v-model="signature" class="w3-input" required />
+    <div v-show="errors.signature" class="w3-red">{{ errors.signature }}</div>
+
+    <label>Anzahl*</label>
+    <input type="number" v-model.number="count" class="w3-input" required />
+    <div v-show="errors.count" class="w3-red">{{ errors.count }}</div>
+
+    <p></p>
+    <button class="w3-button w3-black" type="submit">Senden</button>
+  </form>
+</div>
+
+<%- include('partials/footer'); -%>
+
+<script>
+  const app = Vue.createApp({
+    data() {
+      return {
+        composer: '',
+        work: '',
+        signature: '',
+        count: null,
+        errors: {
+          composer: '',
+          work: '',
+          signature: '',
+          count: ''
+        },
+        error: '',
+        success: false
+      };
+    },
+    methods: {
+      async handleSubmit() {
+        // Reset errors
+        this.errors = { composer: '', work: '', signature: '', count: '' };
+        this.error = '';
+        this.success = false;
+
+        try {
+          const res = await fetch('/admin/register', {
+            method: 'POST',
+            body: JSON.stringify({
+              composer: this.composer,
+              work: this.work,
+              signature: this.signature,
+              count: this.count
+            }),
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          const data = await res.json();
+
+          if (data.errors) {
+            if (typeof data.errors === 'string') {
+              this.error = data.errors;
+            } else {
+              this.errors = { ...this.errors, ...data.errors };
+            }
+          } else if (data.scoreType) {
+            this.success = true;
+            // Reset form
+            this.composer = '';
+            this.work = '';
+            this.signature = '';
+            this.count = null;
+            // Redirect after delay
+            setTimeout(() => {
+              location.assign('/');
+            }, 2000);
+          }
+        } catch (err) {
+          this.error = err.message;
+        }
+      }
+    }
+  });
+
+  app.mount('#app');
+</script>

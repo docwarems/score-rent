@@ -86,3 +86,8 @@ admin.post("/checkouts-vue", scoreController.checkouts_vue_post);
 
 admin.get("/users-vue", scoreController.users_vue_get);
 admin.post("/users-vue", scoreController.users_vue_post)
+
+// Add these lines after line 89:
+admin.get("/register-score-vue", (req: any, res: any) =>
+  res.render("register-score-vue")
+);
