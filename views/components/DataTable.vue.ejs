@@ -32,22 +32,27 @@ const DataTable = {
       return this.visibleColumns.filter(col => col.filterable);
     },
     filteredRows() {
-      let filtered = this.rows;
-      
-      // Apply filters
-      Object.keys(this.filters).forEach(key => {
-        const filterValue = this.filters[key];
-        if (filterValue) {
-          const search = filterValue.toUpperCase();
-          filtered = filtered.filter(row => {
-            const value = String(row[key] || '');
-            return value.toUpperCase().includes(search);
-          });
-        }
-      });
-      
-      return filtered;
-    }
+        let filtered = this.rows;
+        
+        // Apply filters
+        Object.keys(this.filters).forEach(key => {
+            const filterValue = this.filters[key];
+            if (filterValue) {
+                const search = filterValue.toUpperCase();
+                const column = this.columns.find(col => col.key === key);
+                
+                filtered = filtered.filter(row => {
+                    // Use formatter if available, otherwise direct key lookup
+                    const value = column && column.formatter 
+                    ? String(column.formatter(row[key], row) || '')
+                    : String(row[key] || '');
+                    return value.toUpperCase().includes(search);
+                });
+            }
+        });
+
+        return filtered;
+    },
   },
   methods: {
     getCellValue(row, column) {

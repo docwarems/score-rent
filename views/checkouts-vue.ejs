@@ -2,6 +2,8 @@
 
 <script src='https://unpkg.com/vue@3.0.2'></script>
 
+<%- include('components/DataTable.vue.ejs'); %>
+
 <h1>Ausleihen</h1>
   
 <div id="app">
@@ -29,37 +31,12 @@
 
     <div v-if="checkouts">
         <div class="w3-left-align"><p>{{ statSummary }}</p></div>
-        <div class="w3-responsive">
-            <p></p>
-            <table class="w3-table-all">
-                <tr>
-                    <th v-if="filter.signature === SIGNATURE_ALL.id">Werk</th>
-                    <th>Noten Id</th>
-                    <th>Noten ext. Id</th>
-                    <th v-if="admin">Benutzer</th>
-                    <th>Ausgeliehen am</th>
-                    <th>Kommentar Ausleihe</th>
-                    <th v-if="admin"></th> <!-- Schalter Rückgabe -->
-                    <th>Rückgabe am</th>
-                    <th>Kommentar Rückgabe</th>
-                  </tr>
-                  <tr v-for="checkout in checkouts">
-                    <td v-if="filter.signature === SIGNATURE_ALL.id">signatureMap.get(checkout.signature)</td>
-                    <td>{{ checkout.scoreId }}</td>
-                    <td>{{ checkout.scoreExtId }}</td>
-                    <td v-if="admin">
-                      <button @click="userDetails(checkout.user)" class="w3-button w3-pale-blue">{{ checkout.user.namePlusVoice }}</button>
-                    </td>
-                    <td v-if="admin"><button @click="editCheckout(checkout)" class="w3-button w3-pale-blue">{{ checkout.checkoutTimestamp }}</button></td>
-                    <td v-else>{{ checkout.checkoutTimestamp }}</td>
-                    <td>{{ checkout.checkoutComment }}</td>
-                    <td>
-                    </td>
-                    <td>{{ checkout.checkinTimestamp }}</td>
-                    <td>{{ checkout.checkinComment }}</td>
-                  </tr>
-            </table>          
-        </div>    
+        <data-table
+            :columns="checkoutColumns"
+            :rows="checkouts"
+            row-key="id"
+            @cell-click="handleCellClick"
+        ></data-table>
     </div>
 
 
@@ -155,6 +132,9 @@
 <script>
 
 const app = Vue.createApp({
+    components: {
+        DataTable
+    },
     data() {
         return {
             admin: JSON.parse('<%- admin %>'),
@@ -185,17 +165,55 @@ const app = Vue.createApp({
             userLastName: '',
         }
     },
+    computed: {
+        checkoutColumns() {
+            return [
+                { 
+                    key: 'signature', 
+                    label: 'Werk', 
+                    visible: this.filter.signature === this.SIGNATURE_ALL.id,
+                    formatter: (val, row) => row.signature // Add signatureMap lookup if needed
+                },
+                { key: 'scoreId', label: 'Noten Id' },
+                { key: 'scoreExtId', label: 'Noten ext. Id', filterable: true },
+                { 
+                    key: 'userName', 
+                    label: 'Benutzer', 
+                    visible: this.admin,
+                    clickable: true,
+                    filterable: true,
+                    formatter: (val, row) => row.user.namePlusVoice
+                },
+                { 
+                    key: 'checkoutTimestamp', 
+                    label: 'Ausgeliehen am',
+                    clickable: this.admin
+                },
+                { key: 'checkoutComment', label: 'Kommentar Ausleihe' },
+                { key: 'checkinTimestamp', label: 'Rückgabe am' },
+                { key: 'checkinComment', label: 'Kommentar Rückgabe' }
+            ];
+        }
+    },
     methods: {
+        handleCellClick({ row, column }) {
+            if (column.key === 'userName') {
+                this.userDetails(row.user);
+            } else if (column.key === 'checkoutTimestamp') {
+                this.editCheckout(row);
+            }
+        },
         userDetails(user) {
             this.userDetailsName = user.name;
             this.userDetailsEmail = user.email;
-            // v-show does not work here - don't know why
-            const userDetailsModal = this.$refs["userDetailsModal"];
-            userDetailsModal.style = 'display: block';
+            this.showUserDetailsModal = true;
+            // // v-show does not work here - don't know why
+            // const userDetailsModal = this.$refs["userDetailsModal"];
+            // userDetailsModal.style = 'display: block';
         },
         closeUserDetails() {
             const userDetailsModal = this.$refs["userDetailsModal"];
-            userDetailsModal.style = 'display: none';
+            // userDetailsModal.style = 'display: none';
         },
         editCheckout(checkout) {
             this.showEditCheckoutModalSuccess = false;
@@ -204,9 +222,10 @@ const app = Vue.createApp({
             this.editCheckoutComment = checkout.checkoutComment;
             this.editCheckinComment = checkout.checkinComment;
             this.editCheckoutUserId = checkout.user.id;
-            // v-show does not work here - don't know why
-            const editCheckoutModal = this.$refs["editCheckoutModal"];
-            editCheckoutModal.style = 'display: block';
+            this.showEditCheckoutModal = true;
+            // // v-show does not work here - don't know why
+            // const editCheckoutModal = this.$refs["editCheckoutModal"];
+            // editCheckoutModal.style = 'display: block';
         },
         async updateCheckout() {
             console.log("editCheckoutComment", this.editCheckoutComment, "editCheckinComment=", this.editCheckinComment, "editCheckoutUserId=", this.editCheckoutUserId);
@@ -263,6 +282,7 @@ const app = Vue.createApp({
                 this.checkouts = data.checkouts;
             } catch (err) {
                 console.log("err=", err);
+                this.error = err.message;
             }
         },
         async userSearch() {
@@ -287,8 +307,12 @@ const app = Vue.createApp({
                 }
             } catch (err) {
                 console.log("err=", err);
+                this.editCheckoutModalError = err.message;
             }
         },
+        chooseUser(userId) {
+            this.editCheckoutUserId = userId;
+        }
     },
 })
 
