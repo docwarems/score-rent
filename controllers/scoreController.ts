@@ -785,11 +785,10 @@ module.exports.scoreHistory_post = async (req: any, res: any) => {
   });
 };
 
-
 module.exports.users_vue_get = async (req: any, res: any) => {
   res.render("users-vue", {
     filter: JSON.stringify({ active: true }),
-    users: JSON.stringify([]),
+    users: [],
   });
 };
 
@@ -798,8 +797,8 @@ module.exports.users_vue_post = async (req: any, res: any) => {
   const users = await User.find({ $or: [{ active }, { active: null }] }).sort(
     "lastName"
   );
-  res.status(201).json({ 
-    users: users.map(u => ({
+  res.status(201).json({
+    users: users.map((u) => ({
       id: u.id,
       firstName: u.firstName,
       lastName: u.lastName,
@@ -807,6 +806,6 @@ module.exports.users_vue_post = async (req: any, res: any) => {
       voice: u.voice,
       memberState: u.memberState,
       active: u.active ?? true,
-    }))
+    })),
   });
 };

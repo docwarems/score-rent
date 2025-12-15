@@ -140,6 +140,11 @@
           this.error = err.message;
         }
       },
+      handleCellClick({ row, column }) {
+        if (column.key === 'lastName') {
+            this.editUser(row);
+        }
+      },
       editUser(user) {
         this.editUserId = user.id;
         this.editUserEmail = user.email;
