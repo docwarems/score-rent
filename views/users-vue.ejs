@@ -2,6 +2,8 @@
 
 <script src="https://unpkg.com/vue@3.0.2"></script>
 
+<%- include('components/DataTable.vue.ejs'); %>
+
 <h1>Benutzer</h1>
 
 <div id="app">
@@ -19,43 +21,14 @@
     </form>
 
     <p></p>
-    <table class="w3-table-all">
-      <tr>
-        <th>User Id</th>
-        <th>Vorname</th>
-        <th>Nachname</th>
-        <th>Email</th>
-        <th>Stimmgruppe</th>
-        <th>M-Status</th>
-      </tr>
-      <tr>
-        <td>&nbsp;</td>
-        <td>&nbsp;</td>
-        <th>
-          <input
-            class="w3-input w3-border w3-padding"
-            type="text"
-            placeholder="Filtern.."
-            v-model="searchLastName"
-          />
-        </th>
-        <td>&nbsp;</td>
-        <td>&nbsp;</td>
-        <td>&nbsp;</td>
-      </tr>
-      <tr v-for="user in filteredUsers" :key="user.id">
-        <td>{{ user.id }}</td>
-        <td>{{ user.firstName }}</td>
-        <td>
-          <button @click="editUser(user)" class="w3-button">
-            {{ user.lastName }}
-          </button>
-        </td>
-        <td>{{ user.email }}</td>
-        <td>{{ user.voice }}</td>
-        <td>{{ user.memberState }}</td>
-      </tr>
-    </table>
+
+    <data-table
+      :columns="userColumns"
+      :rows="users"
+      row-key="id"
+      @cell-click="handleCellClick"
+    ></data-table>
+
   </div>
 
   <!-- Edit user modal -->
@@ -105,6 +78,9 @@
 
 <script>
   const app = Vue.createApp({
+    components: {
+        DataTable
+    },
     data() {
       return {
         filter: JSON.parse('<%- filter %>'),
@@ -117,6 +93,17 @@
         editUserActive: false,
         editUserSuccess: false,
         editUserError: "",
+
+        // Table configuration
+        userColumns: [
+          { key: 'id', label: 'User Id', visible: true },
+          { key: 'firstName', label: 'Vorname', visible: true },
+          { key: 'lastName', label: 'Nachname', visible: true, clickable: true, filterable: true },
+          { key: 'email', label: 'Email', visible: true },
+          { key: 'voice', label: 'Stimmgruppe', visible: true },
+          { key: 'memberState', label: 'M-Status', visible: true }
+        ]
+
       };
     },
     computed: {
