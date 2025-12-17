@@ -41,7 +41,10 @@
 
 
     <!-- The user details modal -->
-    <div ref="userDetailsModal" class="w3-modal" style="display: none">
+    <div
+        class="w3-modal"
+        :style="{ display: showUserDetailsModal ? 'block' : 'none' }"
+    >
         <div class="w3-modal-content">
         <div class="w3-container">
             <span @click="closeUserDetails" class="w3-button w3-display-topright">&times;</span>
@@ -62,7 +65,10 @@
     </div>  
 
     <!-- edit checkout modal -->
-    <div ref="editCheckoutModal" class="w3-modal" style="display: none">
+    <div
+        class="w3-modal"
+        :style="{ display: showEditCheckoutModal ? 'block' : 'none' }"
+    >
         <div class="w3-modal-content">
         <div class="w3-container">
             <span @click="closeEditCheckout" class="w3-button w3-display-topright">&times;</span>
@@ -149,7 +155,7 @@ const app = Vue.createApp({
             error: '',
             SIGNATURE_ALL: { id: 'ALL', name: 'Alle'},
             userNamePlusVoice: '',
-            showUserDetails: false,
+            showUserDetailsModal: false,
             userDetailsName: '',
             userDetailsEmail: '',
             userDetailsRegisterDate: 'TODO',
@@ -158,6 +164,7 @@ const app = Vue.createApp({
             editCheckoutComment: '',
             editCheckinComment: '',
             editCheckoutUserId: '',
+            showEditCheckoutModal: false,
             showEditCheckoutModalSuccess: false,
             showFoo: false,
             editCheckoutModalError: '',
@@ -207,13 +214,9 @@ const app = Vue.createApp({
             this.userDetailsName = user.name;
             this.userDetailsEmail = user.email;
             this.showUserDetailsModal = true;
-            // // v-show does not work here - don't know why
-            // const userDetailsModal = this.$refs["userDetailsModal"];
-            // userDetailsModal.style = 'display: block';
         },
         closeUserDetails() {
-            const userDetailsModal = this.$refs["userDetailsModal"];
-            // userDetailsModal.style = 'display: none';
+            this.showUserDetailsModal = false;
         },
         editCheckout(checkout) {
             this.showEditCheckoutModalSuccess = false;
@@ -223,9 +226,6 @@ const app = Vue.createApp({
             this.editCheckinComment = checkout.checkinComment;
             this.editCheckoutUserId = checkout.user.id;
             this.showEditCheckoutModal = true;
-            // // v-show does not work here - don't know why
-            // const editCheckoutModal = this.$refs["editCheckoutModal"];
-            // editCheckoutModal.style = 'display: block';
         },
         async updateCheckout() {
             console.log("editCheckoutComment", this.editCheckoutComment, "editCheckinComment=", this.editCheckinComment, "editCheckoutUserId=", this.editCheckoutUserId);
@@ -255,8 +255,7 @@ const app = Vue.createApp({
             }
         },
         closeEditCheckout() {
-            const editCheckoutModal = this.$refs["editCheckoutModal"];
-            editCheckoutModal.style = 'display: none';
+            this.showEditCheckoutModal = false;
         },
         async handleCheckoutsFilterSubmit() {
             this.error = "";
