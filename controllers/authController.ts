@@ -1,4 +1,4 @@
-import { User, Voice, voiceMap } from "../models/User";
+import { User, Voice, voiceMap, incrementUserIdSuffix } from "../models/User";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import type { StringValue } from "ms";
@@ -35,8 +35,10 @@ const handleSaveErrors = (err: any, type: string | undefined) => {
   if (err.code === 11000) {
     if (!type) {
     } else if (type == "email") {
-      errors.email = "Diese E-Mail Adresse ist bereits in Verwendung";
+      errors.email =
+        "Diese E-Mail Adresse ist bereits in Verwendung. Bitte nutze die Passwort-Vergessen-Funktion auf der Login-Seite.";
     } else if (type == "userId") {
+      // should not occur anymore since we now add a suffix in this case
       errors.userId =
         "Die aus Vor- und Nachnamen gebildete User Id ist bereits in Verwendung. Bitte HSC kontaktieren!";
     }
@@ -86,9 +88,9 @@ module.exports.signup_user_get = (req: any, res: any) => {
 };
 
 module.exports.signup_success_get = (req: any, res: any) => {
-  const { admin } = req.query;
+  const isAdmin = res.locals.user?.isAdmin || false;
   res.render("signup-success", {
-    admin: admin == "true",
+    admin: isAdmin,
   });
 };
 
@@ -273,51 +275,178 @@ module.exports.signup_user_post = async (req: any, res: any) => {
   await signup(req, res, true);
 };
 
+/**
+ * Check if a user is trying to re-register with the same email and name
+ * Returns true if both email and userId exist and belong to the same user
+ */
+async function checkDuplicateUserRegistration(
+  email: string | undefined,
+  userId: string
+): Promise<boolean> {
+  if (!email) return false;
+
+  const existingUserByEmail = await User.findOne({ email });
+  const existingUserById = await User.findOne({ id: userId });
+
+  return (
+    !!existingUserByEmail &&
+    !!existingUserById &&
+    existingUserByEmail.id === existingUserById.id
+  );
+}
+
+/**
+ * Check if a manually registered user (no email) exists and can be updated
+ * Returns the user if found and eligible for update, null otherwise
+ */
+async function findManualUserForUpdate(userId: string) {
+  const existingUser = await User.findOne({ id: userId });
+
+  if (
+    existingUser &&
+    existingUser.isManuallyRegistered &&
+    !existingUser.email
+  ) {
+    return existingUser;
+  }
+
+  return null;
+}
+
+/**
+ * Update a manually registered user with new registration data
+ */
+async function updateManualUser(
+  existingUser: any,
+  userData: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    voice: string;
+    verificationToken: string | undefined;
+    isManuallyRegistered: boolean;
+  }
+) {
+  existingUser.email = userData.email;
+  existingUser.password = userData.password;
+  existingUser.firstName = userData.firstName;
+  existingUser.lastName = userData.lastName;
+  existingUser.voice = userData.voice;
+  existingUser.verificationToken = userData.verificationToken;
+  existingUser.isManuallyRegistered = userData.isManuallyRegistered;
+  existingUser.isPasswordHashed = false; // Will trigger re-hashing
+
+  await existingUser.save();
+  return existingUser;
+}
+
+/**
+ * Attempt to create a new user with automatic userId suffix handling
+ * Returns the created/updated user or throws an error
+ */
+async function createUserWithRetry(
+  userData: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    voice: string;
+    verificationToken: string | undefined;
+    isManuallyRegistered: boolean;
+  },
+  baseUserId: string,
+  maxAttempts = 5
+) {
+  let userId = baseUserId;
+  let attempts = 0;
+
+  while (attempts < maxAttempts) {
+    attempts++;
+
+    try {
+      const user = await User.create({
+        id: userId,
+        ...userData,
+      });
+      return user;
+    } catch (createError: any) {
+      // Check if it's a duplicate userId error
+      if (createError.code === 11000 && createError.keyValue?.id) {
+        // Check if we can update an existing manual user
+        const manualUser = await findManualUserForUpdate(userId);
+
+        if (manualUser) {
+          return await updateManualUser(manualUser, userData);
+        }
+
+        // Otherwise, increment suffix and try again
+        userId = incrementUserIdSuffix(userId);
+      } else {
+        // Other errors - throw immediately
+        throw createError;
+      }
+    }
+  }
+
+  throw new Error(
+    `Failed to create user after ${maxAttempts} attempts. Please contact support.`
+  );
+}
+
 const signup = async (req: any, res: any, byAdmin = false) => {
-  let {
-    email,
-    password,
-    passwordRepeat,
-    firstName, // TODO: Mindestlänge 2 wg. User Id
-    lastName,
-    voice,
-  } = req.body;
+  let { email, password, passwordRepeat, firstName, lastName, voice } =
+    req.body;
 
   try {
+    // Admin authorization check
     if (byAdmin && (!res.locals.user || !res.locals.user.isAdmin)) {
       return res.status(403).json({ errors: "Admin access required" });
     }
 
-    let isManuallyRegistered;
+    // Handle admin vs user registration differences
+    const isManuallyRegistered = byAdmin;
     if (byAdmin) {
-      password = `${process.env.MANUAL_REGISTRATION_PASSWORD}`; // not critical because e-mail verification required to activate account
-      isManuallyRegistered = true;
-      if (email == "") {
-        email = undefined; // will avoid duplicate key error
+      password = `${process.env.MANUAL_REGISTRATION_PASSWORD}`;
+      if (email === "") {
+        email = undefined; // Avoid duplicate key error
       }
     } else {
       if (password !== passwordRepeat) {
         throw new Error("repeated password wrong");
       }
-      isManuallyRegistered = false;
     }
 
+    // Generate userId
     firstName = firstName.trim();
     lastName = lastName.trim();
     const userId = User.generateUserId(firstName, lastName);
+
     if (!userId) {
-      res.status(400).json({
+      return res.status(400).json({
         status: `Interner Fehler bei Bildung der User id. Bitte den HSC kontaktieren unter ${process.env.SMTP_FROM}!`,
       });
     }
 
+    // Generate verification token for non-admin signups
     const verificationToken = byAdmin
       ? undefined
       : Math.random().toString(36).substring(2);
 
-    try {
-      const user = await User.create({
-        id: userId,
+    // Check if user is trying to re-register (same email + name)
+    if (await checkDuplicateUserRegistration(email, userId)) {
+      return res.status(400).json({
+        errors: {
+          email:
+            "Ein Konto mit dieser E-Mail und diesem Namen existiert bereits. Bitte nutze die Passwort-Vergessen-Funktion auf der Login-Seite.",
+          userId: "",
+        },
+      });
+    }
+
+    // Create user with automatic userId suffix handling
+    const user = await createUserWithRetry(
+      {
         email,
         password,
         firstName,
@@ -325,42 +454,13 @@ const signup = async (req: any, res: any, byAdmin = false) => {
         voice,
         verificationToken,
         isManuallyRegistered,
-      });
-      res.status(201).json({ user: user._id });
-    } catch (createError: any) {
-      // Check if it's a duplicate key error for userId
-      if (createError.code === 11000 && createError.keyValue?.id) {
-        // Find the existing user with this userId
-        const existingUser = await User.findOne({ id: userId });
+      },
+      userId
+    );
 
-        // Check if it's a manually registered user with empty email
-        if (
-          existingUser &&
-          existingUser.isManuallyRegistered &&
-          !existingUser.email
-        ) {
-          // Update the existing user with new data
-          existingUser.email = email;
-          existingUser.password = password;
-          existingUser.firstName = firstName;
-          existingUser.lastName = lastName;
-          existingUser.voice = voice;
-          existingUser.verificationToken = verificationToken;
-          existingUser.isManuallyRegistered = isManuallyRegistered;
-          existingUser.isPasswordHashed = false; // Will trigger re-hashing
-
-          await existingUser.save();
-          res.status(201).json({ user: existingUser._id });
-        } else {
-          // It's a real duplicate - throw the error to be handled below
-          throw createError;
-        }
-      } else {
-        // Other errors - throw to be handled below
-        throw createError;
-      }
-    }
+    res.status(201).json({ user: user._id });
   } catch (err: any) {
+    // Determine error type for appropriate error message
     let type: string | undefined = undefined;
     if (err.keyValue?.id) {
       type = "userId";

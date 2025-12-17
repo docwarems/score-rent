@@ -44,9 +44,11 @@ const handleSaveErrors = (err, type) => {
         if (!type) {
         }
         else if (type == "email") {
-            errors.email = "Diese E-Mail Adresse ist bereits in Verwendung";
+            errors.email =
+                "Diese E-Mail Adresse ist bereits in Verwendung. Bitte nutze die Passwort-Vergessen-Funktion auf der Login-Seite.";
         }
         else if (type == "userId") {
+            // should not occur anymore since we now add a suffix in this case
             errors.userId =
                 "Die aus Vor- und Nachnamen gebildete User Id ist bereits in Verwendung. Bitte HSC kontaktieren!";
         }
@@ -84,9 +86,10 @@ module.exports.signup_user_get = (req, res) => {
     });
 };
 module.exports.signup_success_get = (req, res) => {
-    const { admin } = req.query;
+    var _a;
+    const isAdmin = ((_a = res.locals.user) === null || _a === void 0 ? void 0 : _a.isAdmin) || false;
     res.render("signup-success", {
-        admin: admin == "true",
+        admin: isAdmin,
     });
 };
 module.exports.login_get = (req, res) => {
@@ -251,90 +254,150 @@ module.exports.signup_post = (req, res) => __awaiter(void 0, void 0, void 0, fun
 module.exports.signup_user_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     yield signup(req, res, true);
 });
+/**
+ * Check if a user is trying to re-register with the same email and name
+ * Returns true if both email and userId exist and belong to the same user
+ */
+function checkDuplicateUserRegistration(email, userId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (!email)
+            return false;
+        const existingUserByEmail = yield User_1.User.findOne({ email });
+        const existingUserById = yield User_1.User.findOne({ id: userId });
+        return (!!existingUserByEmail &&
+            !!existingUserById &&
+            existingUserByEmail.id === existingUserById.id);
+    });
+}
+/**
+ * Check if a manually registered user (no email) exists and can be updated
+ * Returns the user if found and eligible for update, null otherwise
+ */
+function findManualUserForUpdate(userId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const existingUser = yield User_1.User.findOne({ id: userId });
+        if (existingUser &&
+            existingUser.isManuallyRegistered &&
+            !existingUser.email) {
+            return existingUser;
+        }
+        return null;
+    });
+}
+/**
+ * Update a manually registered user with new registration data
+ */
+function updateManualUser(existingUser, userData) {
+    return __awaiter(this, void 0, void 0, function* () {
+        existingUser.email = userData.email;
+        existingUser.password = userData.password;
+        existingUser.firstName = userData.firstName;
+        existingUser.lastName = userData.lastName;
+        existingUser.voice = userData.voice;
+        existingUser.verificationToken = userData.verificationToken;
+        existingUser.isManuallyRegistered = userData.isManuallyRegistered;
+        existingUser.isPasswordHashed = false; // Will trigger re-hashing
+        yield existingUser.save();
+        return existingUser;
+    });
+}
+/**
+ * Attempt to create a new user with automatic userId suffix handling
+ * Returns the created/updated user or throws an error
+ */
+function createUserWithRetry(userData, baseUserId, maxAttempts = 5) {
+    var _a;
+    return __awaiter(this, void 0, void 0, function* () {
+        let userId = baseUserId;
+        let attempts = 0;
+        while (attempts < maxAttempts) {
+            attempts++;
+            try {
+                const user = yield User_1.User.create(Object.assign({ id: userId }, userData));
+                return user;
+            }
+            catch (createError) {
+                // Check if it's a duplicate userId error
+                if (createError.code === 11000 && ((_a = createError.keyValue) === null || _a === void 0 ? void 0 : _a.id)) {
+                    // Check if we can update an existing manual user
+                    const manualUser = yield findManualUserForUpdate(userId);
+                    if (manualUser) {
+                        return yield updateManualUser(manualUser, userData);
+                    }
+                    // Otherwise, increment suffix and try again
+                    userId = (0, User_1.incrementUserIdSuffix)(userId);
+                }
+                else {
+                    // Other errors - throw immediately
+                    throw createError;
+                }
+            }
+        }
+        throw new Error(`Failed to create user after ${maxAttempts} attempts. Please contact support.`);
+    });
+}
 const signup = (req, res, byAdmin = false) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
-    let { email, password, passwordRepeat, firstName, // TODO: Mindestlänge 2 wg. User Id
-    lastName, voice, } = req.body;
+    var _a, _b;
+    let { email, password, passwordRepeat, firstName, lastName, voice } = req.body;
     try {
+        // Admin authorization check
         if (byAdmin && (!res.locals.user || !res.locals.user.isAdmin)) {
             return res.status(403).json({ errors: "Admin access required" });
         }
-        let isManuallyRegistered;
+        // Handle admin vs user registration differences
+        const isManuallyRegistered = byAdmin;
         if (byAdmin) {
-            password = `${process.env.MANUAL_REGISTRATION_PASSWORD}`; // not critical because e-mail verification required to activate account
-            isManuallyRegistered = true;
-            if (email == "") {
-                email = undefined; // will avoid duplicate key error
+            password = `${process.env.MANUAL_REGISTRATION_PASSWORD}`;
+            if (email === "") {
+                email = undefined; // Avoid duplicate key error
             }
         }
         else {
             if (password !== passwordRepeat) {
                 throw new Error("repeated password wrong");
             }
-            isManuallyRegistered = false;
         }
+        // Generate userId
         firstName = firstName.trim();
         lastName = lastName.trim();
         const userId = User_1.User.generateUserId(firstName, lastName);
         if (!userId) {
-            res.status(400).json({
+            return res.status(400).json({
                 status: `Interner Fehler bei Bildung der User id. Bitte den HSC kontaktieren unter ${process.env.SMTP_FROM}!`,
             });
         }
+        // Generate verification token for non-admin signups
         const verificationToken = byAdmin
             ? undefined
             : Math.random().toString(36).substring(2);
-        try {
-            const user = yield User_1.User.create({
-                id: userId,
-                email,
-                password,
-                firstName,
-                lastName,
-                voice,
-                verificationToken,
-                isManuallyRegistered,
+        // Check if user is trying to re-register (same email + name)
+        if (yield checkDuplicateUserRegistration(email, userId)) {
+            return res.status(400).json({
+                errors: {
+                    email: "Ein Konto mit dieser E-Mail und diesem Namen existiert bereits. Bitte nutze die Passwort-Vergessen-Funktion auf der Login-Seite.",
+                    userId: "",
+                },
             });
-            res.status(201).json({ user: user._id });
         }
-        catch (createError) {
-            // Check if it's a duplicate key error for userId
-            if (createError.code === 11000 && ((_a = createError.keyValue) === null || _a === void 0 ? void 0 : _a.id)) {
-                // Find the existing user with this userId
-                const existingUser = yield User_1.User.findOne({ id: userId });
-                // Check if it's a manually registered user with empty email
-                if (existingUser &&
-                    existingUser.isManuallyRegistered &&
-                    !existingUser.email) {
-                    // Update the existing user with new data
-                    existingUser.email = email;
-                    existingUser.password = password;
-                    existingUser.firstName = firstName;
-                    existingUser.lastName = lastName;
-                    existingUser.voice = voice;
-                    existingUser.verificationToken = verificationToken;
-                    existingUser.isManuallyRegistered = isManuallyRegistered;
-                    existingUser.isPasswordHashed = false; // Will trigger re-hashing
-                    yield existingUser.save();
-                    res.status(201).json({ user: existingUser._id });
-                }
-                else {
-                    // It's a real duplicate - throw the error to be handled below
-                    throw createError;
-                }
-            }
-            else {
-                // Other errors - throw to be handled below
-                throw createError;
-            }
-        }
+        // Create user with automatic userId suffix handling
+        const user = yield createUserWithRetry({
+            email,
+            password,
+            firstName,
+            lastName,
+            voice,
+            verificationToken,
+            isManuallyRegistered,
+        }, userId);
+        res.status(201).json({ user: user._id });
     }
     catch (err) {
+        // Determine error type for appropriate error message
         let type = undefined;
-        if ((_b = err.keyValue) === null || _b === void 0 ? void 0 : _b.id) {
+        if ((_a = err.keyValue) === null || _a === void 0 ? void 0 : _a.id) {
             type = "userId";
         }
-        else if ((_c = err.keyValue) === null || _c === void 0 ? void 0 : _c.email) {
+        else if ((_b = err.keyValue) === null || _b === void 0 ? void 0 : _b.email) {
             type = "email";
         }
         const errors = handleSaveErrors(err, type);

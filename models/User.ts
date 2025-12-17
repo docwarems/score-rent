@@ -166,6 +166,35 @@ userSchema.static(
   }
 );
 
+/**
+ * Adds or increments a numeric suffix to a userId
+ * Examples:
+ *   mi.suedka -> mi.suedka01
+ *   mi.suedka01 -> mi.suedka02
+ *   mi.suedka99 -> mi.suedka100
+ */
+function incrementUserIdSuffix(userId: string): string {
+  // Check if userId already has a numeric suffix
+  const match = userId.match(/^(.+?)(\d+)$/);
+
+  if (match) {
+    // Has numeric suffix - increment it
+    const base = match[1];
+    const currentNumber = parseInt(match[2], 10);
+    const nextNumber = currentNumber + 1;
+    // Pad with leading zeros to match original length (minimum 2 digits)
+    const paddedNumber = nextNumber
+      .toString()
+      .padStart(Math.max(2, match[2].length), "0");
+    return base + paddedNumber;
+  } else {
+    // No suffix - add 01
+    return userId + "01";
+  }
+}
+
+export { incrementUserIdSuffix };
+
 // fire a function before doc saved to db
 userSchema.pre("save", async function (next: any) {
   // TODO: we must ensure that e-mail doesn't exist because we have no longer a unique constraint on email field because we need to be able to manually register users without email
