@@ -21,10 +21,11 @@
     <h3><%= t('user') %></h3>
     <li><a href="/signup-user" class="w3-button w3-black"><%= t('user.register') %></a></li>
     <li><a href="/admin/users" class="w3-button w3-black"><%= t('user.list') %></a></li>
+
+    <li><a href="/admin/checkouts-vue" class="w3-button w3-red">Checkouts(Vue)</a></li>
+    <li><a href="/admin/users-vue" class="w3-button w3-red">Users(Vue)</a></li>
     <% if (process.env.STAGE !== 'prod') { %>
       <li><a href="/admin/vue-test" class="w3-button w3-red">Vue test</a></li>
-      <li><a href="/admin/checkouts-vue" class="w3-button w3-red">Checkouts(Vue)</a></li>
-      <li><a href="/admin/users-vue" class="w3-button w3-red">Users(Vue)</a></li>
       <li><a href="/admin/register-score-vue" class="w3-button w3-red">Register score(Vue)</a></li>
     <% } %>
   <% } else { %>
