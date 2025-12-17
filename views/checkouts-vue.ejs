@@ -119,9 +119,13 @@
             <button class="w3-button w3-black">User suchen</button>
             </form>
             <p></p>
-            <table class="w3-table-all">
-                <tr v-for="user in users">
-                    <td>{{ user.id }}</td>
+            <table class="w3-table-all tableUsers">
+                <tr v-for="user in users" :key="user.id">
+                    <td>
+                        <button @click="chooseUser(user.id)" class="w3-button w3-pale-blue">
+                            {{ user.firstName }} {{ user.lastName }}
+                        </button>
+                    </td>
                 </tr>
             </table>   
             <p></p>

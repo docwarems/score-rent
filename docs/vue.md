@@ -1,5 +1,36 @@
 # Vue migration
 
+## Status
+
+### checkouts-vue
+
+TODOs
+
+DONEs
+- edit checkout
+  - show
+  - edit comment
+  - search user
+  - choose user after search
+- Show user details
+- choose score signature and list checkouts
+- 'only open' checkbox
+- user filter
+
+### users-vue
+
+### Data table
+
+Used for
+- checkouts list
+- users list
+
+DONEs
+- user list
+- user filter
+- 'only active' checkbox
+- edit user (currently only active status toggling)
+
 ## Experiences
 
 v-show to display a dialog will not work
