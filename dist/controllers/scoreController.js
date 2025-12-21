@@ -115,7 +115,7 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                         if (user && !isPlaywright) {
                             try {
                                 // sending may fail with "sent limit exceeded" error
-                                yield sendCheckoutConfirmationEmail(user, score, process.env.EMAIL_TEST_RECIPIENT);
+                                yield sendCheckoutConfirmationEmail(user, score, (0, misc_utils_1.getEnvVar)("EMAIL_TEST_RECIPIENT"));
                             }
                             catch (error) {
                                 console.error(error);
@@ -254,7 +254,7 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
                                 if (!isPlaywright) {
                                     try {
                                         // sending may fail with "sent limit exceeded" error
-                                        yield sendCheckinConfirmationEmail(user, score, process.env.EMAIL_TEST_RECIPIENT);
+                                        yield sendCheckinConfirmationEmail(user, score, (0, misc_utils_1.getEnvVar)("EMAIL_TEST_RECIPIENT"));
                                     }
                                     catch (error) {
                                         console.error(error);
@@ -724,14 +724,14 @@ module.exports.email_queue_stats_get = (req, res) => __awaiter(void 0, void 0, v
     }
 });
 module.exports.send_test_email_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    if (!process.env.EMAIL_TEST_RECIPIENT) {
+    if (!(0, misc_utils_1.getEnvVar)("EMAIL_TEST_RECIPIENT")) {
         res.status(500).json({
             error: new Error(`no EMAIL_TEST_RECIPIENT defined in env`).message,
         });
     }
     const mailOptions = {
         from: process.env.SMTP_FROM,
-        to: process.env.EMAIL_TEST_RECIPIENT,
+        to: (0, misc_utils_1.getEnvVar)("EMAIL_TEST_RECIPIENT"),
         subject: "test",
         html: "<h3>a test message</h3>",
     };

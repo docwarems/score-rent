@@ -52,6 +52,8 @@ Log files can be found at lambda / \<function\> / monitor / View CloudWatch logs
 
 ### via CLI
 
+set desired stage in log-group-name option
+
 ```
 aws logs filter-log-events   --region eu-central-1   --log-group-name "/aws/lambda/serverless-score-rent-prod-api"   --filter-pattern "ERROR"   --start-time $(date -d '2 day ago' +%s)000
 ```

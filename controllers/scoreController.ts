@@ -3,7 +3,7 @@ import { Score, ScoreType, IScore } from "../models/Score";
 import { Checkout, ICheckout } from "../models/Checkout";
 import jwt from "jsonwebtoken";
 require("dotenv").config();
-import { mailTransporter } from "../utils/misc-utils";
+import { getEnvVar, mailTransporter } from "../utils/misc-utils";
 import { v4 as uuidv4 } from "uuid";
 import i18next from "i18next";
 import {
@@ -134,7 +134,7 @@ module.exports.checkout_post = async (req: any, res: any) => {
                 await sendCheckoutConfirmationEmail(
                   user,
                   score,
-                  process.env.EMAIL_TEST_RECIPIENT
+                  getEnvVar("EMAIL_TEST_RECIPIENT")
                 );
               } catch (error) {
                 console.error(error);
@@ -269,7 +269,7 @@ module.exports.checkin_post = async (req: any, res: any) => {
                     await sendCheckinConfirmationEmail(
                       user,
                       score,
-                      process.env.EMAIL_TEST_RECIPIENT
+                      getEnvVar("EMAIL_TEST_RECIPIENT")
                     );
                   } catch (error) {
                     console.error(error);
@@ -827,7 +827,7 @@ module.exports.email_queue_stats_get = async (req: any, res: any) => {
 };
 
 module.exports.send_test_email_get = async (req: any, res: any) => {
-  if (!process.env.EMAIL_TEST_RECIPIENT) {
+  if (!getEnvVar("EMAIL_TEST_RECIPIENT")) {
     res.status(500).json({
       error: new Error(`no EMAIL_TEST_RECIPIENT defined in env`).message,
     });
@@ -835,7 +835,7 @@ module.exports.send_test_email_get = async (req: any, res: any) => {
 
   const mailOptions = {
     from: process.env.SMTP_FROM,
-    to: process.env.EMAIL_TEST_RECIPIENT as string,
+    to: getEnvVar("EMAIL_TEST_RECIPIENT"),
     subject: "test",
     html: "<h3>a test message</h3>",
   };
