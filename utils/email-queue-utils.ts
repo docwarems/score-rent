@@ -119,6 +119,19 @@ export class EmailQueueService {
         }
 
         try {
+          // Atomically mark as processing to prevent race conditions
+          const updateResult = await EmailQueue.updateOne(
+            { _id: emailDoc._id, status: "pending" },
+            { $set: { status: "processing" } }
+          );
+
+          // If no document was updated, another process is handling it
+          if (updateResult.modifiedCount === 0) {
+            console.log(`Email already being processed: ${emailDoc.subject}`);
+            skipped++;
+            continue;
+          }
+
           // Send email
           await mailTransporter.sendMail({
             from: emailDoc.from,
@@ -129,31 +142,38 @@ export class EmailQueueService {
             attachments: emailDoc.attachments || [],
           });
 
-          // Mark as sent
-          emailDoc.status = "sent";
-          emailDoc.sentAt = new Date();
-          await emailDoc.save();
+          // Mark as sent atomically
+          await EmailQueue.updateOne(
+            { _id: emailDoc._id },
+            { $set: { status: "sent", sentAt: new Date() } }
+          );
 
           sent++;
           console.log(`✓ Email sent: ${emailDoc.subject} to ${emailDoc.to}`);
         } catch (error: any) {
-          // Update attempts and error
-          emailDoc.attempts += 1;
-          emailDoc.error = error.message || String(error);
+          // Update attempts and error atomically
+          const currentAttempts = emailDoc.attempts + 1;
+          const updateData: any = {
+            $set: {
+              attempts: currentAttempts,
+              error: error.message || String(error),
+            },
+          };
 
           // Mark as failed if max attempts reached
-          if (emailDoc.attempts >= emailDoc.maxAttempts) {
-            emailDoc.status = "failed";
+          if (currentAttempts >= emailDoc.maxAttempts) {
+            updateData.$set.status = "failed";
             console.error(
               `✗ Email failed permanently: ${emailDoc.subject} to ${emailDoc.to}`
             );
           } else {
+            updateData.$set.status = "pending"; // Reset to pending for retry
             console.error(
-              `✗ Email attempt ${emailDoc.attempts} failed: ${emailDoc.subject}`
+              `✗ Email attempt ${currentAttempts} failed: ${emailDoc.subject}`
             );
           }
 
-          await emailDoc.save();
+          await EmailQueue.updateOne({ _id: emailDoc._id }, updateData);
           failed++;
         }
 

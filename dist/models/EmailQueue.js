@@ -31,7 +31,7 @@ const emailQueueSchema = new mongoose_1.default.Schema({
     },
     status: {
         type: String,
-        enum: ["pending", "sent", "failed"],
+        enum: ["pending", "processing", "sent", "failed"],
         default: "pending",
     },
     attempts: {
