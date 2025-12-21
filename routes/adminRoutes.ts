@@ -89,3 +89,4 @@ admin.get("/register-score-vue", (req: any, res: any) =>
 );
 
 admin.get("/email-queue-stats", scoreController.email_queue_stats_get);
+admin.get("/test-email", scoreController.send_test_email_get);

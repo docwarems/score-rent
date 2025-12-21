@@ -724,3 +724,21 @@ module.exports.email_queue_stats_get = (req, res) => __awaiter(void 0, void 0, v
         res.status(500).json({ error });
     }
 });
+module.exports.send_test_email_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!process.env.EMAIL_TEST_RECIPIENT) {
+        res.status(500).json({
+            error: new Error(`no EMAIL_TEST_RECIPIENT defined in env`).message,
+        });
+    }
+    const mailOptions = {
+        from: process.env.SMTP_FROM,
+        to: process.env.EMAIL_TEST_RECIPIENT,
+        subject: "test",
+        html: "<h3>a test message</h3>",
+    };
+    const result = yield email_queue_utils_1.emailQueueService.queueEmail(mailOptions);
+    if (misc_utils_1.mailTransporter.logger) {
+        console.log("Queued confirmation e-mail:", result);
+    }
+    res.redirect("/admin/email-queue-stats");
+});

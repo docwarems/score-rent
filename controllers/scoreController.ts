@@ -826,3 +826,26 @@ module.exports.email_queue_stats_get = async (req: any, res: any) => {
     res.status(500).json({ error });
   }
 };
+
+module.exports.send_test_email_get = async (req: any, res: any) => {
+  if (!process.env.EMAIL_TEST_RECIPIENT) {
+    res.status(500).json({
+      error: new Error(`no EMAIL_TEST_RECIPIENT defined in env`).message,
+    });
+  }
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM,
+    to: process.env.EMAIL_TEST_RECIPIENT as string,
+    subject: "test",
+    html: "<h3>a test message</h3>",
+  };
+
+  const result = await emailQueueService.queueEmail(mailOptions);
+
+  if (mailTransporter.logger) {
+    console.log("Queued confirmation e-mail:", result);
+  }
+
+  res.redirect("/admin/email-queue-stats");
+};

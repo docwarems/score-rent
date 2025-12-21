@@ -30,6 +30,9 @@
     <% } %>
     <h3>E-Mail Queue Stats</h3>
     <li><a href="/admin/email-queue-stats" class="w3-button w3-black">E-Mail queue stats</a></li>
+    <% if (process.env.STAGE !== 'prod') { %>
+      <li><a href="/admin/test-email" class="w3-button w3-red">Send test e-mail</a></li>
+    <% } %>
   <% } else { %>
     <li><a href="/user/checkouts" class="w3-button w3-black"><%= t('checkouts.show') %></a></li>
     <li><a href="#" onClick="document.querySelector('.divQrCode').style='display: block'" class="w3-button w3-black"><%= t('login.show.qrcode') %></a></li>
