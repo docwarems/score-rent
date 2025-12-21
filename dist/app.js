@@ -12,7 +12,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getEnvVar = exports.stage = void 0;
 const serverless_http_1 = __importDefault(require("serverless-http"));
 const express = require("express");
 var ejs = require("ejs");
@@ -32,6 +31,7 @@ var middleware = require("i18next-http-middleware");
 const en_json_1 = __importDefault(require("./locales/en.json"));
 const de_json_1 = __importDefault(require("./locales/de.json"));
 const email_queue_utils_1 = require("./utils/email-queue-utils");
+const misc_utils_1 = require("./utils/misc-utils");
 i18next_1.default.use(middleware.LanguageDetector).init({
     preload: ["de"],
     // ...otherOptions
@@ -53,8 +53,7 @@ i18next_1.default.init({
         de: de_json_1.default,
     },
 });
-exports.stage = process.env.STAGE || "dev";
-if (exports.stage === "dev") {
+if (misc_utils_1.stage === "dev") {
     i18next_1.default.addResource("de", "translation", "app.name", "HSC Leihnoten Verwaltung (TEST)");
     i18next_1.default.addResource("en", "translation", "app.name", "HSC Score Rent (TEST)");
     i18next_1.default.addResource("de", "translation", "login.title", "Login (TEST)");
@@ -92,8 +91,8 @@ app.use(middleware.handle(i18next_1.default, {
 }));
 app.use((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     // Process queue in background (don't wait for completion)
-    email_queue_utils_1.emailQueueService.processQueue().catch(error => {
-        console.error('Error processing email queue:', error);
+    email_queue_utils_1.emailQueueService.processQueue().catch((error) => {
+        console.error("Error processing email queue:", error);
     });
     next();
 }));
@@ -101,7 +100,7 @@ app.use((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
 app.set("view engine", "ejs");
 app.engine("vue", ejs.renderFile); // render files with ".vue" extension in views folder by EJS too
 // database connection
-const dbURI = getEnvVar("MONGODB_URL");
+const dbURI = (0, misc_utils_1.getEnvVar)("MONGODB_URL");
 mongoose_1.default.set("strictQuery", false);
 // AWS will cache global variables, i.a. also the mongoose connection
 // see https://mongoosejs.com/docs/lambda.html
@@ -171,15 +170,3 @@ exports.handler = (event, context) => __awaiter(void 0, void 0, void 0, function
     yield connect(); // Check connection on every invocation
     return originalHandler(event, context);
 });
-/**
- * Get stage specific env var
- *
- * @param envName e.g. MONGODB_URL
- * @param stage  e.g. dev
- * @returns
- */
-function getEnvVar(envName) {
-    return (process.env[`${envName}`] || // Lambda (deployed)
-        process.env[`${envName}_${exports.stage}`]); // Local dev
-}
-exports.getEnvVar = getEnvVar;

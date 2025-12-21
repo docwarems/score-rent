@@ -23,7 +23,8 @@ var middleware = require("i18next-http-middleware");
 import en from "./locales/en.json";
 import de from "./locales/de.json";
 import { User } from "./models/User";
-import { emailQueueService } from './utils/email-queue-utils';
+import { emailQueueService } from "./utils/email-queue-utils";
+import { stage, getEnvVar } from "./utils/misc-utils";
 
 i18next.use(middleware.LanguageDetector).init({
   preload: ["de"],
@@ -47,8 +48,6 @@ i18next.init({
     de,
   },
 });
-
-export const stage = process.env.STAGE || "dev";
 
 if (stage === "dev") {
   i18next.addResource(
@@ -102,8 +101,8 @@ app.use(
 
 app.use(async (req: any, res: any, next: any) => {
   // Process queue in background (don't wait for completion)
-  emailQueueService.processQueue().catch(error => {
-    console.error('Error processing email queue:', error);
+  emailQueueService.processQueue().catch((error) => {
+    console.error("Error processing email queue:", error);
   });
   next();
 });
@@ -194,15 +193,3 @@ exports.handler = async (event: any, context: any) => {
   await connect(); // Check connection on every invocation
   return originalHandler(event, context);
 };
-
-/**
- * Get stage specific env var
- *
- * @param envName e.g. MONGODB_URL
- * @param stage  e.g. dev
- * @returns
- */
-export function getEnvVar(envName: string) {
-  return (process.env[`${envName}`] || // Lambda (deployed)
-    process.env[`${envName}_${stage}`]) as string; // Local dev
-}

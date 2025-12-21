@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mailTransporter = void 0;
+exports.getEnvVar = exports.stage = exports.mailTransporter = void 0;
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const { SESClient, SendRawEmailCommand } = require("@aws-sdk/client-ses");
 const { defaultProvider } = require("@aws-sdk/credential-provider-node");
@@ -34,3 +34,16 @@ exports.mailTransporter.verify(function (error, success) {
         console.log("SMTP server is ready to take our messages");
     }
 });
+exports.stage = process.env.STAGE || "dev";
+/**
+ * Get stage specific env var
+ *
+ * @param envName e.g. MONGODB_URL
+ * @param stage  e.g. dev
+ * @returns
+ */
+function getEnvVar(envName) {
+    return (process.env[`${envName}`] || // Lambda (deployed)
+        process.env[`${envName}_${exports.stage}`]); // Local dev
+}
+exports.getEnvVar = getEnvVar;

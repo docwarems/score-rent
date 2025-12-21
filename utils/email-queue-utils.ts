@@ -1,5 +1,5 @@
 import { EmailQueue } from "../models/EmailQueue";
-import { mailTransporter } from "./misc-utils";
+import { mailTransporter, getEnvVar } from "./misc-utils";
 import mongoose from "mongoose";
 
 interface EmailOptions {
@@ -21,7 +21,7 @@ export class EmailQueueService {
   constructor(config?: RateLimitConfig) {
     // Default limits for typical personal email accounts (adjust to your limits)
     this.rateLimitConfig = config || {
-      maxEmailsPerHour: 20, // Adjust to your provider's limit
+      maxEmailsPerHour: 50, // Adjust to your provider's limit
       maxEmailsPerDay: 200, // Adjust to your provider's limit
     };
   }
@@ -207,6 +207,7 @@ export class EmailQueueService {
 
 // Export singleton instance
 export const emailQueueService = new EmailQueueService({
-  maxEmailsPerHour: parseInt(process.env.EMAIL_LIMIT_HOUR || "50"),
-  maxEmailsPerDay: parseInt(process.env.EMAIL_LIMIT_DAY || "200"),
+  // defaults are assumed 1&1 limits
+  maxEmailsPerHour: parseInt(getEnvVar("EMAIL_LIMIT_HOUR") || "20"),
+  maxEmailsPerDay: parseInt(getEnvVar("EMAIL_LIMIT_DAY") || "100"),
 });

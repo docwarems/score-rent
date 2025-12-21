@@ -2,8 +2,7 @@ import { User, Voice, voiceMap, incrementUserIdSuffix } from "../models/User";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import type { StringValue } from "ms";
-import { mailTransporter } from "../utils/misc-utils";
-import { getEnvVar } from "../app";
+import { mailTransporter, getEnvVar } from "../utils/misc-utils";
 require("dotenv").config();
 var QRCode = require("qrcode");
 

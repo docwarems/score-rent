@@ -35,6 +35,8 @@ functions:
       JWT_SECRET: ${env:JWT_SECRET}
       EMAIL_JWT_EXPIRY: ${env:EMAIL_JWT_EXPIRY_${self:provider.stage}}
       EMAIL_VERIFICATION_SECRET: ${env:EMAIL_VERIFICATION_SECRET}
+      EMAIL_LIMIT_HOUR: ${env:EMAIL_LIMIT_HOUR_${self:provider.stage}}
+      EMAIL_LIMIT_DAY: ${env:EMAIL_LIMIT_DAY_${self:provider.stage}}
       CYCLIC_URL: ${env:CYCLIC_URL_${self:provider.stage}}
       MANUAL_REGISTRATION_SECRET: ${env:MANUAL_REGISTRATION_SECRET}
 

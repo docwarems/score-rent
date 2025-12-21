@@ -16,7 +16,7 @@ class EmailQueueService {
     constructor(config) {
         // Default limits for typical personal email accounts (adjust to your limits)
         this.rateLimitConfig = config || {
-            maxEmailsPerHour: 20,
+            maxEmailsPerHour: 50,
             maxEmailsPerDay: 200, // Adjust to your provider's limit
         };
     }
@@ -176,6 +176,7 @@ class EmailQueueService {
 exports.EmailQueueService = EmailQueueService;
 // Export singleton instance
 exports.emailQueueService = new EmailQueueService({
-    maxEmailsPerHour: parseInt(process.env.EMAIL_LIMIT_HOUR || "50"),
-    maxEmailsPerDay: parseInt(process.env.EMAIL_LIMIT_DAY || "200"),
+    // defaults are assumed 1&1 limits
+    maxEmailsPerHour: parseInt((0, misc_utils_1.getEnvVar)("EMAIL_LIMIT_HOUR") || "20"),
+    maxEmailsPerDay: parseInt((0, misc_utils_1.getEnvVar)("EMAIL_LIMIT_DAY") || "100"),
 });

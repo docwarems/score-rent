@@ -3,8 +3,7 @@ const { isEmail } = require("validator");
 import bcrypt from "bcrypt";
 import jwt, { sign } from "jsonwebtoken";
 import type { StringValue } from "ms";
-import { mailTransporter } from "../utils/misc-utils";
-import { stage, getEnvVar } from "../app";
+import { mailTransporter, stage, getEnvVar } from "../utils/misc-utils";
 require("dotenv").config();
 
 // the adding of a static User Method from the JS code had to be rewritten according to

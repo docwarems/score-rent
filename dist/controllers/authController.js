@@ -16,7 +16,6 @@ const User_1 = require("../models/User");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const uuid_1 = require("uuid");
 const misc_utils_1 = require("../utils/misc-utils");
-const app_1 = require("../app");
 require("dotenv").config();
 var QRCode = require("qrcode");
 const handleSaveErrors = (err, type) => {
@@ -439,7 +438,7 @@ module.exports.password_forgotten_post = (req, res) => __awaiter(void 0, void 0,
 });
 function sendPasswordResetEmail(user) {
     return __awaiter(this, void 0, void 0, function* () {
-        const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.EMAIL_VERIFICATION_SECRET, { expiresIn: ((0, app_1.getEnvVar)("EMAIL_JWT_EXPIRY") || "24h") });
+        const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.EMAIL_VERIFICATION_SECRET, { expiresIn: ((0, misc_utils_1.getEnvVar)("EMAIL_JWT_EXPIRY") || "24h") });
         const resetPasswordUrl = `${process.env.CYCLIC_URL}/verify-password-reset-email?token=${token}`;
         const email = user.email;
         const subject = "Passwort Zurücksetzen";
