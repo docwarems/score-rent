@@ -1,5 +1,5 @@
-import { EmailQueue } from '../models/EmailQueue';
-import { mailTransporter } from './misc-utils';
+import { EmailQueue } from "../models/EmailQueue";
+import { mailTransporter } from "./misc-utils";
 import mongoose from "mongoose";
 
 interface EmailOptions {
@@ -21,8 +21,8 @@ export class EmailQueueService {
   constructor(config?: RateLimitConfig) {
     // Default limits for typical personal email accounts (adjust to your limits)
     this.rateLimitConfig = config || {
-      maxEmailsPerHour: 50,    // Adjust to your provider's limit
-      maxEmailsPerDay: 200,     // Adjust to your provider's limit
+      maxEmailsPerHour: 20, // Adjust to your provider's limit
+      maxEmailsPerDay: 200, // Adjust to your provider's limit
     };
   }
 
@@ -35,13 +35,15 @@ export class EmailQueueService {
         to: emailOptions.to,
         subject: emailOptions.subject,
         html: emailOptions.html,
-        text: emailOptions.text || '',
+        text: emailOptions.text || "",
         from: emailOptions.from || process.env.SMTP_FROM,
-        status: 'pending',
+        status: "pending",
       });
-      console.log(`Email queued: ${emailOptions.subject} to ${emailOptions.to}`);
+      console.log(
+        `Email queued: ${emailOptions.subject} to ${emailOptions.to}`
+      );
     } catch (error) {
-      console.error('Error queueing email:', error);
+      console.error("Error queueing email:", error);
       throw error;
     }
   }
@@ -56,17 +58,19 @@ export class EmailQueueService {
 
     // Count emails sent in last hour
     const sentLastHour = await EmailQueue.countDocuments({
-      status: 'sent',
+      status: "sent",
       sentAt: { $gte: oneHourAgo },
     });
 
     // Count emails sent in last 24 hours
     const sentLastDay = await EmailQueue.countDocuments({
-      status: 'sent',
+      status: "sent",
       sentAt: { $gte: oneDayAgo },
     });
 
-    console.log(`Rate check: ${sentLastHour}/${this.rateLimitConfig.maxEmailsPerHour} per hour, ${sentLastDay}/${this.rateLimitConfig.maxEmailsPerDay} per day`);
+    console.log(
+      `Rate check: ${sentLastHour}/${this.rateLimitConfig.maxEmailsPerHour} per hour, ${sentLastDay}/${this.rateLimitConfig.maxEmailsPerDay} per day`
+    );
 
     return (
       sentLastHour < this.rateLimitConfig.maxEmailsPerHour &&
@@ -77,7 +81,11 @@ export class EmailQueueService {
   /**
    * Process email queue - send pending emails if within limits
    */
-  async processQueue(): Promise<{ sent: number; failed: number; skipped: number }> {
+  async processQueue(): Promise<{
+    sent: number;
+    failed: number;
+    skipped: number;
+  }> {
     let sent = 0;
     let failed = 0;
     let skipped = 0;
@@ -85,7 +93,7 @@ export class EmailQueueService {
     try {
       // Get pending emails that are due
       const pendingEmails = await EmailQueue.find({
-        status: 'pending',
+        status: "pending",
         scheduledFor: { $lte: new Date() },
         attempts: { $lt: 3 }, // Or whatever your maxAttempts default is
       })
@@ -101,7 +109,7 @@ export class EmailQueueService {
       for (const emailDoc of pendingEmails) {
         // Check rate limits before each send
         if (!(await this.canSendEmail())) {
-          console.log('Rate limit reached, stopping queue processing');
+          console.log("Rate limit reached, stopping queue processing");
           skipped = pendingEmails.length - sent - failed;
           break;
         }
@@ -117,7 +125,7 @@ export class EmailQueueService {
           });
 
           // Mark as sent
-          emailDoc.status = 'sent';
+          emailDoc.status = "sent";
           emailDoc.sentAt = new Date();
           await emailDoc.save();
 
@@ -130,10 +138,14 @@ export class EmailQueueService {
 
           // Mark as failed if max attempts reached
           if (emailDoc.attempts >= emailDoc.maxAttempts) {
-            emailDoc.status = 'failed';
-            console.error(`✗ Email failed permanently: ${emailDoc.subject} to ${emailDoc.to}`);
+            emailDoc.status = "failed";
+            console.error(
+              `✗ Email failed permanently: ${emailDoc.subject} to ${emailDoc.to}`
+            );
           } else {
-            console.error(`✗ Email attempt ${emailDoc.attempts} failed: ${emailDoc.subject}`);
+            console.error(
+              `✗ Email attempt ${emailDoc.attempts} failed: ${emailDoc.subject}`
+            );
           }
 
           await emailDoc.save();
@@ -141,10 +153,10 @@ export class EmailQueueService {
         }
 
         // Small delay between emails to avoid triggering spam filters
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     } catch (error) {
-      console.error('Error processing email queue:', error);
+      console.error("Error processing email queue:", error);
     }
 
     return { sent, failed, skipped };
@@ -154,22 +166,24 @@ export class EmailQueueService {
    * Get queue statistics
    */
   async getQueueStats() {
-    const pending = await EmailQueue.countDocuments({ status: 'pending' });
-    const sent = await EmailQueue.countDocuments({ status: 'sent' });
-    const failed = await EmailQueue.countDocuments({ status: 'failed' });
+    const pending = await EmailQueue.countDocuments({ status: "pending" });
+    const sent = await EmailQueue.countDocuments({ status: "sent" });
+    const failed = await EmailQueue.countDocuments({ status: "failed" });
     const total = await EmailQueue.countDocuments();
 
-    const oldestPending = await EmailQueue.findOne({ status: 'pending' })
+    const oldestPending = await EmailQueue.findOne({ status: "pending" })
       .sort({ createdAt: 1 })
-      .select('createdAt');
+      .select("createdAt");
 
     return {
       pending,
       sent,
       failed,
       total,
-      oldestPendingAge: oldestPending 
-        ? Math.floor((Date.now() - oldestPending.createdAt.getTime()) / 1000 / 60) 
+      oldestPendingAge: oldestPending
+        ? Math.floor(
+            (Date.now() - oldestPending.createdAt.getTime()) / 1000 / 60
+          )
         : 0, // minutes
     };
   }
@@ -182,7 +196,7 @@ export class EmailQueueService {
     cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
     const result = await EmailQueue.deleteMany({
-      status: 'sent',
+      status: "sent",
       sentAt: { $lt: cutoffDate },
     });
 
@@ -193,6 +207,6 @@ export class EmailQueueService {
 
 // Export singleton instance
 export const emailQueueService = new EmailQueueService({
-  maxEmailsPerHour: parseInt(process.env.EMAIL_LIMIT_HOUR || '50'),
-  maxEmailsPerDay: parseInt(process.env.EMAIL_LIMIT_DAY || '200'),
+  maxEmailsPerHour: parseInt(process.env.EMAIL_LIMIT_HOUR || "50"),
+  maxEmailsPerDay: parseInt(process.env.EMAIL_LIMIT_DAY || "200"),
 });
