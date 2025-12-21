@@ -150,8 +150,9 @@ class EmailQueueService {
     }
     /**
      * Get queue statistics
+     * @param verbose - If true, include detailed list of pending emails
      */
-    getQueueStats() {
+    getQueueStats(verbose = false) {
         return __awaiter(this, void 0, void 0, function* () {
             const pending = yield EmailQueue_1.EmailQueue.countDocuments({ status: "pending" });
             const sent = yield EmailQueue_1.EmailQueue.countDocuments({ status: "sent" });
@@ -172,23 +173,64 @@ class EmailQueueService {
                 status: "sent",
                 sentAt: { $gte: oneDayAgo },
             });
-            return {
-                pending,
+            // Calculate when next email can be sent
+            let nextAvailableIn = null;
+            if (sentLastHour >= this.rateLimitConfig.maxEmailsPerHour) {
+                // Find oldest email in the last hour
+                const oldestInHour = yield EmailQueue_1.EmailQueue.findOne({
+                    status: "sent",
+                    sentAt: { $gte: oneHourAgo },
+                })
+                    .sort({ sentAt: 1 })
+                    .select("sentAt");
+                if (oldestInHour === null || oldestInHour === void 0 ? void 0 : oldestInHour.sentAt) {
+                    const nextAvailableTime = new Date(oldestInHour.sentAt.getTime() + 60 * 60 * 1000);
+                    const minutesUntilAvailable = Math.ceil((nextAvailableTime.getTime() - now.getTime()) / 1000 / 60);
+                    nextAvailableIn = {
+                        minutes: minutesUntilAvailable,
+                        reason: "hourly limit reached",
+                    };
+                }
+            }
+            else if (sentLastDay >= this.rateLimitConfig.maxEmailsPerDay) {
+                // Find oldest email in the last day
+                const oldestInDay = yield EmailQueue_1.EmailQueue.findOne({
+                    status: "sent",
+                    sentAt: { $gte: oneDayAgo },
+                })
+                    .sort({ sentAt: 1 })
+                    .select("sentAt");
+                if (oldestInDay && oldestInDay.sentAt) {
+                    const nextAvailableTime = new Date(oldestInDay.sentAt.getTime() + 24 * 60 * 60 * 1000);
+                    const minutesUntilAvailable = Math.ceil((nextAvailableTime.getTime() - now.getTime()) / 1000 / 60);
+                    nextAvailableIn = {
+                        minutes: minutesUntilAvailable,
+                        reason: "daily limit reached",
+                    };
+                }
+            }
+            // Get pending emails details if verbose
+            let pendingEmails;
+            if (verbose) {
+                pendingEmails = yield EmailQueue_1.EmailQueue.find({ status: "pending" })
+                    .sort({ createdAt: 1 })
+                    .select("to subject createdAt")
+                    .lean();
+            }
+            return Object.assign({ pending,
                 sent,
                 failed,
-                total,
-                oldestPendingAge: oldestPending
+                total, oldestPendingAge: oldestPending
                     ? Math.floor((Date.now() - oldestPending.createdAt.getTime()) / 1000 / 60)
-                    : 0,
-                rateLimit: {
+                    : 0, rateLimit: {
                     sentLastHour,
                     maxEmailsPerHour: this.rateLimitConfig.maxEmailsPerHour,
                     sentLastDay,
                     maxEmailsPerDay: this.rateLimitConfig.maxEmailsPerDay,
                     canSendMore: sentLastHour < this.rateLimitConfig.maxEmailsPerHour &&
                         sentLastDay < this.rateLimitConfig.maxEmailsPerDay,
-                },
-            };
+                    nextAvailableIn,
+                } }, (pendingEmails && { pendingEmails }));
         });
     }
     /**

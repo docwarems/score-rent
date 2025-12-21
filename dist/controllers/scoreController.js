@@ -715,7 +715,8 @@ module.exports.users_vue_post = (req, res) => __awaiter(void 0, void 0, void 0, 
 });
 module.exports.email_queue_stats_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const stats = yield email_queue_utils_1.emailQueueService.getQueueStats();
+        const verbose = req.query.verbose === "1";
+        const stats = yield email_queue_utils_1.emailQueueService.getQueueStats(verbose);
         const canSend = yield email_queue_utils_1.emailQueueService.canSendEmail();
         res.json(Object.assign(Object.assign({}, stats), { canSendMore: canSend }));
     }

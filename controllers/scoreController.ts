@@ -814,7 +814,8 @@ module.exports.users_vue_post = async (req: any, res: any) => {
 
 module.exports.email_queue_stats_get = async (req: any, res: any) => {
   try {
-    const stats = await emailQueueService.getQueueStats();
+    const verbose = req.query.verbose === "1";
+    const stats = await emailQueueService.getQueueStats(verbose);
     const canSend = await emailQueueService.canSendEmail();
 
     res.json({

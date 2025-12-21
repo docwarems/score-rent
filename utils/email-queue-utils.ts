@@ -189,8 +189,9 @@ export class EmailQueueService {
 
   /**
    * Get queue statistics
+   * @param verbose - If true, include detailed list of pending emails
    */
-  async getQueueStats() {
+  async getQueueStats(verbose: boolean = false) {
     const pending = await EmailQueue.countDocuments({ status: "pending" });
     const sent = await EmailQueue.countDocuments({ status: "sent" });
     const failed = await EmailQueue.countDocuments({ status: "failed" });
@@ -215,6 +216,62 @@ export class EmailQueueService {
       sentAt: { $gte: oneDayAgo },
     });
 
+    // Calculate when next email can be sent
+    let nextAvailableIn: { minutes: number; reason: string } | null = null;
+
+    if (sentLastHour >= this.rateLimitConfig.maxEmailsPerHour) {
+      // Find oldest email in the last hour
+      const oldestInHour = await EmailQueue.findOne({
+        status: "sent",
+        sentAt: { $gte: oneHourAgo },
+      })
+        .sort({ sentAt: 1 })
+        .select("sentAt");
+
+      if (oldestInHour?.sentAt) {
+        const nextAvailableTime = new Date(
+          oldestInHour.sentAt.getTime() + 60 * 60 * 1000
+        );
+        const minutesUntilAvailable = Math.ceil(
+          (nextAvailableTime.getTime() - now.getTime()) / 1000 / 60
+        );
+        nextAvailableIn = {
+          minutes: minutesUntilAvailable,
+          reason: "hourly limit reached",
+        };
+      }
+    } else if (sentLastDay >= this.rateLimitConfig.maxEmailsPerDay) {
+      // Find oldest email in the last day
+      const oldestInDay = await EmailQueue.findOne({
+        status: "sent",
+        sentAt: { $gte: oneDayAgo },
+      })
+        .sort({ sentAt: 1 })
+        .select("sentAt");
+
+      if (oldestInDay && oldestInDay.sentAt) {
+        const nextAvailableTime = new Date(
+          oldestInDay.sentAt.getTime() + 24 * 60 * 60 * 1000
+        );
+        const minutesUntilAvailable = Math.ceil(
+          (nextAvailableTime.getTime() - now.getTime()) / 1000 / 60
+        );
+        nextAvailableIn = {
+          minutes: minutesUntilAvailable,
+          reason: "daily limit reached",
+        };
+      }
+    }
+
+    // Get pending emails details if verbose
+    let pendingEmails: any[] | undefined;
+    if (verbose) {
+      pendingEmails = await EmailQueue.find({ status: "pending" })
+        .sort({ createdAt: 1 })
+        .select("to subject createdAt")
+        .lean();
+    }
+
     return {
       pending,
       sent,
@@ -233,7 +290,9 @@ export class EmailQueueService {
         canSendMore:
           sentLastHour < this.rateLimitConfig.maxEmailsPerHour &&
           sentLastDay < this.rateLimitConfig.maxEmailsPerDay,
+        nextAvailableIn,
       },
+      ...(pendingEmails && { pendingEmails }),
     };
   }
 
