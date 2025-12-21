@@ -16,17 +16,3 @@ module.exports.checkouts_post = async (req: any, res: any) => {
   const { signature, checkedOut } = req.body;
   await checkouts(res, signature, checkedOut, admin, userId);
 };
-
-module.exports.email_queue_stats_get = async (req: any, res: any) => {
-  try {
-    const stats = await emailQueueService.getQueueStats();
-    const canSend = await emailQueueService.canSendEmail();
-
-    res.json({
-      ...stats,
-      canSendMore: canSend,
-    });
-  } catch (error) {
-    res.status(500).json({ error });
-  }
-};

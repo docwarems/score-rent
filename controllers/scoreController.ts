@@ -11,7 +11,7 @@ import {
   SIGNATURE_ALL,
   getScoreTypeMap,
 } from "../utils/score-utils";
-import { emailQueueService } from '../utils/email-queue-utils';
+import { emailQueueService } from "../utils/email-queue-utils";
 
 const handleSaveErrors = (err: any, type: string | undefined) => {
   console.log(err.message, err.code);
@@ -811,4 +811,18 @@ module.exports.users_vue_post = async (req: any, res: any) => {
       active: u.active ?? true,
     })),
   });
+};
+
+module.exports.email_queue_stats_get = async (req: any, res: any) => {
+  try {
+    const stats = await emailQueueService.getQueueStats();
+    const canSend = await emailQueueService.canSendEmail();
+
+    res.json({
+      ...stats,
+      canSendMore: canSend,
+    });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
 };

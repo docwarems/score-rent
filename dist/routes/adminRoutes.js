@@ -75,3 +75,4 @@ exports.admin.post("/checkouts-vue", scoreController.checkouts_vue_post);
 exports.admin.get("/users-vue", scoreController.users_vue_get);
 exports.admin.post("/users-vue", scoreController.users_vue_post);
 exports.admin.get("/register-score-vue", (req, res) => res.render("register-score-vue"));
+exports.admin.get("/email-queue-stats", scoreController.email_queue_stats_get);

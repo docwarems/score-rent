@@ -714,3 +714,13 @@ module.exports.users_vue_post = (req, res) => __awaiter(void 0, void 0, void 0, 
         }),
     });
 });
+module.exports.email_queue_stats_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const stats = yield email_queue_utils_1.emailQueueService.getQueueStats();
+        const canSend = yield email_queue_utils_1.emailQueueService.canSendEmail();
+        res.json(Object.assign(Object.assign({}, stats), { canSendMore: canSend }));
+    }
+    catch (error) {
+        res.status(500).json({ error });
+    }
+});

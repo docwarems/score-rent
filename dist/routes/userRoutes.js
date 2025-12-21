@@ -24,4 +24,3 @@ const signatures = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.user.get("/checkouts", userController.checkouts_get);
 exports.user.post("/checkouts", userController.checkouts_post);
-exports.user.get("/email-queue-stats", requireAuth, requireAdmin, userController.email_queue_stats_get);

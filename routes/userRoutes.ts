@@ -21,10 +21,3 @@ const signatures = async () => {
 
 user.get("/checkouts", userController.checkouts_get);
 user.post("/checkouts", userController.checkouts_post);
-
-user.get(
-  "/email-queue-stats",
-  requireAuth,
-  requireAdmin,
-  userController.email_queue_stats_get
-);
