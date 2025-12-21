@@ -18,6 +18,7 @@ const { isEmail } = require("validator");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const misc_utils_1 = require("../utils/misc-utils");
+const email_queue_utils_1 = require("../utils/email-queue-utils");
 require("dotenv").config();
 // the adding of a static User Method from the JS code had to be rewritten according to
 // https://mongoosejs.com/docs/typescript/statics-and-methods.html
@@ -201,7 +202,7 @@ function sendVerificationEmail(user) {
   Bitte klicke auf den folgenden Link um die E-Mail Adresse zu bestätigen: <a href="${verificationUrl}">${verificationUrl}</a>
   `;
         const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
-        const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions); // we must not use queue because delayed sending is not acceptable
+        const result = yield email_queue_utils_1.emailQueueService.queueEmail(mailOptions);
         if (misc_utils_1.mailTransporter.logger) {
             console.log("Verification e-mail:", result);
         }

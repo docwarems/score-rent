@@ -16,6 +16,7 @@ const User_1 = require("../models/User");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const uuid_1 = require("uuid");
 const misc_utils_1 = require("../utils/misc-utils");
+const email_queue_utils_1 = require("../utils/email-queue-utils");
 require("dotenv").config();
 var QRCode = require("qrcode");
 const handleSaveErrors = (err, type) => {
@@ -172,7 +173,7 @@ const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void
             // attachments: [{ path: url }, { path: "/tmp/hsc-noten.espass" }],
             attachments: [{ path: url }],
         };
-        const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions); // we must not use queue because delayed sending is not acceptable
+        const result = yield email_queue_utils_1.emailQueueService.queueEmail(mailOptions);
         if (misc_utils_1.mailTransporter.logger) {
             console.log("Registration successful e-mail:", result);
         }
@@ -448,7 +449,7 @@ function sendPasswordResetEmail(user) {
   `;
         const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
         try {
-            const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions); // we must not use queue because delayed sending is not acceptable
+            const result = yield email_queue_utils_1.emailQueueService.queueEmail(mailOptions);
             if (misc_utils_1.mailTransporter.logger) {
                 console.log("Password reset e-mail:", result);
             }

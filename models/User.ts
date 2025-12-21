@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import jwt, { sign } from "jsonwebtoken";
 import type { StringValue } from "ms";
 import { mailTransporter, stage, getEnvVar } from "../utils/misc-utils";
+import { emailQueueService } from "../utils/email-queue-utils";
 require("dotenv").config();
 
 // the adding of a static User Method from the JS code had to be rewritten according to
@@ -231,7 +232,7 @@ async function sendVerificationEmail(user: any) {
   `;
   const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
 
-  const result = await mailTransporter.sendMail(mailOptions); // we must not use queue because delayed sending is not acceptable
+  const result = await emailQueueService.queueEmail(mailOptions);
   if (mailTransporter.logger) {
     console.log("Verification e-mail:", result);
   }

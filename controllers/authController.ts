@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import type { StringValue } from "ms";
 import { mailTransporter, getEnvVar } from "../utils/misc-utils";
+import { emailQueueService } from "../utils/email-queue-utils";
 require("dotenv").config();
 var QRCode = require("qrcode");
 
@@ -187,7 +188,7 @@ const sendVerificationSuccessfulEmail = async (user: any) => {
       attachments: [{ path: url }],
     };
 
-    const result = await mailTransporter.sendMail(mailOptions); // we must not use queue because delayed sending is not acceptable
+    const result = await emailQueueService.queueEmail(mailOptions);
     if (mailTransporter.logger) {
       console.log("Registration successful e-mail:", result);
     }
@@ -523,7 +524,7 @@ async function sendPasswordResetEmail(user: any) {
   `;
   const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
   try {
-    const result = await mailTransporter.sendMail(mailOptions); // we must not use queue because delayed sending is not acceptable
+    const result = await emailQueueService.queueEmail(mailOptions);
     if (mailTransporter.logger) {
       console.log("Password reset e-mail:", result);
     }
