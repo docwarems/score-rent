@@ -187,7 +187,7 @@ const sendVerificationSuccessfulEmail = async (user: any) => {
       attachments: [{ path: url }],
     };
 
-    const result = await mailTransporter.sendMail(mailOptions);
+    const result = await mailTransporter.sendMail(mailOptions); // we must not use queue because delayed sending is not acceptable
     if (mailTransporter.logger) {
       console.log("Registration successful e-mail:", result);
     }
@@ -523,7 +523,7 @@ async function sendPasswordResetEmail(user: any) {
   `;
   const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
   try {
-    const result = await mailTransporter.sendMail(mailOptions);
+    const result = await mailTransporter.sendMail(mailOptions); // we must not use queue because delayed sending is not acceptable
     if (mailTransporter.logger) {
       console.log("Password reset e-mail:", result);
     }

@@ -172,7 +172,7 @@ const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void
             // attachments: [{ path: url }, { path: "/tmp/hsc-noten.espass" }],
             attachments: [{ path: url }],
         };
-        const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions);
+        const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions); // we must not use queue because delayed sending is not acceptable
         if (misc_utils_1.mailTransporter.logger) {
             console.log("Registration successful e-mail:", result);
         }
@@ -448,7 +448,7 @@ function sendPasswordResetEmail(user) {
   `;
         const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
         try {
-            const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions);
+            const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions); // we must not use queue because delayed sending is not acceptable
             if (misc_utils_1.mailTransporter.logger) {
                 console.log("Password reset e-mail:", result);
             }

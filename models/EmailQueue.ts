@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const emailQueueSchema = new mongoose.Schema({
   to: {
@@ -20,10 +20,14 @@ const emailQueueSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  attachments: {
+    type: [mongoose.Schema.Types.Mixed],
+    default: [],
+  },
   status: {
     type: String,
-    enum: ['pending', 'sent', 'failed'],
-    default: 'pending',
+    enum: ["pending", "sent", "failed"],
+    default: "pending",
   },
   attempts: {
     type: Number,
@@ -52,4 +56,4 @@ const emailQueueSchema = new mongoose.Schema({
 // Index for efficient querying
 emailQueueSchema.index({ status: 1, scheduledFor: 1 });
 
-export const EmailQueue = mongoose.model('EmailQueue', emailQueueSchema);
+export const EmailQueue = mongoose.model("EmailQueue", emailQueueSchema);

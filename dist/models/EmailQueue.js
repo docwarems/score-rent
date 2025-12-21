@@ -25,10 +25,14 @@ const emailQueueSchema = new mongoose_1.default.Schema({
         type: String,
         required: true,
     },
+    attachments: {
+        type: [mongoose_1.default.Schema.Types.Mixed],
+        default: [],
+    },
     status: {
         type: String,
-        enum: ['pending', 'sent', 'failed'],
-        default: 'pending',
+        enum: ["pending", "sent", "failed"],
+        default: "pending",
     },
     attempts: {
         type: Number,
@@ -55,4 +59,4 @@ const emailQueueSchema = new mongoose_1.default.Schema({
 });
 // Index for efficient querying
 emailQueueSchema.index({ status: 1, scheduledFor: 1 });
-exports.EmailQueue = mongoose_1.default.model('EmailQueue', emailQueueSchema);
+exports.EmailQueue = mongoose_1.default.model("EmailQueue", emailQueueSchema);

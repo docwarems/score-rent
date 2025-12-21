@@ -559,8 +559,7 @@ const sendConfirmationEmail = (user, subject, html, testRecipient) => __awaiter(
             subject,
             html,
         };
-        // const result = await mailTransporter.sendMail(mailOptions);
-        const result = yield email_queue_utils_1.emailQueueService.queueEmail(mailOptions);
+        const result = yield email_queue_utils_1.emailQueueService.queueEmail(mailOptions); // we use queue because delayed sending is no problem
         if (misc_utils_1.mailTransporter.logger) {
             console.log("Queued confirmation e-mail:", result);
         }

@@ -32,6 +32,7 @@ class EmailQueueService {
                     html: emailOptions.html,
                     text: emailOptions.text || "",
                     from: emailOptions.from || process.env.SMTP_FROM,
+                    attachments: emailOptions.attachments || [],
                     status: "pending",
                 });
                 console.log(`Email queued: ${emailOptions.subject} to ${emailOptions.to}`);
@@ -101,6 +102,7 @@ class EmailQueueService {
                             subject: emailDoc.subject,
                             html: emailDoc.html,
                             text: emailDoc.text,
+                            attachments: emailDoc.attachments || [],
                         });
                         // Mark as sent
                         emailDoc.status = "sent";

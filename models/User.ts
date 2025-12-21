@@ -231,7 +231,7 @@ async function sendVerificationEmail(user: any) {
   `;
   const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
 
-  const result = await mailTransporter.sendMail(mailOptions);
+  const result = await mailTransporter.sendMail(mailOptions); // we must not use queue because delayed sending is not acceptable
   if (mailTransporter.logger) {
     console.log("Verification e-mail:", result);
   }

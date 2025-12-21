@@ -201,7 +201,7 @@ function sendVerificationEmail(user) {
   Bitte klicke auf den folgenden Link um die E-Mail Adresse zu bestätigen: <a href="${verificationUrl}">${verificationUrl}</a>
   `;
         const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
-        const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions);
+        const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions); // we must not use queue because delayed sending is not acceptable
         if (misc_utils_1.mailTransporter.logger) {
             console.log("Verification e-mail:", result);
         }

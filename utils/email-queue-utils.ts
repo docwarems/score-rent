@@ -8,6 +8,9 @@ interface EmailOptions {
   html: string;
   text?: string;
   from?: string;
+  attachments?: Array<
+    { path: string } | { filename: string; content: string | Buffer }
+  >;
 }
 
 interface RateLimitConfig {
@@ -37,6 +40,7 @@ export class EmailQueueService {
         html: emailOptions.html,
         text: emailOptions.text || "",
         from: emailOptions.from || process.env.SMTP_FROM,
+        attachments: emailOptions.attachments || [],
         status: "pending",
       });
       console.log(
@@ -122,6 +126,7 @@ export class EmailQueueService {
             subject: emailDoc.subject,
             html: emailDoc.html,
             text: emailDoc.text,
+            attachments: emailDoc.attachments || [],
           });
 
           // Mark as sent
