@@ -33,6 +33,7 @@ class EmailQueueService {
                     text: emailOptions.text || "",
                     from: emailOptions.from || process.env.SMTP_FROM,
                     attachments: emailOptions.attachments || [],
+                    priority: emailOptions.priority || false,
                     status: "pending",
                 });
                 console.log(`Email queued: ${emailOptions.subject} to ${emailOptions.to}`);
@@ -81,7 +82,7 @@ class EmailQueueService {
                     scheduledFor: { $lte: new Date() },
                     attempts: { $lt: 3 }, // Or whatever your maxAttempts default is
                 })
-                    .sort({ createdAt: 1 })
+                    .sort({ priority: -1, createdAt: 1 }) // Priority emails first, then oldest first
                     .limit(10); // Process max 10 emails at a time
                 if (pendingEmails.length === 0) {
                     return { sent, failed, skipped };
@@ -212,10 +213,12 @@ class EmailQueueService {
             // Get pending emails details if verbose
             let pendingEmails;
             if (verbose) {
-                pendingEmails = yield EmailQueue_1.EmailQueue.find({ status: "pending" })
-                    .sort({ createdAt: 1 })
-                    .select("to subject createdAt")
+                const emails = yield EmailQueue_1.EmailQueue.find({ status: "pending" })
+                    .sort({ priority: -1, createdAt: 1 })
+                    .select("to subject createdAt priority")
                     .lean();
+                // Only include priority field if true (cleaner JSON output)
+                pendingEmails = emails.map((email) => (Object.assign({ to: email.to, subject: email.subject, createdAt: email.createdAt }, (email.priority && { priority: true }))));
             }
             return Object.assign({ pending,
                 sent,

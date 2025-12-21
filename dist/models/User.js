@@ -201,7 +201,13 @@ function sendVerificationEmail(user) {
   Du hast diese Mail erhalten weil du dich bei der Notenverwaltung des Hans-Sachs-Chor registriert hast.<br>
   Bitte klicke auf den folgenden Link um die E-Mail Adresse zu bestätigen: <a href="${verificationUrl}">${verificationUrl}</a>
   `;
-        const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
+        const mailOptions = {
+            from: process.env.SMTP_FROM,
+            to: email,
+            subject,
+            html,
+            priority: true,
+        };
         const result = yield email_queue_utils_1.emailQueueService.queueEmail(mailOptions);
         if (misc_utils_1.mailTransporter.logger) {
             console.log("Verification e-mail:", result);
