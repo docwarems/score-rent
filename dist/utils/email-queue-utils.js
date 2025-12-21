@@ -160,6 +160,18 @@ class EmailQueueService {
             const oldestPending = yield EmailQueue_1.EmailQueue.findOne({ status: "pending" })
                 .sort({ createdAt: 1 })
                 .select("createdAt");
+            // Get rate limit info
+            const now = new Date();
+            const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+            const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            const sentLastHour = yield EmailQueue_1.EmailQueue.countDocuments({
+                status: "sent",
+                sentAt: { $gte: oneHourAgo },
+            });
+            const sentLastDay = yield EmailQueue_1.EmailQueue.countDocuments({
+                status: "sent",
+                sentAt: { $gte: oneDayAgo },
+            });
             return {
                 pending,
                 sent,
@@ -167,7 +179,15 @@ class EmailQueueService {
                 total,
                 oldestPendingAge: oldestPending
                     ? Math.floor((Date.now() - oldestPending.createdAt.getTime()) / 1000 / 60)
-                    : 0, // minutes
+                    : 0,
+                rateLimit: {
+                    sentLastHour,
+                    maxEmailsPerHour: this.rateLimitConfig.maxEmailsPerHour,
+                    sentLastDay,
+                    maxEmailsPerDay: this.rateLimitConfig.maxEmailsPerDay,
+                    canSendMore: sentLastHour < this.rateLimitConfig.maxEmailsPerHour &&
+                        sentLastDay < this.rateLimitConfig.maxEmailsPerDay,
+                },
             };
         });
     }
