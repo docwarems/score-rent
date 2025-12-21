@@ -76,6 +76,12 @@ class EmailQueueService {
             let failed = 0;
             let skipped = 0;
             try {
+                // First, reset any stuck "processing" emails (older than 5 minutes)
+                const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+                yield EmailQueue_1.EmailQueue.updateMany({
+                    status: "processing",
+                    createdAt: { $lt: fiveMinutesAgo },
+                }, { $set: { status: "pending" } });
                 // Get pending emails that are due
                 const pendingEmails = yield EmailQueue_1.EmailQueue.find({
                     status: "pending",
