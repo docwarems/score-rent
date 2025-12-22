@@ -48,6 +48,14 @@ export class EmailQueueService {
       console.log(
         `Email queued: ${emailOptions.subject} to ${emailOptions.to}`
       );
+
+      // Try to send immediately if within rate limits
+      if (await this.canSendEmail()) {
+        console.log("Attempting immediate send...");
+        this.processQueue().catch((err) =>
+          console.error("Background queue processing error:", err)
+        );
+      }
     } catch (error) {
       console.error("Error queueing email:", error);
       throw error;
