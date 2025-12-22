@@ -58,6 +58,12 @@ set desired stage in log-group-name option
 aws logs filter-log-events   --region eu-central-1   --log-group-name "/aws/lambda/serverless-score-rent-prod-api"   --filter-pattern "ERROR"   --start-time $(date -d '2 day ago' +%s)000
 ```
 
+#### tail (requires aws client version 2)
+
+```
+aws logs tail --region eu-central-1  /aws/lambda/serverless-score-rent-dev-api --since 10m --follow
+```
+
 ## Costs
 
 Cost explorer shows that 6 services are in use.

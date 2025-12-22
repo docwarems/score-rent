@@ -37,11 +37,8 @@ class EmailQueueService {
                     status: "pending",
                 });
                 console.log(`Email queued: ${emailOptions.subject} to ${emailOptions.to}`);
-                // Try to send immediately if within rate limits
-                if (yield this.canSendEmail()) {
-                    console.log("Attempting immediate send...");
-                    this.processQueue().catch((err) => console.error("Background queue processing error:", err));
-                }
+                // Note: Email will be processed on next request or queue check interval
+                // (Removed immediate send to prevent Lambda exit issues)
             }
             catch (error) {
                 console.error("Error queueing email:", error);
@@ -98,12 +95,13 @@ class EmailQueueService {
                     attempts: { $lt: 3 }, // Or whatever your maxAttempts default is
                 })
                     .sort({ priority: -1, createdAt: 1 }) // Priority emails first, then oldest first
-                    .limit(10); // Process max 10 emails at a time
+                    .limit(5); // Process max 5 emails at a time
                 if (pendingEmails.length === 0) {
                     return { sent, failed, skipped };
                 }
                 console.log(`Processing ${pendingEmails.length} pending emails`);
                 for (const emailDoc of pendingEmails) {
+                    console.log(`[${sent + failed + skipped + 1}/${pendingEmails.length}] Processing email: ${emailDoc.subject}`);
                     // Check rate limits before each send
                     if (!(yield this.canSendEmail())) {
                         console.log("Rate limit reached, stopping queue processing");
@@ -115,7 +113,7 @@ class EmailQueueService {
                         const updateResult = yield EmailQueue_1.EmailQueue.updateOne({ _id: emailDoc._id, status: "pending" }, { $set: { status: "processing" } });
                         // If no document was updated, another process is handling it
                         if (updateResult.modifiedCount === 0) {
-                            console.log(`Email already being processed: ${emailDoc.subject}`);
+                            console.log(`  Email already being processed, skipping`);
                             skipped++;
                             continue;
                         }
@@ -134,6 +132,8 @@ class EmailQueueService {
                         console.log(`✓ Email sent: ${emailDoc.subject} to ${emailDoc.to}`);
                     }
                     catch (error) {
+                        // Log full error for debugging
+                        console.error("Email send error:", error);
                         // Update attempts and error atomically
                         const currentAttempts = emailDoc.attempts + 1;
                         const updateData = {
@@ -145,11 +145,11 @@ class EmailQueueService {
                         // Mark as failed if max attempts reached
                         if (currentAttempts >= emailDoc.maxAttempts) {
                             updateData.$set.status = "failed";
-                            console.error(`✗ Email failed permanently: ${emailDoc.subject} to ${emailDoc.to}`);
+                            console.error(`✗ Email failed permanently: ${emailDoc.subject} to ${emailDoc.to}. Error: ${error.message}`);
                         }
                         else {
                             updateData.$set.status = "pending"; // Reset to pending for retry
-                            console.error(`✗ Email attempt ${currentAttempts} failed: ${emailDoc.subject}`);
+                            console.error(`✗ Email attempt ${currentAttempts} failed: ${emailDoc.subject}. Error: ${error.message}`);
                         }
                         yield EmailQueue_1.EmailQueue.updateOne({ _id: emailDoc._id }, updateData);
                         failed++;

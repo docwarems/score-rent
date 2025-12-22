@@ -92,13 +92,19 @@ app.use(middleware.handle(i18next_1.default, {
 // AWS Lambda global scope variable for email queue throttling
 let lastEmailQueueCheck = 0;
 const EMAIL_QUEUE_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+let activeQueueProcessing = null;
 app.use((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     // Process queue in background only if 5+ minutes have passed
     const now = Date.now();
     if (now - lastEmailQueueCheck >= EMAIL_QUEUE_CHECK_INTERVAL_MS) {
         lastEmailQueueCheck = now;
-        email_queue_utils_1.emailQueueService.processQueue().catch((error) => {
+        // Store promise to prevent Lambda exit before completion
+        activeQueueProcessing = email_queue_utils_1.emailQueueService.processQueue()
+            .catch((error) => {
             console.error("Error processing email queue:", error);
+        })
+            .finally(() => {
+            activeQueueProcessing = null;
         });
     }
     next();
@@ -175,5 +181,11 @@ const originalHandler = (0, serverless_http_1.default)(app, {
 });
 exports.handler = (event, context) => __awaiter(void 0, void 0, void 0, function* () {
     yield connect(); // Check connection on every invocation
-    return originalHandler(event, context);
+    const response = yield originalHandler(event, context);
+    // Wait for any background email queue processing to complete
+    if (activeQueueProcessing) {
+        console.log("Waiting for email queue processing to complete...");
+        yield activeQueueProcessing;
+    }
+    return response;
 });

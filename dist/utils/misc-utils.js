@@ -24,6 +24,8 @@ exports.mailTransporter = nodemailer_1.default.createTransport({
         pass: process.env.SMTP_PASS,
     },
     greetingTimeout: 1000 * 10,
+    connectionTimeout: 1000 * 10,
+    socketTimeout: 1000 * 15,
     logger: !!process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
 });
 exports.mailTransporter.verify(function (error, success) {

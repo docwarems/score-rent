@@ -12,6 +12,7 @@ provider:
   region: eu-central-1
   stage: ${opt:stage, 'dev'} # Allow --stage flag
   profile: serverless-deployer
+  timeout: 20 # Seconds - balance between email processing and cost control
   iamRoleStatements:
     - Effect: "Allow"
       Action:
