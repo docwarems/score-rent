@@ -212,14 +212,21 @@ export class EmailQueueService {
    * @param verbose - If true, include detailed list of pending emails
    */
   async getQueueStats(verbose: boolean = false) {
-    const pending = await EmailQueue.countDocuments({ status: "pending" });
+    // Query pending emails once to ensure consistency
+    const pendingEmailDocs = await EmailQueue.find({ status: "pending" })
+      .sort({ priority: -1, createdAt: 1 })
+      .select("to subject createdAt priority")
+      .lean();
+
+    const pending = pendingEmailDocs.length;
+    const oldestPending =
+      pendingEmailDocs.length > 0
+        ? pendingEmailDocs[pendingEmailDocs.length - 1]
+        : null;
+
     const sent = await EmailQueue.countDocuments({ status: "sent" });
     const failed = await EmailQueue.countDocuments({ status: "failed" });
     const total = await EmailQueue.countDocuments();
-
-    const oldestPending = await EmailQueue.findOne({ status: "pending" })
-      .sort({ createdAt: 1 })
-      .select("createdAt");
 
     // Get rate limit info
     const now = new Date();
@@ -283,16 +290,11 @@ export class EmailQueueService {
       }
     }
 
-    // Get pending emails details if verbose
+    // Format pending emails for verbose output
     let pendingEmails: any[] | undefined;
     if (verbose) {
-      const emails = await EmailQueue.find({ status: "pending" })
-        .sort({ priority: -1, createdAt: 1 })
-        .select("to subject createdAt priority")
-        .lean();
-
       // Only include priority field if true (cleaner JSON output)
-      pendingEmails = emails.map((email) => ({
+      pendingEmails = pendingEmailDocs.map((email) => ({
         to: email.to,
         subject: email.subject,
         createdAt: email.createdAt,

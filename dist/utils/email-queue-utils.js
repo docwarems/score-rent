@@ -166,13 +166,18 @@ class EmailQueueService {
      */
     getQueueStats(verbose = false) {
         return __awaiter(this, void 0, void 0, function* () {
-            const pending = yield EmailQueue_1.EmailQueue.countDocuments({ status: "pending" });
+            // Query pending emails once to ensure consistency
+            const pendingEmailDocs = yield EmailQueue_1.EmailQueue.find({ status: "pending" })
+                .sort({ priority: -1, createdAt: 1 })
+                .select("to subject createdAt priority")
+                .lean();
+            const pending = pendingEmailDocs.length;
+            const oldestPending = pendingEmailDocs.length > 0
+                ? pendingEmailDocs[pendingEmailDocs.length - 1]
+                : null;
             const sent = yield EmailQueue_1.EmailQueue.countDocuments({ status: "sent" });
             const failed = yield EmailQueue_1.EmailQueue.countDocuments({ status: "failed" });
             const total = yield EmailQueue_1.EmailQueue.countDocuments();
-            const oldestPending = yield EmailQueue_1.EmailQueue.findOne({ status: "pending" })
-                .sort({ createdAt: 1 })
-                .select("createdAt");
             // Get rate limit info
             const now = new Date();
             const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
@@ -221,15 +226,11 @@ class EmailQueueService {
                     };
                 }
             }
-            // Get pending emails details if verbose
+            // Format pending emails for verbose output
             let pendingEmails;
             if (verbose) {
-                const emails = yield EmailQueue_1.EmailQueue.find({ status: "pending" })
-                    .sort({ priority: -1, createdAt: 1 })
-                    .select("to subject createdAt priority")
-                    .lean();
                 // Only include priority field if true (cleaner JSON output)
-                pendingEmails = emails.map((email) => (Object.assign({ to: email.to, subject: email.subject, createdAt: email.createdAt }, (email.priority && { priority: true }))));
+                pendingEmails = pendingEmailDocs.map((email) => (Object.assign({ to: email.to, subject: email.subject, createdAt: email.createdAt }, (email.priority && { priority: true }))));
             }
             return Object.assign({ pending,
                 sent,
