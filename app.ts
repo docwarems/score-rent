@@ -99,11 +99,19 @@ app.use(
   })
 );
 
+// AWS Lambda global scope variable for email queue throttling
+let lastEmailQueueCheck = 0;
+const EMAIL_QUEUE_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
 app.use(async (req: any, res: any, next: any) => {
-  // Process queue in background (don't wait for completion)
-  emailQueueService.processQueue().catch((error) => {
-    console.error("Error processing email queue:", error);
-  });
+  // Process queue in background only if 5+ minutes have passed
+  const now = Date.now();
+  if (now - lastEmailQueueCheck >= EMAIL_QUEUE_CHECK_INTERVAL_MS) {
+    lastEmailQueueCheck = now;
+    emailQueueService.processQueue().catch((error) => {
+      console.error("Error processing email queue:", error);
+    });
+  }
   next();
 });
 
@@ -115,7 +123,7 @@ app.engine("vue", ejs.renderFile); // render files with ".vue" extension in view
 const dbURI = getEnvVar("MONGODB_URL");
 mongoose.set("strictQuery", false);
 
-// AWS will cache global variables, i.a. also the mongoose connection
+// AWS Lambda will cache global variables, i.a. also the mongoose connection
 // see https://mongoosejs.com/docs/lambda.html
 let conn: any = null;
 const connect = async function (): Promise<typeof mongoose> {
