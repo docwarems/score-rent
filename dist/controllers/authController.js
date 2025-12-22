@@ -16,7 +16,7 @@ const User_1 = require("../models/User");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const uuid_1 = require("uuid");
 const misc_utils_1 = require("../utils/misc-utils");
-const app_1 = require("../app");
+const email_queue_utils_1 = require("../utils/email-queue-utils");
 require("dotenv").config();
 var QRCode = require("qrcode");
 const handleSaveErrors = (err, type) => {
@@ -172,8 +172,9 @@ const sendVerificationSuccessfulEmail = (user) => __awaiter(void 0, void 0, void
             html,
             // attachments: [{ path: url }, { path: "/tmp/hsc-noten.espass" }],
             attachments: [{ path: url }],
+            priority: true,
         };
-        const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions);
+        const result = yield email_queue_utils_1.emailQueueService.queueEmail(mailOptions);
         if (misc_utils_1.mailTransporter.logger) {
             console.log("Registration successful e-mail:", result);
         }
@@ -439,7 +440,7 @@ module.exports.password_forgotten_post = (req, res) => __awaiter(void 0, void 0,
 });
 function sendPasswordResetEmail(user) {
     return __awaiter(this, void 0, void 0, function* () {
-        const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.EMAIL_VERIFICATION_SECRET, { expiresIn: ((0, app_1.getEnvVar)("EMAIL_JWT_EXPIRY") || "24h") });
+        const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.EMAIL_VERIFICATION_SECRET, { expiresIn: ((0, misc_utils_1.getEnvVar)("EMAIL_JWT_EXPIRY") || "24h") });
         const resetPasswordUrl = `${process.env.CYCLIC_URL}/verify-password-reset-email?token=${token}`;
         const email = user.email;
         const subject = "Passwort Zurücksetzen";
@@ -447,9 +448,15 @@ function sendPasswordResetEmail(user) {
   Du hast diese Mail erhalten weil du bei der Notenverwaltung des Hans-Sachs-Chor ein Zurücksetzen des Passwort angefordert hast.<br>
   Bitte klicke auf den folgenden Link um dein Passwort zurückzusetzen: <a href="${resetPasswordUrl}">${resetPasswordUrl}</a>
   `;
-        const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
+        const mailOptions = {
+            from: process.env.SMTP_FROM,
+            to: email,
+            subject,
+            html,
+            priority: true,
+        };
         try {
-            const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions);
+            const result = yield email_queue_utils_1.emailQueueService.queueEmail(mailOptions);
             if (misc_utils_1.mailTransporter.logger) {
                 console.log("Password reset e-mail:", result);
             }

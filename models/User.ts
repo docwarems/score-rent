@@ -3,8 +3,8 @@ const { isEmail } = require("validator");
 import bcrypt from "bcrypt";
 import jwt, { sign } from "jsonwebtoken";
 import type { StringValue } from "ms";
-import { mailTransporter } from "../utils/misc-utils";
-import { stage, getEnvVar } from "../app";
+import { mailTransporter, stage, getEnvVar } from "../utils/misc-utils";
+import { emailQueueService } from "../utils/email-queue-utils";
 require("dotenv").config();
 
 // the adding of a static User Method from the JS code had to be rewritten according to
@@ -230,9 +230,15 @@ async function sendVerificationEmail(user: any) {
   Du hast diese Mail erhalten weil du dich bei der Notenverwaltung des Hans-Sachs-Chor registriert hast.<br>
   Bitte klicke auf den folgenden Link um die E-Mail Adresse zu bestätigen: <a href="${verificationUrl}">${verificationUrl}</a>
   `;
-  const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
+  const mailOptions = {
+    from: process.env.SMTP_FROM,
+    to: email,
+    subject,
+    html,
+    priority: true,
+  };
 
-  const result = await mailTransporter.sendMail(mailOptions);
+  const result = await emailQueueService.queueEmail(mailOptions);
   if (mailTransporter.logger) {
     console.log("Verification e-mail:", result);
   }

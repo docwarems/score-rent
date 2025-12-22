@@ -22,6 +22,7 @@ const misc_utils_1 = require("../utils/misc-utils");
 const uuid_1 = require("uuid");
 const i18next_1 = __importDefault(require("i18next"));
 const score_utils_1 = require("../utils/score-utils");
+const email_queue_utils_1 = require("../utils/email-queue-utils");
 const handleSaveErrors = (err, type) => {
     console.log(err.message, err.code);
     let errors = {
@@ -114,7 +115,7 @@ module.exports.checkout_post = (req, res) => __awaiter(void 0, void 0, void 0, f
                         if (user && !isPlaywright) {
                             try {
                                 // sending may fail with "sent limit exceeded" error
-                                yield sendCheckoutConfirmationEmail(user, score, process.env.EMAIL_TEST_RECIPIENT);
+                                yield sendCheckoutConfirmationEmail(user, score, (0, misc_utils_1.getEnvVar)("EMAIL_TEST_RECIPIENT"));
                             }
                             catch (error) {
                                 console.error(error);
@@ -253,7 +254,7 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
                                 if (!isPlaywright) {
                                     try {
                                         // sending may fail with "sent limit exceeded" error
-                                        yield sendCheckinConfirmationEmail(user, score, process.env.EMAIL_TEST_RECIPIENT);
+                                        yield sendCheckinConfirmationEmail(user, score, (0, misc_utils_1.getEnvVar)("EMAIL_TEST_RECIPIENT"));
                                     }
                                     catch (error) {
                                         console.error(error);
@@ -558,9 +559,9 @@ const sendConfirmationEmail = (user, subject, html, testRecipient) => __awaiter(
             subject,
             html,
         };
-        const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions);
+        const result = yield email_queue_utils_1.emailQueueService.queueEmail(mailOptions); // we use queue because delayed sending is no problem
         if (misc_utils_1.mailTransporter.logger) {
-            console.log("Score confirmation e-mail:", result);
+            console.log("Queued confirmation e-mail:", result);
         }
     }
     else {
@@ -711,4 +712,33 @@ module.exports.users_vue_post = (req, res) => __awaiter(void 0, void 0, void 0, 
             });
         }),
     });
+});
+module.exports.email_queue_stats_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const verbose = req.query.verbose === "1";
+        const stats = yield email_queue_utils_1.emailQueueService.getQueueStats(verbose);
+        const canSend = yield email_queue_utils_1.emailQueueService.canSendEmail();
+        res.json(Object.assign(Object.assign({}, stats), { canSendMore: canSend }));
+    }
+    catch (error) {
+        res.status(500).json({ error });
+    }
+});
+module.exports.send_test_email_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!(0, misc_utils_1.getEnvVar)("EMAIL_TEST_RECIPIENT")) {
+        res.status(500).json({
+            error: new Error(`no EMAIL_TEST_RECIPIENT defined in env`).message,
+        });
+    }
+    const mailOptions = {
+        from: process.env.SMTP_FROM,
+        to: (0, misc_utils_1.getEnvVar)("EMAIL_TEST_RECIPIENT"),
+        subject: "test",
+        html: "<h3>a test message</h3>",
+    };
+    const result = yield email_queue_utils_1.emailQueueService.queueEmail(mailOptions);
+    if (misc_utils_1.mailTransporter.logger) {
+        console.log("Queued confirmation e-mail:", result);
+    }
+    res.redirect("/admin/email-queue-stats");
 });

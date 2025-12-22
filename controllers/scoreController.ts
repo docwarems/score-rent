@@ -3,7 +3,7 @@ import { Score, ScoreType, IScore } from "../models/Score";
 import { Checkout, ICheckout } from "../models/Checkout";
 import jwt from "jsonwebtoken";
 require("dotenv").config();
-import { mailTransporter } from "../utils/misc-utils";
+import { getEnvVar, mailTransporter } from "../utils/misc-utils";
 import { v4 as uuidv4 } from "uuid";
 import i18next from "i18next";
 import {
@@ -11,6 +11,7 @@ import {
   SIGNATURE_ALL,
   getScoreTypeMap,
 } from "../utils/score-utils";
+import { emailQueueService } from "../utils/email-queue-utils";
 
 const handleSaveErrors = (err: any, type: string | undefined) => {
   console.log(err.message, err.code);
@@ -133,7 +134,7 @@ module.exports.checkout_post = async (req: any, res: any) => {
                 await sendCheckoutConfirmationEmail(
                   user,
                   score,
-                  process.env.EMAIL_TEST_RECIPIENT
+                  getEnvVar("EMAIL_TEST_RECIPIENT")
                 );
               } catch (error) {
                 console.error(error);
@@ -268,7 +269,7 @@ module.exports.checkin_post = async (req: any, res: any) => {
                     await sendCheckinConfirmationEmail(
                       user,
                       score,
-                      process.env.EMAIL_TEST_RECIPIENT
+                      getEnvVar("EMAIL_TEST_RECIPIENT")
                     );
                   } catch (error) {
                     console.error(error);
@@ -637,9 +638,10 @@ const sendConfirmationEmail = async (
       html,
     };
 
-    const result = await mailTransporter.sendMail(mailOptions);
+    const result = await emailQueueService.queueEmail(mailOptions); // we use queue because delayed sending is no problem
+
     if (mailTransporter.logger) {
-      console.log("Score confirmation e-mail:", result);
+      console.log("Queued confirmation e-mail:", result);
     }
   } else {
     console.log(
@@ -808,4 +810,42 @@ module.exports.users_vue_post = async (req: any, res: any) => {
       active: u.active ?? true,
     })),
   });
+};
+
+module.exports.email_queue_stats_get = async (req: any, res: any) => {
+  try {
+    const verbose = req.query.verbose === "1";
+    const stats = await emailQueueService.getQueueStats(verbose);
+    const canSend = await emailQueueService.canSendEmail();
+
+    res.json({
+      ...stats,
+      canSendMore: canSend,
+    });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+};
+
+module.exports.send_test_email_get = async (req: any, res: any) => {
+  if (!getEnvVar("EMAIL_TEST_RECIPIENT")) {
+    res.status(500).json({
+      error: new Error(`no EMAIL_TEST_RECIPIENT defined in env`).message,
+    });
+  }
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM,
+    to: getEnvVar("EMAIL_TEST_RECIPIENT"),
+    subject: "test",
+    html: "<h3>a test message</h3>",
+  };
+
+  const result = await emailQueueService.queueEmail(mailOptions);
+
+  if (mailTransporter.logger) {
+    console.log("Queued confirmation e-mail:", result);
+  }
+
+  res.redirect("/admin/email-queue-stats");
 };

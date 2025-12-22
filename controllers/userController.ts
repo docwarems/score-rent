@@ -1,5 +1,6 @@
 import { checkouts } from "./scoreController";
 import { SIGNATURE_ALL } from "../utils/score-utils";
+import { emailQueueService } from "../utils/email-queue-utils";
 
 module.exports.checkouts_get = async (req: any, res: any) => {
   const userId = res.locals.user.id;

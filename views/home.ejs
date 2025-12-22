@@ -28,6 +28,16 @@
     <% if (process.env.STAGE !== 'prod') { %>
       <li><a href="/admin/vue-test" class="w3-button w3-red">Vue test</a></li>
     <% } %>
+    <h3>E-Mail Queue Stats</h3>
+    <li>
+      <label>
+        <input type="checkbox" class="w3-check" id="verboseCheckbox"> Verbose
+      </label>
+      <a href="/admin/email-queue-stats" id="emailStatsLink" class="w3-button w3-black">E-Mail queue stats</a>
+    </li>
+    <% if (process.env.STAGE !== 'prod') { %>
+      <li><a href="/admin/test-email" class="w3-button w3-red">Send test e-mail</a></li>
+    <% } %>
   <% } else { %>
     <li><a href="/user/checkouts" class="w3-button w3-black"><%= t('checkouts.show') %></a></li>
     <li><a href="#" onClick="document.querySelector('.divQrCode').style='display: block'" class="w3-button w3-black"><%= t('login.show.qrcode') %></a></li>
@@ -39,5 +49,18 @@
   <img src="<%= qrCodeDataUrl %>" style="width:100%;max-width:300px">
 </div>
 <% } %>
+
+<script>
+  const verboseCheckbox = document.getElementById('verboseCheckbox');
+  const emailStatsLink = document.getElementById('emailStatsLink');
+  
+  verboseCheckbox.addEventListener('change', function() {
+    if (this.checked) {
+      emailStatsLink.href = '/admin/email-queue-stats?verbose=1';
+    } else {
+      emailStatsLink.href = '/admin/email-queue-stats';
+    }
+  });
+</script>
 
 <%- include('partials/footer'); -%>
