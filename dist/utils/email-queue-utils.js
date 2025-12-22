@@ -67,7 +67,11 @@ class EmailQueueService {
                 status: "sent",
                 sentAt: { $gte: oneDayAgo },
             });
-            console.log(`Rate check: ${sentLastHour}/${this.rateLimitConfig.maxEmailsPerHour} per hour, ${sentLastDay}/${this.rateLimitConfig.maxEmailsPerDay} per day`);
+            // Only log if there are pending emails
+            const pendingCount = yield EmailQueue_1.EmailQueue.countDocuments({ status: "pending" });
+            if (pendingCount > 0) {
+                console.log(`Rate check: ${sentLastHour}/${this.rateLimitConfig.maxEmailsPerHour} per hour, ${sentLastDay}/${this.rateLimitConfig.maxEmailsPerDay} per day`);
+            }
             return (sentLastHour < this.rateLimitConfig.maxEmailsPerHour &&
                 sentLastDay < this.rateLimitConfig.maxEmailsPerDay);
         });
