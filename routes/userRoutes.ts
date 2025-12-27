@@ -2,6 +2,7 @@ const { Router } = require("express");
 const userController = require("../controllers/userController");
 const {
   requireAuth,
+  requireAdmin,
   checkUser,
   requireUserVerified,
 } = require("../middleware/authMiddleware");

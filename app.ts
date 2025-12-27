@@ -22,6 +22,9 @@ import i18next from "i18next";
 var middleware = require("i18next-http-middleware");
 import en from "./locales/en.json";
 import de from "./locales/de.json";
+import { User } from "./models/User";
+import { emailQueueService } from "./utils/email-queue-utils";
+import { stage, getEnvVar } from "./utils/misc-utils";
 
 i18next.use(middleware.LanguageDetector).init({
   preload: ["de"],
@@ -45,8 +48,6 @@ i18next.init({
     de,
   },
 });
-
-export const stage = process.env.STAGE || "dev";
 
 if (stage === "dev") {
   i18next.addResource(
@@ -98,6 +99,30 @@ app.use(
   })
 );
 
+// AWS Lambda global scope variable for email queue throttling
+let lastEmailQueueCheck = 0;
+const EMAIL_QUEUE_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+let activeQueueProcessing: Promise<any> | null = null;
+
+app.use(async (req: any, res: any, next: any) => {
+  // Process queue in background only if 5+ minutes have passed
+  const now = Date.now();
+  if (now - lastEmailQueueCheck >= EMAIL_QUEUE_CHECK_INTERVAL_MS) {
+    lastEmailQueueCheck = now;
+    // Store promise to prevent Lambda exit before completion
+    // await would also wait for completion but would block the request until completed.
+    activeQueueProcessing = emailQueueService
+      .processQueue()
+      .catch((error) => {
+        console.error("Error processing email queue:", error);
+      })
+      .finally(() => {
+        activeQueueProcessing = null;
+      });
+  }
+  next();
+});
+
 // view engine
 app.set("view engine", "ejs");
 app.engine("vue", ejs.renderFile); // render files with ".vue" extension in views folder by EJS too
@@ -106,7 +131,7 @@ app.engine("vue", ejs.renderFile); // render files with ".vue" extension in view
 const dbURI = getEnvVar("MONGODB_URL");
 mongoose.set("strictQuery", false);
 
-// AWS will cache global variables, i.a. also the mongoose connection
+// AWS Lambda will cache global variables, i.a. also the mongoose connection
 // see https://mongoosejs.com/docs/lambda.html
 let conn: any = null;
 const connect = async function (): Promise<typeof mongoose> {
@@ -182,17 +207,13 @@ const originalHandler = serverless(app, {
 });
 exports.handler = async (event: any, context: any) => {
   await connect(); // Check connection on every invocation
-  return originalHandler(event, context);
-};
+  const response = await originalHandler(event, context);
 
-/**
- * Get stage specific env var
- *
- * @param envName e.g. MONGODB_URL
- * @param stage  e.g. dev
- * @returns
- */
-export function getEnvVar(envName: string) {
-  return (process.env[`${envName}`] || // Lambda (deployed)
-    process.env[`${envName}_${stage}`]) as string; // Local dev
-}
+  // Wait for any background email queue processing to complete
+  if (activeQueueProcessing) {
+    console.log("Waiting for email queue processing to complete...");
+    await activeQueueProcessing;
+  }
+
+  return response;
+};

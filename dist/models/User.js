@@ -18,7 +18,7 @@ const { isEmail } = require("validator");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const misc_utils_1 = require("../utils/misc-utils");
-const app_1 = require("../app");
+const email_queue_utils_1 = require("../utils/email-queue-utils");
 require("dotenv").config();
 // the adding of a static User Method from the JS code had to be rewritten according to
 // https://mongoosejs.com/docs/typescript/statics-and-methods.html
@@ -193,7 +193,7 @@ userSchema.post("save", function (doc, next) {
 // Send verification email to the user
 function sendVerificationEmail(user) {
     return __awaiter(this, void 0, void 0, function* () {
-        const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.EMAIL_VERIFICATION_SECRET, { expiresIn: ((0, app_1.getEnvVar)("EMAIL_JWT_EXPIRY") || "24h") });
+        const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.EMAIL_VERIFICATION_SECRET, { expiresIn: ((0, misc_utils_1.getEnvVar)("EMAIL_JWT_EXPIRY") || "24h") });
         const verificationUrl = `${process.env.CYCLIC_URL}/verify-email?token=${token}`;
         const email = user.email;
         const subject = "Email Überprüfung";
@@ -201,8 +201,14 @@ function sendVerificationEmail(user) {
   Du hast diese Mail erhalten weil du dich bei der Notenverwaltung des Hans-Sachs-Chor registriert hast.<br>
   Bitte klicke auf den folgenden Link um die E-Mail Adresse zu bestätigen: <a href="${verificationUrl}">${verificationUrl}</a>
   `;
-        const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
-        const result = yield misc_utils_1.mailTransporter.sendMail(mailOptions);
+        const mailOptions = {
+            from: process.env.SMTP_FROM,
+            to: email,
+            subject,
+            html,
+            priority: true,
+        };
+        const result = yield email_queue_utils_1.emailQueueService.queueEmail(mailOptions);
         if (misc_utils_1.mailTransporter.logger) {
             console.log("Verification e-mail:", result);
         }

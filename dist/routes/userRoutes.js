@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.user = void 0;
 const { Router } = require("express");
 const userController = require("../controllers/userController");
-const { requireAuth, checkUser, requireUserVerified, } = require("../middleware/authMiddleware");
+const { requireAuth, requireAdmin, checkUser, requireUserVerified, } = require("../middleware/authMiddleware");
 const score_utils_1 = require("../utils/score-utils");
 // end user routes
 exports.user = Router();

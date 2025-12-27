@@ -2,8 +2,8 @@ import { User, Voice, voiceMap, incrementUserIdSuffix } from "../models/User";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import type { StringValue } from "ms";
-import { mailTransporter } from "../utils/misc-utils";
-import { getEnvVar } from "../app";
+import { mailTransporter, getEnvVar } from "../utils/misc-utils";
+import { emailQueueService } from "../utils/email-queue-utils";
 require("dotenv").config();
 var QRCode = require("qrcode");
 
@@ -186,9 +186,10 @@ const sendVerificationSuccessfulEmail = async (user: any) => {
       html,
       // attachments: [{ path: url }, { path: "/tmp/hsc-noten.espass" }],
       attachments: [{ path: url }],
+      priority: true,
     };
 
-    const result = await mailTransporter.sendMail(mailOptions);
+    const result = await emailQueueService.queueEmail(mailOptions);
     if (mailTransporter.logger) {
       console.log("Registration successful e-mail:", result);
     }
@@ -522,9 +523,15 @@ async function sendPasswordResetEmail(user: any) {
   Du hast diese Mail erhalten weil du bei der Notenverwaltung des Hans-Sachs-Chor ein Zurücksetzen des Passwort angefordert hast.<br>
   Bitte klicke auf den folgenden Link um dein Passwort zurückzusetzen: <a href="${resetPasswordUrl}">${resetPasswordUrl}</a>
   `;
-  const mailOptions = { from: process.env.SMTP_FROM, to: email, subject, html };
+  const mailOptions = {
+    from: process.env.SMTP_FROM,
+    to: email,
+    subject,
+    html,
+    priority: true,
+  };
   try {
-    const result = await mailTransporter.sendMail(mailOptions);
+    const result = await emailQueueService.queueEmail(mailOptions);
     if (mailTransporter.logger) {
       console.log("Password reset e-mail:", result);
     }
