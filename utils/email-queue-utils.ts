@@ -49,8 +49,8 @@ export class EmailQueueService {
         `Email queued: ${emailOptions.subject} to ${emailOptions.to}`
       );
 
-      // Note: Email will be processed on next request or queue check interval
-      // (Removed immediate send to prevent Lambda exit issues)
+      // Immediately process the queue to ensure Lambda waits for email to send
+      await this.processQueue();
     } catch (error) {
       console.error("Error queueing email:", error);
       throw error;

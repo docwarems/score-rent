@@ -99,7 +99,9 @@ app.use((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     if (now - lastEmailQueueCheck >= EMAIL_QUEUE_CHECK_INTERVAL_MS) {
         lastEmailQueueCheck = now;
         // Store promise to prevent Lambda exit before completion
-        activeQueueProcessing = email_queue_utils_1.emailQueueService.processQueue()
+        // await would also wait for completion but would block the request until completed.
+        activeQueueProcessing = email_queue_utils_1.emailQueueService
+            .processQueue()
             .catch((error) => {
             console.error("Error processing email queue:", error);
         })

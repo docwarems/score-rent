@@ -110,7 +110,9 @@ app.use(async (req: any, res: any, next: any) => {
   if (now - lastEmailQueueCheck >= EMAIL_QUEUE_CHECK_INTERVAL_MS) {
     lastEmailQueueCheck = now;
     // Store promise to prevent Lambda exit before completion
-    activeQueueProcessing = emailQueueService.processQueue()
+    // await would also wait for completion but would block the request until completed.
+    activeQueueProcessing = emailQueueService
+      .processQueue()
       .catch((error) => {
         console.error("Error processing email queue:", error);
       })
@@ -206,12 +208,12 @@ const originalHandler = serverless(app, {
 exports.handler = async (event: any, context: any) => {
   await connect(); // Check connection on every invocation
   const response = await originalHandler(event, context);
-  
+
   // Wait for any background email queue processing to complete
   if (activeQueueProcessing) {
     console.log("Waiting for email queue processing to complete...");
     await activeQueueProcessing;
   }
-  
+
   return response;
 };
