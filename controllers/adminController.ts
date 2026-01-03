@@ -657,14 +657,14 @@ module.exports.updateCheckout_post = async (req: any, res: any) => {
   let score = await Score.findOne({ id: scoreId });
   // const score = await Score.findOne({ "checkouts._id" : checkoutId });  // interesting to find a score just by the _id of one of it's checkouts
   if (score) {
-    console.log("score found");
+    // console.log("score found");
 
     // TODO: works, but question is if we can do a query which just returns the checkout without returning the whole score first
     const checkout = score.checkouts.find(
       (checkout: any) => checkout._id == checkoutId
     );
     if (checkout) {
-      console.log("checkout found");
+      // console.log("checkout found");
       checkout.checkoutComment = checkoutComment;
       checkout.checkinComment = checkinComment;
       if (userId) {
