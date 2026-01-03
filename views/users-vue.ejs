@@ -63,6 +63,7 @@
         editUserId: "",
         editUserEmail: "",
         editUserActive: false,
+        editUserVoice: "",
         editUserSuccess: false,
         editUserError: "",
 
@@ -87,7 +88,19 @@
       editUserEditFields() {
         return [
           { key: 'email', label: 'E-Mail', value: this.editUserEmail, type: 'text' },
-          { key: 'active', label: 'Aktiv', value: this.editUserActive, type: 'checkbox' }
+          { key: 'active', label: 'Aktiv', value: this.editUserActive, type: 'checkbox' },
+          { 
+            key: 'voice', 
+            label: 'Stimmgruppe', 
+            value: this.editUserVoice, 
+            type: 'select',
+            options: [
+              { value: 'S', label: 'Sopran' },
+              { value: 'A', label: 'Alt' },
+              { value: 'T', label: 'Tenor' },
+              { value: 'B', label: 'Bass' }
+            ]
+          }
         ];
       },
       filteredUsers() {
@@ -132,6 +145,7 @@
         this.editUserId = user.id;
         this.editUserEmail = user.email;
         this.editUserActive = user.active;
+        this.editUserVoice = user.voice;
         this.editUserSuccess = false;
         this.editUserError = "";
         this.showEditUserModal = true;
@@ -143,6 +157,7 @@
         // Update local state from component values
         this.editUserEmail = values.email;
         this.editUserActive = values.active;
+        this.editUserVoice = values.voice;
 
         this.editUserError = "";
         this.editUserSuccess = false;
@@ -154,6 +169,7 @@
               id: this.editUserId,
               email: this.editUserEmail,
               active: this.editUserActive,
+              voice: this.editUserVoice,
             }),
             headers: {
               "Content-Type": "application/json",
@@ -170,6 +186,7 @@
             if (user) {
               user.email = this.editUserEmail;
               user.active = this.editUserActive;
+              user.voice = this.editUserVoice;
             }
           }
         } catch (err) {

@@ -115,6 +115,16 @@ const EditModal = {
                     class="w3-check"
                     type="checkbox"
                   >
+                  <select
+                    v-else-if="field.type === 'select'"
+                    :value="field.value"
+                    @change="updateField(field.key, $event.target.value)"
+                    class="w3-select"
+                  >
+                    <option v-for="option in field.options" :key="option.value" :value="option.value">
+                      {{ option.label }}
+                    </option>
+                  </select>
                   <input 
                     v-else
                     :value="field.value" 

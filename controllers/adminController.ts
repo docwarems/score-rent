@@ -726,13 +726,14 @@ module.exports.users_post = async (req: any, res: any) => {
 };
 
 module.exports.updateUser_post = async (req: any, res: any) => {
-  const { id, email, active } = req.body;
+  const { id, email, active, voice } = req.body;
 
   let user = await User.findOne({ id });
   if (user) {
     // console.log("user found");
     user.email = email;
     user.active = !!active;
+    user.voice = voice;
     user = await user.save();
     if (user) {
       res.status(201).json({ updateUser: user });
