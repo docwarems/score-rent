@@ -632,12 +632,13 @@ module.exports.users_post = (req, res) => __awaiter(void 0, void 0, void 0, func
     });
 });
 module.exports.updateUser_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { id, email, active } = req.body;
+    const { id, email, active, voice } = req.body;
     let user = yield User_1.User.findOne({ id });
     if (user) {
         // console.log("user found");
         user.email = email;
         user.active = !!active;
+        user.voice = voice;
         user = yield user.save();
         if (user) {
             res.status(201).json({ updateUser: user });
@@ -693,12 +694,14 @@ module.exports.users_vue_get = (req, res) => __awaiter(void 0, void 0, void 0, f
     res.render("users-vue", {
         filter: JSON.stringify({ active: true }),
         users: [],
+        voiceOptions: JSON.stringify((0, User_1.getVoiceOptions)()),
     });
 });
 module.exports.users_vue_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { active } = req.body;
     const users = yield User_1.User.find({ $or: [{ active }, { active: null }] }).sort("lastName");
     res.status(201).json({
+        voiceOptions: (0, User_1.getVoiceOptions)(),
         users: users.map((u) => {
             var _a;
             return ({

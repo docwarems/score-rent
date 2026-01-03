@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.User = exports.incrementUserIdSuffix = exports.MemberState = exports.voiceMap = exports.Voice = exports.USER_UNKNOWN = void 0;
+exports.User = exports.incrementUserIdSuffix = exports.MemberState = exports.getVoiceOptions = exports.voiceLabels = exports.Voice = exports.USER_UNKNOWN = void 0;
 const mongoose_1 = require("mongoose");
 const { isEmail } = require("validator");
 const bcrypt_1 = __importDefault(require("bcrypt"));
@@ -36,11 +36,19 @@ var Voice;
     Voice["TENOR"] = "T";
     Voice["BASS"] = "B";
 })(Voice = exports.Voice || (exports.Voice = {}));
-exports.voiceMap = new Map();
-exports.voiceMap.set(Voice.SOPRANO, "Sopran");
-exports.voiceMap.set(Voice.ALTO, "Alt");
-exports.voiceMap.set(Voice.TENOR, "Tenor");
-exports.voiceMap.set(Voice.BASS, "Bass");
+exports.voiceLabels = {
+    [Voice.SOPRANO]: "Sopran",
+    [Voice.ALTO]: "Alt",
+    [Voice.TENOR]: "Tenor",
+    [Voice.BASS]: "Bass",
+};
+function getVoiceOptions() {
+    return Object.entries(exports.voiceLabels).map(([value, label]) => ({
+        value,
+        label,
+    }));
+}
+exports.getVoiceOptions = getVoiceOptions;
 var MemberState;
 (function (MemberState) {
     MemberState["MEMBER"] = "M";

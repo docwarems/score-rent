@@ -57,6 +57,7 @@
       return {
         filter: JSON.parse('<%- filter %>'),
         users: JSON.parse('<%- JSON.stringify(users) %>'),
+        voiceOptions: JSON.parse('<%- voiceOptions %>'),
         error: "",
         searchLastName: "",
         showEditUserModal: false,
@@ -94,12 +95,7 @@
             label: 'Stimmgruppe', 
             value: this.editUserVoice, 
             type: 'select',
-            options: [
-              { value: 'S', label: 'Sopran' },
-              { value: 'A', label: 'Alt' },
-              { value: 'T', label: 'Tenor' },
-              { value: 'B', label: 'Bass' }
-            ]
+            options: this.voiceOptions
           }
         ];
       },
@@ -130,6 +126,9 @@
             this.error = data.errors;
           } else if (data.users) {
             this.users = data.users;
+            if (data.voiceOptions) {
+              this.voiceOptions = data.voiceOptions;
+            }
             this.searchLastName = "";
           }
         } catch (err) {

@@ -1,4 +1,9 @@
-import { User, Voice, voiceMap, incrementUserIdSuffix } from "../models/User";
+import {
+  User,
+  Voice,
+  voiceLabels,
+  incrementUserIdSuffix,
+} from "../models/User";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import type { StringValue } from "ms";
@@ -75,7 +80,7 @@ module.exports.signup_get = (req: any, res: any) => {
   res.render("signup", {
     admin: false,
     voices: Object.values(Voice),
-    voiceMap,
+    voiceLabels,
   });
 };
 
@@ -83,7 +88,7 @@ module.exports.signup_user_get = (req: any, res: any) => {
   res.render("signup", {
     admin: true,
     voices: Object.values(Voice),
-    voiceMap,
+    voiceLabels,
   });
 };
 
