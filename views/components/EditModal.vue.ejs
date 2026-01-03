@@ -1,0 +1,183 @@
+<script>
+const EditModal = {
+  name: 'EditModal',
+  props: {
+    show: {
+      type: Boolean,
+      required: true
+    },
+    title: {
+      type: String,
+      default: 'Bearbeiten'
+    },
+    displayFields: {
+      type: Array,
+      default: () => []
+      // Format: [{ key: 'id', label: 'ID', value: '123' }]
+    },
+    editFields: {
+      type: Array,
+      required: true
+      // Format: [{ key: 'comment', label: 'Kommentar', value: 'text', type: 'text' }]
+    },
+    successMessage: {
+      type: String,
+      default: ''
+    },
+    errorMessage: {
+      type: String,
+      default: ''
+    },
+    showUserSearch: {
+      type: Boolean,
+      default: false
+    },
+    users: {
+      type: Array,
+      default: () => []
+    },
+    userSearchValue: {
+      type: String,
+      default: ''
+    }
+  },
+  emits: ['close', 'submit', 'user-search', 'choose-user', 'update:userSearchValue'],
+  computed: {
+    localEditFields() {
+      return this.editFields.map(field => ({
+        ...field,
+        localValue: field.value
+      }));
+    }
+  },
+  methods: {
+    handleSubmit() {
+      const values = {};
+      this.editFields.forEach(field => {
+        values[field.key] = field.value;
+      });
+      this.$emit('submit', values);
+    },
+    handleClose() {
+      this.$emit('close');
+    },
+    handleUserSearch() {
+      this.$emit('user-search', this.userSearchValue);
+    },
+    handleChooseUser(userId) {
+      this.$emit('choose-user', userId);
+    },
+    updateField(key, value) {
+      const field = this.editFields.find(f => f.key === key);
+      if (field) {
+        field.value = value;
+      }
+    }
+  },
+  template: `
+    <div
+      class="w3-modal"
+      :style="{ display: show ? 'block' : 'none' }"
+    >
+      <div class="w3-modal-content">
+        <div class="w3-container">
+          <span @click="handleClose" class="w3-button w3-display-topright">&times;</span>
+          <h3>{{ title }}</h3>
+  
+          <div v-show="successMessage" class="w3-panel w3-green">
+            <p>{{ successMessage }}</p>
+          </div>
+          <div v-show="errorMessage" class="w3-panel w3-red">
+            <p>{{ errorMessage }}</p>
+          </div>
+  
+          <!-- Display fields (read-only) -->
+          <div v-if="displayFields.length > 0">
+            <p v-for="field in displayFields" :key="field.key">
+              {{ field.label ? field.label + ': ' : '' }}{{ field.value }}
+            </p>
+          </div>
+  
+          <!-- Edit form -->
+          <form @submit.prevent="handleSubmit">
+            <table class="w3-table-all">
+              <tr>
+                <th v-for="field in editFields" :key="field.key">
+                  {{ field.label }}
+                </th>
+              </tr>
+              <tr>
+                <td v-for="field in editFields" :key="field.key">
+                  <input 
+                    v-if="field.type === 'checkbox'"
+                    :checked="field.value" 
+                    @change="updateField(field.key, $event.target.checked)"
+                    class="w3-check"
+                    type="checkbox"
+                  >
+                  <select
+                    v-else-if="field.type === 'select'"
+                    :value="field.value"
+                    @change="updateField(field.key, $event.target.value)"
+                    class="w3-select"
+                  >
+                    <option v-for="option in field.options" :key="option.value" :value="option.value">
+                      {{ option.label }}
+                    </option>
+                  </select>
+                  <input 
+                    v-else
+                    :value="field.value" 
+                    @input="updateField(field.key, $event.target.value)"
+                    class="w3-input"
+                    :type="field.type || 'text'"
+                  >
+                </td>
+              </tr>
+            </table>
+            <p></p>
+            <button class="w3-button w3-black">OK</button>
+          </form>
+  
+          <!-- User search section (optional) -->
+          <div v-if="showUserSearch">
+            <p></p>
+            <h4>User suchen</h4>
+  
+            <form @click.prevent="handleUserSearch">
+              <table class="w3-table-all">
+                <tr>
+                  <th>Nachname</th>
+                </tr>
+                <tr>
+                  <td>
+                    <input 
+                      class="w3-input" 
+                      :value="userSearchValue"
+                      @input="$emit('update:userSearchValue', $event.target.value)"
+                    >
+                  </td>
+                </tr>
+              </table>
+              <p></p>
+              <button class="w3-button w3-black">User suchen</button>
+            </form>
+            <p></p>
+            <table class="w3-table-all tableUsers">
+              <tr v-for="user in users" :key="user.id">
+                <td>
+                  <button @click="handleChooseUser(user.id)" class="w3-button w3-pale-blue">
+                    {{ user.firstName }} {{ user.lastName }}
+                  </button>
+                </td>
+              </tr>
+            </table>   
+            <p></p>
+          </div>
+  
+        </div>
+      </div>
+    </div>
+  `
+};
+</script>

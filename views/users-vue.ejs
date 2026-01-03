@@ -3,6 +3,7 @@
 <script src="https://unpkg.com/vue@3.0.2"></script>
 
 <%- include('components/DataTable.vue.ejs'); %>
+<%- include('components/EditModal.vue.ejs'); %>
 
 <h1>Benutzer</h1>
 
@@ -32,46 +33,16 @@
   </div>
 
   <!-- Edit user modal -->
-  <div
-    class="w3-modal"
-    :style="{ display: showEditUserModal ? 'block' : 'none' }"
-  >
-    <div class="w3-modal-content">
-      <div class="w3-container">
-        <span @click="closeEditUser" class="w3-button w3-display-topright"
-          >&times;</span
-        >
-        <h3>Benutzer bearbeiten</h3>
-
-        <div v-show="editUserSuccess" class="w3-panel w3-green">
-          <p>Bearbeitung erfolgreich</p>
-        </div>
-        <div v-show="editUserError" class="w3-panel w3-red">
-          <p>{{ editUserError }}</p>
-        </div>
-
-        <p>User Id: {{ editUserId }}</p>
-
-        <form @submit.prevent="updateUser">
-          <label>E-Mail</label>
-          <input type="text" v-model="editUserEmail" class="w3-input" />
-
-          <input
-            type="checkbox"
-            v-model="editUserActive"
-            class="w3-check"
-            id="editUserActive"
-          />
-          <label for="editUserActive">Aktiv</label>
-
-          <p></p>
-          <button class="w3-button w3-black" type="submit">OK</button>
-        </form>
-
-        <p></p>
-      </div>
-    </div>
-  </div>
+  <edit-modal
+    :show="showEditUserModal"
+    title="Benutzer bearbeiten"
+    :display-fields="editUserDisplayFields"
+    :edit-fields="editUserEditFields"
+    :success-message="editUserSuccess ? 'Bearbeitung erfolgreich' : ''"
+    :error-message="editUserError"
+    @close="closeEditUser"
+    @submit="updateUser"
+  ></edit-modal>
 </div>
 
 <%- include('partials/footer'); -%>
@@ -79,18 +50,21 @@
 <script>
   const app = Vue.createApp({
     components: {
-        DataTable
+        DataTable,
+        EditModal
     },
     data() {
       return {
         filter: JSON.parse('<%- filter %>'),
         users: JSON.parse('<%- JSON.stringify(users) %>'),
+        voiceOptions: JSON.parse('<%- voiceOptions %>'),
         error: "",
         searchLastName: "",
         showEditUserModal: false,
         editUserId: "",
         editUserEmail: "",
         editUserActive: false,
+        editUserVoice: "",
         editUserSuccess: false,
         editUserError: "",
 
@@ -107,6 +81,24 @@
       };
     },
     computed: {
+      editUserDisplayFields() {
+        return [
+          { key: 'userId', label: 'User Id', value: this.editUserId }
+        ];
+      },
+      editUserEditFields() {
+        return [
+          { key: 'email', label: 'E-Mail', value: this.editUserEmail, type: 'text' },
+          { key: 'active', label: 'Aktiv', value: this.editUserActive, type: 'checkbox' },
+          { 
+            key: 'voice', 
+            label: 'Stimmgruppe', 
+            value: this.editUserVoice, 
+            type: 'select',
+            options: this.voiceOptions
+          }
+        ];
+      },
       filteredUsers() {
         if (!this.searchLastName) return this.users;
         const search = this.searchLastName.toUpperCase();
@@ -134,6 +126,9 @@
             this.error = data.errors;
           } else if (data.users) {
             this.users = data.users;
+            if (data.voiceOptions) {
+              this.voiceOptions = data.voiceOptions;
+            }
             this.searchLastName = "";
           }
         } catch (err) {
@@ -149,6 +144,7 @@
         this.editUserId = user.id;
         this.editUserEmail = user.email;
         this.editUserActive = user.active;
+        this.editUserVoice = user.voice;
         this.editUserSuccess = false;
         this.editUserError = "";
         this.showEditUserModal = true;
@@ -156,7 +152,12 @@
       closeEditUser() {
         this.showEditUserModal = false;
       },
-      async updateUser() {
+      async updateUser(values) {
+        // Update local state from component values
+        this.editUserEmail = values.email;
+        this.editUserActive = values.active;
+        this.editUserVoice = values.voice;
+
         this.editUserError = "";
         this.editUserSuccess = false;
 
@@ -167,6 +168,7 @@
               id: this.editUserId,
               email: this.editUserEmail,
               active: this.editUserActive,
+              voice: this.editUserVoice,
             }),
             headers: {
               "Content-Type": "application/json",
@@ -183,6 +185,7 @@
             if (user) {
               user.email = this.editUserEmail;
               user.active = this.editUserActive;
+              user.voice = this.editUserVoice;
             }
           }
         } catch (err) {

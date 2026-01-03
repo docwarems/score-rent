@@ -3,6 +3,7 @@
 <script src='https://unpkg.com/vue@3.0.2'></script>
 
 <%- include('components/DataTable.vue.ejs'); %>
+<%- include('components/EditModal.vue.ejs'); %>
 
 <h1>Ausleihen</h1>
   
@@ -65,74 +66,21 @@
     </div>  
 
     <!-- edit checkout modal -->
-    <div
-        class="w3-modal"
-        :style="{ display: showEditCheckoutModal ? 'block' : 'none' }"
-    >
-        <div class="w3-modal-content">
-        <div class="w3-container">
-            <span @click="closeEditCheckout" class="w3-button w3-display-topright">&times;</span>
-            <h3>Ausleihe bearbeiten</h3>
-    
-            <div v-show="showEditCheckoutModalSuccess" class="w3-panel w3-green">
-            <p>Bearbeitung erfolgreich:</p>
-            </div>
-            <div v-show="editCheckoutModalError" class="w3-panel w3-red">
-            <p>{{ editCheckoutModalError }}</p>
-            </div>
-    
-            <p>{{ editCheckoutScoreId }}</p>
-            <p>{{ editCheckoutId }}</p>
-    
-            <form @submit.prevent="updateCheckout">
-            <input type="hidden" v-model="editCheckoutScoreId">
-            <input type="hidden" v-model="editCheckoutId">
-            <table class="w3-table-all">
-                <tr>
-                <th>Kommentar Ausleihe</th>
-                <th>Kommentar Rückgabe</th>
-                <th>User Id</th>
-                </tr>
-                <tr>
-                <td><input v-model="editCheckoutComment" class="w3-input"></td>
-                <td><input v-model="editCheckinComment" class="w3-input"></td>
-                <td><input v-model="editCheckoutUserId" class="w3-input"></td>
-                </tr>
-            </table>
-            <p></p>
-            <button class="w3-button w3-black">OK</button>
-            </form>
-    
-            <P></P>
-            <h4>User suchen</h4>
-    
-            <form @click.prevent="userSearch">
-            <table class="w3-table-all">
-                <tr>
-                <th>Nachname</th>
-                </tr>
-                <tr>
-                <td><input class="w3-input" v-model="userLastName"></td>
-                </tr>
-            </table>
-            <p></p>
-            <button class="w3-button w3-black">User suchen</button>
-            </form>
-            <p></p>
-            <table class="w3-table-all tableUsers">
-                <tr v-for="user in users" :key="user.id">
-                    <td>
-                        <button @click="chooseUser(user.id)" class="w3-button w3-pale-blue">
-                            {{ user.firstName }} {{ user.lastName }}
-                        </button>
-                    </td>
-                </tr>
-            </table>   
-            <p></p>
-    
-        </div>
-        </div>
-    </div>
+    <edit-modal
+        :show="showEditCheckoutModal"
+        title="Ausleihe bearbeiten"
+        :display-fields="editCheckoutDisplayFields"
+        :edit-fields="editCheckoutEditFields"
+        :success-message="showEditCheckoutModalSuccess ? 'Bearbeitung erfolgreich' : ''"
+        :error-message="editCheckoutModalError"
+        :show-user-search="true"
+        :users="users"
+        v-model:user-search-value="userLastName"
+        @close="closeEditCheckout"
+        @submit="updateCheckout"
+        @user-search="userSearch"
+        @choose-user="chooseUser"
+    ></edit-modal>
   
 
 </div>
@@ -143,7 +91,8 @@
 
 const app = Vue.createApp({
     components: {
-        DataTable
+        DataTable,
+        EditModal
     },
     data() {
         return {
@@ -204,6 +153,19 @@ const app = Vue.createApp({
                 { key: 'checkinTimestamp', label: 'Rückgabe am' },
                 { key: 'checkinComment', label: 'Kommentar Rückgabe' }
             ];
+        },
+        editCheckoutDisplayFields() {
+            return [
+                { key: 'scoreId', value: this.editCheckoutScoreId },
+                { key: 'checkoutId', value: this.editCheckoutId }
+            ];
+        },
+        editCheckoutEditFields() {
+            return [
+                { key: 'checkoutComment', label: 'Kommentar Ausleihe', value: this.editCheckoutComment },
+                { key: 'checkinComment', label: 'Kommentar Rückgabe', value: this.editCheckinComment },
+                { key: 'userId', label: 'User Id', value: this.editCheckoutUserId }
+            ];
         }
     },
     methods: {
@@ -231,8 +193,13 @@ const app = Vue.createApp({
             this.editCheckoutUserId = checkout.user.id;
             this.showEditCheckoutModal = true;
         },
-        async updateCheckout() {
-            console.log("editCheckoutComment", this.editCheckoutComment, "editCheckinComment=", this.editCheckinComment, "editCheckoutUserId=", this.editCheckoutUserId);
+        async updateCheckout(values) {
+            // Update local state from component values
+            this.editCheckoutComment = values.checkoutComment;
+            this.editCheckinComment = values.checkinComment;
+            this.editCheckoutUserId = values.userId;
+
+            // console.log("editCheckoutComment", this.editCheckoutComment, "editCheckinComment=", this.editCheckinComment, "editCheckoutUserId=", this.editCheckoutUserId);
 
             const res = await fetch('/admin/updateCheckout', {
                 method: 'POST',
@@ -248,7 +215,7 @@ const app = Vue.createApp({
                 }
             });
             const data = await res.json();
-            console.log("data=", data);
+            // console.log("data=", data);
 
             if (data.errors) {
                 this.editCheckoutModalError = data.errors;

@@ -34,7 +34,7 @@
   <select class="w3-select" name="voice" required>
     <option value="" disabled selected>Stimmgruppe auswählen</option>
     <% for (const voice of voices) { %>
-    <option value="<%= voice %>"><%= voiceMap.get(voice) %></option>
+    <option value="<%= voice %>"><%= voiceLabels[voice] %></option>
     <% } %>
   </select>
   <p>

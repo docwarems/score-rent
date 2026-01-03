@@ -75,14 +75,14 @@ module.exports.signup_get = (req, res) => {
     res.render("signup", {
         admin: false,
         voices: Object.values(User_1.Voice),
-        voiceMap: User_1.voiceMap,
+        voiceLabels: User_1.voiceLabels,
     });
 };
 module.exports.signup_user_get = (req, res) => {
     res.render("signup", {
         admin: true,
         voices: Object.values(User_1.Voice),
-        voiceMap: User_1.voiceMap,
+        voiceLabels: User_1.voiceLabels,
     });
 };
 module.exports.signup_success_get = (req, res) => {

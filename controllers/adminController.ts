@@ -1,4 +1,4 @@
-import { IUser, User, USER_UNKNOWN } from "../models/User";
+import { IUser, User, USER_UNKNOWN, getVoiceOptions } from "../models/User";
 import { Score, ScoreType, IScore } from "../models/Score";
 import { Checkout, ICheckout } from "../models/Checkout";
 import jwt from "jsonwebtoken";
@@ -657,14 +657,14 @@ module.exports.updateCheckout_post = async (req: any, res: any) => {
   let score = await Score.findOne({ id: scoreId });
   // const score = await Score.findOne({ "checkouts._id" : checkoutId });  // interesting to find a score just by the _id of one of it's checkouts
   if (score) {
-    console.log("score found");
+    // console.log("score found");
 
     // TODO: works, but question is if we can do a query which just returns the checkout without returning the whole score first
     const checkout = score.checkouts.find(
       (checkout: any) => checkout._id == checkoutId
     );
     if (checkout) {
-      console.log("checkout found");
+      // console.log("checkout found");
       checkout.checkoutComment = checkoutComment;
       checkout.checkinComment = checkinComment;
       if (userId) {
@@ -726,13 +726,14 @@ module.exports.users_post = async (req: any, res: any) => {
 };
 
 module.exports.updateUser_post = async (req: any, res: any) => {
-  const { id, email, active } = req.body;
+  const { id, email, active, voice } = req.body;
 
   let user = await User.findOne({ id });
   if (user) {
     // console.log("user found");
     user.email = email;
     user.active = !!active;
+    user.voice = voice;
     user = await user.save();
     if (user) {
       res.status(201).json({ updateUser: user });
@@ -791,6 +792,7 @@ module.exports.users_vue_get = async (req: any, res: any) => {
   res.render("users-vue", {
     filter: JSON.stringify({ active: true }),
     users: [],
+    voiceOptions: JSON.stringify(getVoiceOptions()),
   });
 };
 
@@ -800,6 +802,7 @@ module.exports.users_vue_post = async (req: any, res: any) => {
     "lastName"
   );
   res.status(201).json({
+    voiceOptions: getVoiceOptions(),
     users: users.map((u) => ({
       id: u.id,
       firstName: u.firstName,

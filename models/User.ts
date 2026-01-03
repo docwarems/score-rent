@@ -24,11 +24,20 @@ export enum Voice {
   TENOR = "T",
   BASS = "B",
 }
-export const voiceMap: Map<Voice, string> = new Map();
-voiceMap.set(Voice.SOPRANO, "Sopran");
-voiceMap.set(Voice.ALTO, "Alt");
-voiceMap.set(Voice.TENOR, "Tenor");
-voiceMap.set(Voice.BASS, "Bass");
+
+export const voiceLabels: Record<Voice, string> = {
+  [Voice.SOPRANO]: "Sopran",
+  [Voice.ALTO]: "Alt",
+  [Voice.TENOR]: "Tenor",
+  [Voice.BASS]: "Bass",
+};
+
+export function getVoiceOptions() {
+  return Object.entries(voiceLabels).map(([value, label]) => ({
+    value,
+    label,
+  }));
+}
 
 export enum MemberState {
   MEMBER = "M",
