@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const scoreController = require("../controllers/scoreController");
+const adminController = require("../controllers/adminController");
 const {
   requireAuth,
   checkUser,
@@ -18,7 +18,7 @@ admin.post("*", requireAuth, requireAdmin);
 admin.get("/register", (req: any, res: any) =>
   res.render("register-score", { scoreType: res.locals.scoreType })
 );
-admin.post("/register", scoreController.register_score_post);
+admin.post("/register", adminController.register_score_post);
 admin.get("/checkout", (req: any, res: any) =>
   res.render("checkout", {
     checkoutUser: res.locals.checkoutUser,
@@ -26,14 +26,14 @@ admin.get("/checkout", (req: any, res: any) =>
     users: undefined,
   })
 );
-admin.post("/checkout", scoreController.checkout_post);
-admin.post("/updateCheckout", scoreController.updateCheckout_post);
+admin.post("/checkout", adminController.checkout_post);
+admin.post("/updateCheckout", adminController.updateCheckout_post);
 admin.get("/checkin", (req: any, res: any) =>
   res.render("checkin", {
     checkinScore: res.locals.checkinScore,
   })
 );
-admin.post("/checkin", scoreController.checkin_post);
+admin.post("/checkin", adminController.checkin_post);
 admin.get("/checkouts", async (req: any, res: any) =>
   res.render("checkouts", {
     admin: true,
@@ -43,13 +43,13 @@ admin.get("/checkouts", async (req: any, res: any) =>
     error: undefined,
   })
 );
-admin.post("/checkouts", scoreController.checkouts_post);
+admin.post("/checkouts", adminController.checkouts_post);
 
 // User management routes
-admin.post("/userSearch", scoreController.userSearch_post);
-admin.get("/users", scoreController.users_get);
-admin.post("/users", scoreController.users_post);
-admin.post("/updateUser", scoreController.updateUser_post);
+admin.post("/userSearch", adminController.userSearch_post);
+admin.get("/users", adminController.users_get);
+admin.post("/users", adminController.users_post);
+admin.post("/updateUser", adminController.updateUser_post);
 
 exports.admin.get("/history", async (req: any, res: any) =>
   res.render("score-history", {
@@ -58,7 +58,7 @@ exports.admin.get("/history", async (req: any, res: any) =>
     error: undefined,
   })
 );
-exports.admin.post("/history", scoreController.scoreHistory_post);
+exports.admin.post("/history", adminController.scoreHistory_post);
 
 exports.admin.get("/vue-test", async (req: any, res: any) =>
   res.render("vue-test")
@@ -79,14 +79,14 @@ exports.admin.get("/checkouts-vue", async (req: any, res: any) =>
     hasError: false,
   })
 );
-admin.post("/checkouts-vue", scoreController.checkouts_vue_post);
+admin.post("/checkouts-vue", adminController.checkouts_vue_post);
 
-admin.get("/users-vue", scoreController.users_vue_get);
-admin.post("/users-vue", scoreController.users_vue_post);
+admin.get("/users-vue", adminController.users_vue_get);
+admin.post("/users-vue", adminController.users_vue_post);
 
 admin.get("/register-score-vue", (req: any, res: any) =>
   res.render("register-score-vue")
 );
 
-admin.get("/email-queue-stats", scoreController.email_queue_stats_get);
-admin.get("/test-email", scoreController.send_test_email_get);
+admin.get("/email-queue-stats", adminController.email_queue_stats_get);
+admin.get("/test-email", adminController.send_test_email_get);
