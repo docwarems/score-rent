@@ -109,6 +109,14 @@ const EditModal = {
               <tr>
                 <td v-for="field in editFields" :key="field.key">
                   <input 
+                    v-if="field.type === 'checkbox'"
+                    :checked="field.value" 
+                    @change="updateField(field.key, $event.target.checked)"
+                    class="w3-check"
+                    type="checkbox"
+                  >
+                  <input 
+                    v-else
                     :value="field.value" 
                     @input="updateField(field.key, $event.target.value)"
                     class="w3-input"
