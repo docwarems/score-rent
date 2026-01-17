@@ -510,11 +510,11 @@ function checkouts_vue(res, signature, checkedOut, admin, userId) {
 exports.checkouts_vue = checkouts_vue;
 const sendCheckoutConfirmationEmail = (user, score, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
     const subject = "Hans-Sachs-Chor Noten ausgeliehen";
-    const extId = score.extId ? score.extId : "???";
+    const extIdText = score.extId ? ` (externe Nummer: ${score.extId})` : "";
     const html = `
-    Liebe Chorsängerin, lieber Chorsänger,
+    Liebe(r) ${user.firstName} ${user.lastName},
     <p>
-    Du hast Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit HSC-Nummer ${score.id} (andere Nummer: ${extId}) vom Hans-Sachs-Chor ausgeliehen.<br>
+    Du hast Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit HSC-Nummer ${score.id} ${extIdText} vom Hans-Sachs-Chor ausgeliehen.<br>
     Bitte behandle die Noten pfleglich und nehme Eintragungen nur mit Bleistift vor.<br>
     Nach dem Konzert gebe die Noten bitte zeitnah an den Chor zurück.<br>
     Vorher radiere bitte deine Eintragungen aus.<br>    
@@ -531,18 +531,11 @@ const sendCheckoutConfirmationEmail = (user, score, testRecipient) => __awaiter(
 });
 const sendCheckinConfirmationEmail = (user, score, testRecipient) => __awaiter(void 0, void 0, void 0, function* () {
     const subject = "Hans-Sachs-Chor Noten Rückgabe erfolgt";
-    // TODO: not sure if we should send this info to users as it may be internal
-    // checkinComment = checkinComment
-    //   ? `<br>Kommentar zur Rückgabe: '${checkinComment}'`
-    //   : "";
-    // const html =
-    //   `Die Noten mit Nummer ${extScoreId} wurden erfolgreich zurückgegeben. Vielen Dank!` +
-    //   checkinComment;
-    const extId = score.extId ? score.extId : "???";
+    const extIdText = score.extId ? ` (externe Nummer: ${score.extId})` : "";
     const html = `
-  Liebe Chorsängerin, lieber Chorsänger,
+  Liebe(r) ${user.firstName} ${user.lastName},
   <p>
-  Du hast die Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit HSC-Nummer ${score.id} (andere Nummer: ${extId}) zurückgegeben. Vielen Dank!
+  Du hast die Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit HSC-Nummer ${score.id}${extIdText} zurückgegeben. Vielen Dank!
   <p>
   Dein Hans-Sachs-Chor Notenwart
   <p>
