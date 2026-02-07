@@ -79,12 +79,13 @@
                     </div>
                 </div>
                 <video ref="fotoVideo" autoplay playsinline width="320" height="240" style="border:1px solid #ccc;"></video>
+
                 <br>
                 <button class="w3-button w3-green" @click="capturePhoto">Foto aufnehmen</button>
                 <br>
                 <canvas ref="fotoCanvas" width="320" height="240" style="display:none;"></canvas>
                 <div v-if="capturedPhoto">
-                    <img :src="capturedPhoto" style="margin-top:10px;max-width:100%;border:1px solid #ccc;" />
+                    <img :src="capturedPhoto" style="margin-top:10px;max-width:100%;height:auto;border:1px solid #ccc;" />
                     <br>
                     <button class="w3-button w3-black" @click="saveFoto" :disabled="fotoUploadStatus==='saving'">Speichern</button>
                     <div v-if="fotoUploadStatus && fotoUploadStatus!=='saving'" style="margin-top:8px;">
@@ -193,7 +194,13 @@ const app = Vue.createApp({
             ];
             if (this.withCheckoutSheet) {
                 columns.unshift({ key: 'id', label: 'Ausleihzettel Id' });
-                columns.push({ key: 'fotoAction', label: 'Foto', clickable: true, visible: true });                
+                columns.push({ 
+                    key: 'fotoAction', 
+                    label: 'Foto', 
+                    clickable: true, 
+                    visible: true,
+                    formatter: () => 'Foto'
+                });                
             }
             return columns;
         },
@@ -352,9 +359,17 @@ const app = Vue.createApp({
         async startCamera() {
             try {
                 let stream = null;
+                const constraints = {
+                    video: {
+                        facingMode: { exact: "environment" },
+                        aspectRatio: { ideal: 4/3 },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
                 try {
-                    // Try to use the environment (rear) camera
-                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "environment" } } });
+                    // Try to use the environment (rear) camera with landscape aspect
+                    stream = await navigator.mediaDevices.getUserMedia(constraints);
                 } catch (e) {
                     // Fallback to any available camera
                     stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -386,6 +401,9 @@ const app = Vue.createApp({
             const video = this.$refs.fotoVideo;
             const canvas = this.$refs.fotoCanvas;
             if (video && canvas) {
+                // Set canvas size to video size for correct aspect ratio
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
                 canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
                 this.capturedPhoto = canvas.toDataURL('image/png');
             }
