@@ -72,6 +72,12 @@
             <div class="w3-container">
                 <span @click="closeFotoDialog" class="w3-button w3-display-topright">&times;</span>
                 <h3>Foto aufnehmen</h3>
+                <div v-if="storedPhotoBase64 && !capturedPhoto">
+                    <div style="margin-bottom:10px;">
+                        <span style="font-size:0.9em;color:#888;">Gespeichertes Foto:</span><br>
+                        <img :src="storedPhotoBase64" style="margin-top:4px;max-width:100%;border:1px solid #ccc;" />
+                    </div>
+                </div>
                 <video ref="fotoVideo" autoplay playsinline width="320" height="240" style="border:1px solid #ccc;"></video>
                 <br>
                 <button class="w3-button w3-green" @click="capturePhoto">Foto aufnehmen</button>
@@ -153,8 +159,8 @@ const app = Vue.createApp({
             fotoDialogRow: null,
             cameraStream: null,
             capturedPhoto: '',
-            capturedPhoto: '',
             fotoUploadStatus: '',
+            storedPhotoBase64: '',
         }
     },
     computed: {
@@ -323,9 +329,24 @@ const app = Vue.createApp({
         chooseUser(userId) {
             this.editCheckoutUserId = userId;
         },
-        openFotoDialog(row) {
+        async openFotoDialog(row) {
             this.showFotoDialog = true;
             this.fotoDialogRow = row;
+            this.capturedPhoto = '';
+            this.fotoUploadStatus = '';
+            this.storedPhotoBase64 = '';
+            // Fetch stored photo
+            try {
+                const res = await fetch(`/admin/getCheckoutPhoto?checkoutId=${encodeURIComponent(row.id)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.photoBase64) {
+                        this.storedPhotoBase64 = data.photoBase64;
+                    }
+                }
+            } catch (err) {
+                // Ignore fetch errors for now
+            }
             this.startCamera();
         },
         async startCamera() {
@@ -350,6 +371,9 @@ const app = Vue.createApp({
         closeFotoDialog() {
             this.showFotoDialog = false;
             this.stopCamera();
+            this.capturedPhoto = '';
+            this.storedPhotoBase64 = '';
+            this.fotoUploadStatus = '';
         },        
         capturePhoto() {
             const video = this.$refs.fotoVideo;

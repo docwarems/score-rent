@@ -1,3 +1,36 @@
+module.exports.getCheckoutPhoto_get = async (req: Request, res: Response) => {
+  try {
+    const { checkoutId } = req.query;
+    if (!checkoutId) {
+      return res
+        .status(400)
+        .json({ success: false, error: "checkoutId required" });
+    }
+    const score = await Score.findOne({ "checkouts._id": checkoutId });
+    if (!score) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Checkout not found in any Score" });
+    }
+    // Use .find, not .id, for TS compatibility
+    const checkout = score.checkouts.find((c: any) => c._id === checkoutId);
+    if (!checkout) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Checkout not found as subdocument" });
+    }
+    if (!checkout.photoBase64) {
+      return res
+        .status(404)
+        .json({ success: false, error: "No photo stored for this checkout" });
+    }
+    return res.json({ success: true, photoBase64: checkout.photoBase64 });
+  } catch (err) {
+    let errorMsg = "Unknown error";
+    if (err instanceof Error) errorMsg = err.message;
+    return res.status(500).json({ success: false, error: errorMsg });
+  }
+};
 import { Request, Response } from "express";
 module.exports.uploadCheckoutPhoto_post = async (
   req: Request,
