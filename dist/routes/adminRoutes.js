@@ -18,6 +18,13 @@ exports.admin = Router();
 // All routes require authentication and admin privileges
 exports.admin.get("*", requireAuth, requireAdmin);
 exports.admin.post("*", requireAuth, requireAdmin);
+// GET endpoint for checkout photo
+exports.admin.get("/getCheckoutPhoto", adminController.getCheckoutPhoto_get);
+// All routes require authentication and admin privileges
+exports.admin.get("*", requireAuth, requireAdmin);
+exports.admin.post("*", requireAuth, requireAdmin);
+// Score management routes
+exports.admin.post("/uploadCheckoutPhoto", adminController.uploadCheckoutPhoto_post);
 // Score management routes
 exports.admin.get("/register", (req, res) => res.render("register-score", { scoreType: res.locals.scoreType }));
 exports.admin.post("/register", adminController.register_score_post);

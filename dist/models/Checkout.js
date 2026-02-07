@@ -40,5 +40,9 @@ exports.checkoutSchema = new mongoose_1.Schema({
         type: Boolean,
         required: false,
     },
+    photoBase64: {
+        type: String,
+        required: false,
+    },
 });
 exports.Checkout = (0, mongoose_1.model)("Checkout", exports.checkoutSchema);
