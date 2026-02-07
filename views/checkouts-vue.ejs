@@ -16,14 +16,15 @@
         <form @submit.prevent="handleCheckoutsFilterSubmit">
             <h3>Filter</h3>
             <label>Noten Signatur</label>
-        
             <select class="w3-select" v-model="signature">                
                 <option value="">Noten auswählen</option>
                 <option v-for="signature in signatures" :value="signature.id">{{signature.name}}</option>
             </select>
-        
             <label>Nur offene&nbsp;</label>
             <input type="checkbox" class="w3-check" v-model="checkedOut">
+            &nbsp;
+            <label>Mit Ausleihzettel&nbsp;</label>
+            <input type="checkbox" class="w3-check" v-model="withCheckoutSheet">
             <p></p>
             <button class="w3-button w3-black">Suchen</button>
             <p></p>
@@ -102,6 +103,7 @@ const app = Vue.createApp({
             filter: JSON.parse('<%- filter %>'),
             checkouts: undefined,
             checkedOut: true,
+            withCheckoutSheet: false,
             scoreTypeTotalCount: 0,
             scoreTypeTotalCheckedOutCount: 0,
             statSummary: '',
@@ -236,6 +238,7 @@ const app = Vue.createApp({
                     body: JSON.stringify({
                         signature: this.signature,
                         checkedOut: this.checkedOut,
+                        withCheckoutSheet: this.withCheckoutSheet,
                         userId: undefined,
                     }),
                     headers: {

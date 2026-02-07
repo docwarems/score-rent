@@ -434,9 +434,16 @@ export async function checkouts(
 }
 
 module.exports.checkouts_vue_post = async (req: any, res: any) => {
-  const { signature, checkedOut, userId } = req.body;
+  const { signature, checkedOut, userId, withCheckoutSheet } = req.body;
   const admin = true;
-  await checkouts_vue(res, signature, checkedOut, admin, userId);
+  await checkouts_vue(
+    res,
+    signature,
+    checkedOut,
+    admin,
+    userId,
+    withCheckoutSheet
+  );
 };
 
 /**
@@ -446,16 +453,17 @@ module.exports.checkouts_vue_post = async (req: any, res: any) => {
  *
  * @param res
  * @param signature
- * @param checkedOut
+ * @param checkedOut if true return only open checkouts
  * @param admin
- * @param userId
+ * @param userId if defined return checkouts only for this user
  */
 export async function checkouts_vue(
   res: any,
   signature: string,
   checkedOut: boolean,
   admin: boolean,
-  userId: string
+  userId: string,
+  withCheckoutSheet: boolean = false
 ) {
   let sigFilter =
     signature && signature !== SIGNATURE_ALL.id ? { signature } : {};
@@ -473,13 +481,14 @@ export async function checkouts_vue(
       scoreTypeTotalCount = scoreType?.count;
 
       // const scores = await Score.find(filter, "checkouts") // return only checkouts property
-      const scores = await Score.find(sigFilter).populate("checkouts").exec(); // TODO: when exec and when not? // TODO: is populate() correct? See https://mongoosejs.com/docs/subdocs.html
+      const scores = await Score.find(sigFilter).populate("checkouts").exec();
       const checkedOutScoreIdSet = new Set<string>();
       checkoutsWithUser = await getCheckoutsWithUser(
         scores,
         checkedOutScoreIdSet,
         checkedOut,
-        userId
+        userId,
+        withCheckoutSheet
       );
       scoreTypeTotalCheckedOutCount = checkedOutScoreIdSet.size;
     }
@@ -503,7 +512,8 @@ export async function checkouts_vue(
     scores: IScore[],
     checkedOutScoreIdSet: Set<string>,
     onlyCheckedOut: boolean,
-    onlyForUserId?: string
+    onlyForUserId?: string,
+    onlyCheckoutSheet?: boolean
   ) {
     const userMap = await getUserMap(scores);
     let checkouts = [];
@@ -512,7 +522,9 @@ export async function checkouts_vue(
         checkedOutScoreIdSet.add(score.id);
         if (
           (!onlyCheckedOut || !checkout.checkinTimestamp) &&
-          (!onlyForUserId || checkout.userId === onlyForUserId)
+          (!onlyForUserId || checkout.userId === onlyForUserId) &&
+          (!onlyCheckoutSheet ||
+            (typeof checkout._id === "string" && checkout._id.startsWith("C-")))
         ) {
           const user = userMap.get(checkout.userId);
           const userName = user
@@ -521,7 +533,6 @@ export async function checkouts_vue(
           const voice = user?.voice ?? "?";
           const namePlusVoice = `${userName} (${voice})`;
           const email = user?.email ?? "";
-          // deconstruction of checkout by "...checkout" seems not to work, because it's a Mongoose object?
           checkouts.push({
             id: checkout._id,
             checkoutTimestamp: checkout.checkoutTimestamp
