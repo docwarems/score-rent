@@ -129,7 +129,7 @@ const app = Vue.createApp({
     },
     computed: {
         checkoutColumns() {
-            return [
+            const columns = [
                 { 
                     key: 'signature', 
                     label: 'Werk', 
@@ -155,6 +155,10 @@ const app = Vue.createApp({
                 { key: 'checkinTimestamp', label: 'Rückgabe am' },
                 { key: 'checkinComment', label: 'Kommentar Rückgabe' }
             ];
+            if (this.withCheckoutSheet) {
+                columns.unshift({ key: 'id', label: 'Ausleihzettel Id' });
+            }
+            return columns;
         },
         editCheckoutDisplayFields() {
             return [
