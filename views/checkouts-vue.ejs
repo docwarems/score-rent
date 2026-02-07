@@ -73,7 +73,13 @@
                 <span @click="closeFotoDialog" class="w3-button w3-display-topright">&times;</span>
                 <h3>Foto aufnehmen</h3>
                 <video ref="fotoVideo" autoplay playsinline width="320" height="240" style="border:1px solid #ccc;"></video>
-                <div style="margin-top:10px;">(Nur Vorschau, noch kein Foto aufnehmen möglich)</div>
+                <br>
+                <button class="w3-button w3-green" @click="capturePhoto">Foto aufnehmen</button>
+                <br>
+                <canvas ref="fotoCanvas" width="320" height="240" style="display:none;"></canvas>
+                <div v-if="capturedPhoto">
+                    <img :src="capturedPhoto" style="margin-top:10px;max-width:100%;border:1px solid #ccc;" />
+                </div>
             </div>
         </div>
     </div>
@@ -140,6 +146,7 @@ const app = Vue.createApp({
             showFotoDialog: false,
             fotoDialogRow: null,
             cameraStream: null,
+            capturedPhoto: '',
         }
     },
     computed: {
@@ -336,6 +343,14 @@ const app = Vue.createApp({
             this.showFotoDialog = false;
             this.stopCamera();
         },        
+        capturePhoto() {
+            const video = this.$refs.fotoVideo;
+            const canvas = this.$refs.fotoCanvas;
+            if (video && canvas) {
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                this.capturedPhoto = canvas.toDataURL('image/png');
+            }
+        },
     },
 })
 
