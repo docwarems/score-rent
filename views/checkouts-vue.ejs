@@ -66,6 +66,19 @@
         </div>
     </div>  
 
+    <!-- foto modal -->
+    <div class="w3-modal" :style="{ display: showFotoDialog ? 'block' : 'none' }">
+        <div class="w3-modal-content w3-center">
+            <div class="w3-container">
+                <span @click="showFotoDialog = false" class="w3-button w3-display-topright">&times;</span>
+                <h3>Foto-Dialog (Platzhalter)</h3>
+                <div>
+                    <!-- Empty for now -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- edit checkout modal -->
     <edit-modal
         :show="showEditCheckoutModal"
@@ -125,6 +138,8 @@ const app = Vue.createApp({
             editCheckoutModalError: '',
             users: [],
             userLastName: '',
+            showFotoDialog: false,
+            fotoDialogRow: null,
         }
     },
     computed: {
@@ -157,6 +172,7 @@ const app = Vue.createApp({
             ];
             if (this.withCheckoutSheet) {
                 columns.unshift({ key: 'id', label: 'Ausleihzettel Id' });
+                columns.push({ key: 'fotoAction', label: 'Foto', clickable: true, visible: true });                
             }
             return columns;
         },
@@ -180,7 +196,9 @@ const app = Vue.createApp({
                 this.userDetails(row.user);
             } else if (column.key === 'checkoutTimestamp') {
                 this.editCheckout(row);
-            }
+            } else if (column.key === 'fotoAction') {
+                this.openFotoDialog(row);
+            }            
         },
         userDetails(user) {
             this.userDetailsName = user.name;
@@ -289,7 +307,11 @@ const app = Vue.createApp({
         },
         chooseUser(userId) {
             this.editCheckoutUserId = userId;
-        }
+        },
+        openFotoDialog(row) {
+            this.showFotoDialog = true;
+            this.fotoDialogRow = row;
+        },
     },
 })
 
