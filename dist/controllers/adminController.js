@@ -13,6 +13,75 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.checkouts_vue = exports.checkouts = void 0;
+module.exports.getCheckoutPhoto_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { checkoutId } = req.query;
+        if (!checkoutId) {
+            return res
+                .status(400)
+                .json({ success: false, error: "checkoutId required" });
+        }
+        const score = yield Score_1.Score.findOne({ "checkouts._id": checkoutId });
+        if (!score) {
+            return res
+                .status(404)
+                .json({ success: false, error: "Checkout not found in any Score" });
+        }
+        // Use .find, not .id, for TS compatibility
+        const checkout = score.checkouts.find((c) => c._id === checkoutId);
+        if (!checkout) {
+            return res
+                .status(404)
+                .json({ success: false, error: "Checkout not found as subdocument" });
+        }
+        if (!checkout.photoBase64) {
+            return res
+                .status(404)
+                .json({ success: false, error: "No photo stored for this checkout" });
+        }
+        return res.json({ success: true, photoBase64: checkout.photoBase64 });
+    }
+    catch (err) {
+        let errorMsg = "Unknown error";
+        if (err instanceof Error)
+            errorMsg = err.message;
+        return res.status(500).json({ success: false, error: errorMsg });
+    }
+});
+module.exports.uploadCheckoutPhoto_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("uploadCheckoutPhoto_post", { checkoutId: req.body.checkoutId });
+    try {
+        const { checkoutId, imageBase64 } = req.body;
+        if (!checkoutId || !imageBase64) {
+            return res
+                .status(400)
+                .json({ success: false, error: "checkoutId and imageBase64 required" });
+        }
+        // Find the Score document containing the checkout
+        const score = yield Score_1.Score.findOne({ "checkouts._id": checkoutId });
+        if (!score) {
+            return res
+                .status(404)
+                .json({ success: false, error: "Checkout not found in any Score" });
+        }
+        // Find the checkout subdocument (use .find for TS compatibility)
+        const checkout = score.checkouts.find((c) => c._id === checkoutId);
+        if (!checkout) {
+            return res
+                .status(404)
+                .json({ success: false, error: "Checkout not found as subdocument" });
+        }
+        checkout.photoBase64 = imageBase64;
+        yield score.save();
+        return res.json({ success: true });
+    }
+    catch (err) {
+        let errorMsg = "Unknown error";
+        if (err instanceof Error)
+            errorMsg = err.message;
+        return res.status(500).json({ success: false, error: errorMsg });
+    }
+});
 const User_1 = require("../models/User");
 const Score_1 = require("../models/Score");
 const Checkout_1 = require("../models/Checkout");
@@ -404,9 +473,9 @@ function checkouts(res, signature, checkedOut, admin, userId) {
 }
 exports.checkouts = checkouts;
 module.exports.checkouts_vue_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { signature, checkedOut, userId } = req.body;
+    const { signature, checkedOut, userId, withCheckoutSheet } = req.body;
     const admin = true;
-    yield checkouts_vue(res, signature, checkedOut, admin, userId);
+    yield checkouts_vue(res, signature, checkedOut, admin, userId, withCheckoutSheet);
 });
 /**
  * Fälle
@@ -415,11 +484,11 @@ module.exports.checkouts_vue_post = (req, res) => __awaiter(void 0, void 0, void
  *
  * @param res
  * @param signature
- * @param checkedOut
+ * @param checkedOut if true return only open checkouts
  * @param admin
- * @param userId
+ * @param userId if defined return checkouts only for this user
  */
-function checkouts_vue(res, signature, checkedOut, admin, userId) {
+function checkouts_vue(res, signature, checkedOut, admin, userId, withCheckoutSheet = false) {
     return __awaiter(this, void 0, void 0, function* () {
         let sigFilter = signature && signature !== score_utils_1.SIGNATURE_ALL.id ? { signature } : {};
         let scoreTypeTotalCount;
@@ -434,9 +503,9 @@ function checkouts_vue(res, signature, checkedOut, admin, userId) {
                 const scoreType = yield Score_1.ScoreType.findOne({ signature });
                 scoreTypeTotalCount = scoreType === null || scoreType === void 0 ? void 0 : scoreType.count;
                 // const scores = await Score.find(filter, "checkouts") // return only checkouts property
-                const scores = yield Score_1.Score.find(sigFilter).populate("checkouts").exec(); // TODO: when exec and when not? // TODO: is populate() correct? See https://mongoosejs.com/docs/subdocs.html
+                const scores = yield Score_1.Score.find(sigFilter).populate("checkouts").exec();
                 const checkedOutScoreIdSet = new Set();
-                checkoutsWithUser = yield getCheckoutsWithUser(scores, checkedOutScoreIdSet, checkedOut, userId);
+                checkoutsWithUser = yield getCheckoutsWithUser(scores, checkedOutScoreIdSet, checkedOut, userId, withCheckoutSheet);
                 scoreTypeTotalCheckedOutCount = checkedOutScoreIdSet.size;
             }
             res.status(201).json({
@@ -454,7 +523,7 @@ function checkouts_vue(res, signature, checkedOut, admin, userId) {
         catch (error) {
             res.status(500).json({ error });
         }
-        function getCheckoutsWithUser(scores, checkedOutScoreIdSet, onlyCheckedOut, onlyForUserId) {
+        function getCheckoutsWithUser(scores, checkedOutScoreIdSet, onlyCheckedOut, onlyForUserId, onlyCheckoutSheet) {
             var _a, _b;
             return __awaiter(this, void 0, void 0, function* () {
                 const userMap = yield getUserMap(scores);
@@ -463,7 +532,9 @@ function checkouts_vue(res, signature, checkedOut, admin, userId) {
                     for (const checkout of score.checkouts) {
                         checkedOutScoreIdSet.add(score.id);
                         if ((!onlyCheckedOut || !checkout.checkinTimestamp) &&
-                            (!onlyForUserId || checkout.userId === onlyForUserId)) {
+                            (!onlyForUserId || checkout.userId === onlyForUserId) &&
+                            (!onlyCheckoutSheet ||
+                                (typeof checkout._id === "string" && checkout._id.startsWith("C-")))) {
                             const user = userMap.get(checkout.userId);
                             const userName = user
                                 ? user.firstName + " " + user.lastName
@@ -471,7 +542,6 @@ function checkouts_vue(res, signature, checkedOut, admin, userId) {
                             const voice = (_a = user === null || user === void 0 ? void 0 : user.voice) !== null && _a !== void 0 ? _a : "?";
                             const namePlusVoice = `${userName} (${voice})`;
                             const email = (_b = user === null || user === void 0 ? void 0 : user.email) !== null && _b !== void 0 ? _b : "";
-                            // deconstruction of checkout by "...checkout" seems not to work, because it's a Mongoose object?
                             checkouts.push({
                                 id: checkout._id,
                                 checkoutTimestamp: checkout.checkoutTimestamp

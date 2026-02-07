@@ -14,6 +14,16 @@ export const admin = Router();
 admin.get("*", requireAuth, requireAdmin);
 admin.post("*", requireAuth, requireAdmin);
 
+// GET endpoint for checkout photo
+admin.get("/getCheckoutPhoto", adminController.getCheckoutPhoto_get);
+
+// All routes require authentication and admin privileges
+admin.get("*", requireAuth, requireAdmin);
+admin.post("*", requireAuth, requireAdmin);
+
+// Score management routes
+admin.post("/uploadCheckoutPhoto", adminController.uploadCheckoutPhoto_post);
+
 // Score management routes
 admin.get("/register", (req: any, res: any) =>
   res.render("register-score", { scoreType: res.locals.scoreType })
