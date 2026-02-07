@@ -70,11 +70,10 @@
     <div class="w3-modal" :style="{ display: showFotoDialog ? 'block' : 'none' }">
         <div class="w3-modal-content w3-center">
             <div class="w3-container">
-                <span @click="showFotoDialog = false" class="w3-button w3-display-topright">&times;</span>
-                <h3>Foto-Dialog (Platzhalter)</h3>
-                <div>
-                    <!-- Empty for now -->
-                </div>
+                <span @click="closeFotoDialog" class="w3-button w3-display-topright">&times;</span>
+                <h3>Foto aufnehmen</h3>
+                <video ref="fotoVideo" autoplay playsinline width="320" height="240" style="border:1px solid #ccc;"></video>
+                <div style="margin-top:10px;">(Nur Vorschau, noch kein Foto aufnehmen möglich)</div>
             </div>
         </div>
     </div>
@@ -140,6 +139,7 @@ const app = Vue.createApp({
             userLastName: '',
             showFotoDialog: false,
             fotoDialogRow: null,
+            cameraStream: null,
         }
     },
     computed: {
@@ -311,7 +311,31 @@ const app = Vue.createApp({
         openFotoDialog(row) {
             this.showFotoDialog = true;
             this.fotoDialogRow = row;
+            this.startCamera();
         },
+        async startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                this.cameraStream = stream;
+                this.$nextTick(() => {
+                    if (this.$refs.fotoVideo) {
+                        this.$refs.fotoVideo.srcObject = stream;
+                    }
+                });
+            } catch (err) {
+                this.error = 'Kamera konnte nicht gestartet werden: ' + err.message;
+            }
+        },
+        stopCamera() {
+            if (this.cameraStream) {
+                this.cameraStream.getTracks().forEach(track => track.stop());
+                this.cameraStream = null;
+            }
+        },
+        closeFotoDialog() {
+            this.showFotoDialog = false;
+            this.stopCamera();
+        },        
     },
 })
 
