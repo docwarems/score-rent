@@ -42,7 +42,7 @@ export interface IScore {
   extId: string;
   state: string;
   checkedOutByUserId: string;
-  checkouts: [ICheckout];
+  checkouts: ICheckout[];
 }
 
 const scoreSchema = new Schema<IScore>({

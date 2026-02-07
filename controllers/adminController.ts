@@ -1,3 +1,39 @@
+import { Request, Response } from "express";
+module.exports.uploadCheckoutPhoto_post = async (
+  req: Request,
+  res: Response
+) => {
+  console.log("uploadCheckoutPhoto_post", { checkoutId: req.body.checkoutId });
+  try {
+    const { checkoutId, imageBase64 } = req.body;
+    if (!checkoutId || !imageBase64) {
+      return res
+        .status(400)
+        .json({ success: false, error: "checkoutId and imageBase64 required" });
+    }
+    // Find the Score document containing the checkout
+    const score = await Score.findOne({ "checkouts._id": checkoutId });
+    if (!score) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Checkout not found in any Score" });
+    }
+    // Find the checkout subdocument (use .find for TS compatibility)
+    const checkout = score.checkouts.find((c: any) => c._id === checkoutId);
+    if (!checkout) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Checkout not found as subdocument" });
+    }
+    checkout.photoBase64 = imageBase64;
+    await score.save();
+    return res.json({ success: true });
+  } catch (err) {
+    let errorMsg = "Unknown error";
+    if (err instanceof Error) errorMsg = err.message;
+    return res.status(500).json({ success: false, error: errorMsg });
+  }
+};
 import { IUser, User, USER_UNKNOWN, getVoiceOptions } from "../models/User";
 import { Score, ScoreType, IScore } from "../models/Score";
 import { Checkout, ICheckout } from "../models/Checkout";

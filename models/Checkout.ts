@@ -14,6 +14,7 @@ export interface ICheckout {
   checkinTimestamp: Date;
   checkinComment: string;
   checkinConfirmationEmailNotSent: boolean;
+  photoBase64?: string;
 }
 
 export const checkoutSchema = new Schema<ICheckout>({
@@ -51,6 +52,10 @@ export const checkoutSchema = new Schema<ICheckout>({
   },
   checkinConfirmationEmailNotSent: {
     type: Boolean,
+    required: false,
+  },
+  photoBase64: {
+    type: String,
     required: false,
   },
 });

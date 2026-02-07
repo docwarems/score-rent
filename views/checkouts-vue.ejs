@@ -79,7 +79,13 @@
                 <canvas ref="fotoCanvas" width="320" height="240" style="display:none;"></canvas>
                 <div v-if="capturedPhoto">
                     <img :src="capturedPhoto" style="margin-top:10px;max-width:100%;border:1px solid #ccc;" />
-                </div>
+                    <br>
+                    <button class="w3-button w3-black" @click="saveFoto" :disabled="fotoUploadStatus==='saving'">Speichern</button>
+                    <div v-if="fotoUploadStatus && fotoUploadStatus!=='saving'" style="margin-top:8px;">
+                        <span v-if="fotoUploadStatus==='success'" style="color:green;">Foto gespeichert!</span>
+                        <span v-else style="color:red;">{{ fotoUploadStatus }}</span>
+                    </div>
+                </div>            
             </div>
         </div>
     </div>
@@ -147,6 +153,8 @@ const app = Vue.createApp({
             fotoDialogRow: null,
             cameraStream: null,
             capturedPhoto: '',
+            capturedPhoto: '',
+            fotoUploadStatus: '',
         }
     },
     computed: {
@@ -349,6 +357,28 @@ const app = Vue.createApp({
             if (video && canvas) {
                 canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
                 this.capturedPhoto = canvas.toDataURL('image/png');
+            }
+        },
+        async saveFoto() {
+            if (!this.capturedPhoto || !this.fotoDialogRow) return;
+            this.fotoUploadStatus = 'saving';
+            try {
+                const res = await fetch('/admin/uploadCheckoutPhoto', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        checkoutId: this.fotoDialogRow.id,
+                        imageBase64: this.capturedPhoto
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.fotoUploadStatus = 'success';
+                } else {
+                    this.fotoUploadStatus = data.error || 'Fehler beim Speichern.';
+                }
+            } catch (err) {
+                this.fotoUploadStatus = err.message || 'Fehler beim Speichern.';
             }
         },
     },
