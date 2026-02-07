@@ -351,7 +351,14 @@ const app = Vue.createApp({
         },
         async startCamera() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                let stream = null;
+                try {
+                    // Try to use the environment (rear) camera
+                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "environment" } } });
+                } catch (e) {
+                    // Fallback to any available camera
+                    stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                }
                 this.cameraStream = stream;
                 this.$nextTick(() => {
                     if (this.$refs.fotoVideo) {
