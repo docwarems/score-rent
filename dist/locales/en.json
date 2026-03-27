@@ -29,6 +29,12 @@
         "score.early.reminder.send": "Send reminder",
         "score.early.reminder.success": "Early reminder emails queued for {{count}} borrower(s)",
         "score.early.reminder.error": "Error sending early reminders",
-        "score.early.reminder.no.borrowers": "No active borrowers found for this score"
+        "score.early.reminder.no.borrowers": "No active borrowers found for this score",
+        "score.return.reminder": "Send return reminder",
+        "score.return.reminder.select": "Select score for post-concert return reminder",
+        "score.return.reminder.send": "Send reminder",
+        "score.return.reminder.success": "Return reminder emails queued for {{count}} borrower(s)",
+        "score.return.reminder.error": "Error sending return reminders",
+        "score.return.reminder.no.borrowers": "No active borrowers found for this score"
     }
 }

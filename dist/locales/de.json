@@ -32,6 +32,12 @@
         "score.early.reminder.send": "Erinnerung senden",
         "score.early.reminder.success": "Erinnerungs-E-Mails für {{count}} Ausleiher in Warteschlange",
         "score.early.reminder.error": "Fehler beim Senden der Erinnerungen",
-        "score.early.reminder.no.borrowers": "Keine aktiven Ausleiher für diese Noten gefunden"
+        "score.early.reminder.no.borrowers": "Keine aktiven Ausleiher für diese Noten gefunden",
+        "score.return.reminder": "Rückgabe-Erinnerung senden",
+        "score.return.reminder.select": "Noten auswählen für Rückgabe-Erinnerung nach Konzert",
+        "score.return.reminder.send": "Erinnerung senden",
+        "score.return.reminder.success": "Rückgabe-Erinnerungs-E-Mails für {{count}} Ausleiher in Warteschlange",
+        "score.return.reminder.error": "Fehler beim Senden der Rückgabe-Erinnerungen",
+        "score.return.reminder.no.borrowers": "Keine aktiven Ausleiher für diese Noten gefunden"
     }
 }

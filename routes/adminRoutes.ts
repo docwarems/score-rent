@@ -101,5 +101,8 @@ admin.get("/register-score-vue", (req: any, res: any) =>
 admin.get("/early-reminder", adminController.early_reminder_get);
 admin.post("/early-reminder", adminController.early_reminder_post);
 
+admin.get("/return-reminder", adminController.return_reminder_get);
+admin.post("/return-reminder", adminController.return_reminder_post);
+
 admin.get("/email-queue-stats", adminController.email_queue_stats_get);
 admin.get("/test-email", adminController.send_test_email_get);
