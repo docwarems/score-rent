@@ -922,3 +922,117 @@ module.exports.send_test_email_get = async (req: any, res: any) => {
 
   res.redirect("/admin/email-queue-stats");
 };
+
+module.exports.early_reminder_get = async (req: any, res: any) => {
+  const signatures = await getScoreTypes();
+  res.render("early-reminder", {
+    signatures,
+    error: undefined,
+    success: undefined,
+    borrowers: undefined,
+  });
+};
+
+module.exports.early_reminder_post = async (req: any, res: any) => {
+  const { signature } = req.body;
+  const signatures = await getScoreTypes();
+
+  try {
+    // Find all scores with this signature that are currently checked out
+    const scores = await Score.find({
+      signature: signature,
+      checkedOutByUserId: { $ne: "" }, // not empty means checked out
+    });
+
+    if (scores.length === 0) {
+      return res.render("early-reminder", {
+        signatures,
+        error: t(req, "score.early.reminder.no.borrowers"),
+        success: undefined,
+        borrowers: undefined,
+      });
+    }
+
+    // Get unique user IDs and prepare borrower info
+    const borrowerMap = new Map(); // userId -> { user, scoreIds[] }
+    const borrowersInfo = [];
+    for (const score of scores) {
+      if (score.checkedOutByUserId) {
+        const user = await User.findOne({ id: score.checkedOutByUserId });
+        if (user && user.email) {
+          if (!borrowerMap.has(user.id)) {
+            borrowerMap.set(user.id, { user, scoreIds: [] });
+          }
+          borrowerMap.get(user.id).scoreIds.push(score.id);
+
+          // Find the latest checkout for this score
+          const latestCheckout = score.checkouts
+            .filter((c: any) => !c.checkinTimestamp)
+            .sort(
+              (a: any, b: any) =>
+                b.checkoutTimestamp.getTime() - a.checkoutTimestamp.getTime()
+            )[0];
+
+          borrowersInfo.push({
+            userName: `${user.firstName} ${user.lastName}`,
+            userEmail: user.email,
+            scoreId: score.id,
+            checkoutDate:
+              latestCheckout?.checkoutTimestamp?.toLocaleDateString("de-DE") ||
+              "",
+          });
+        }
+      }
+    }
+
+    // Send emails to all unique borrowers
+    const scoreTypeMap = await getScoreTypeMap();
+    const scoreName = scoreTypeMap.get(signature);
+    const testRecipient = getEnvVar("EMAIL_TEST_RECIPIENT");
+    let emailCount = 0;
+
+    for (const [userId, { user, scoreIds }] of borrowerMap) {
+      const recipientEmail = testRecipient ? testRecipient : user.email;
+      const scoreIdList =
+        scoreIds.length > 1 ? scoreIds.join(", ") : scoreIds[0];
+      const subject = `Erinnerung: Rückgabe der Noten "${scoreName}"`;
+      const html = `
+Liebe(r) ${user.firstName} ${user.lastName},
+<p>
+Du hast die Noten "${scoreName}" mit HSC-Nummer ${scoreIdList} ausgeliehen.
+<p>
+Falls Du die Proben nicht bis zum Konzert weiterführen möchtest, bitten wir Dich, die Noten möglichst bald zurückzugeben, 
+damit andere Chormitglieder sie nutzen können, und damit es nach dem Konzert keine Verzögerung bei der Rückgabe der Noten an den Verlag gibt.
+<p>
+Du kannst auf diese E-Mail antworten!
+<p>
+Vielen Dank für Dein Verständnis!
+<p>
+Dein Hans-Sachs-Chor Notenwart
+`;
+
+      await emailQueueService.queueEmail({
+        to: recipientEmail,
+        subject,
+        html,
+        from: process.env.SMTP_FROM,
+      });
+      emailCount++;
+    }
+
+    return res.render("early-reminder", {
+      signatures,
+      error: undefined,
+      success: t(req, "score.early.reminder.success", { count: emailCount }),
+      borrowers: borrowersInfo,
+    });
+  } catch (error) {
+    console.error("Error sending early reminders:", error);
+    return res.render("early-reminder", {
+      signatures,
+      error: t(req, "score.early.reminder.error"),
+      success: undefined,
+      borrowers: undefined,
+    });
+  }
+};

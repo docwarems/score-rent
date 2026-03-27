@@ -1,0 +1,71 @@
+<%- include('partials/header'); -%>
+
+<h1><%= t('score.early.reminder') %></h1>
+
+<% 
+  let errorStyle; 
+  let errorText;
+ if (error) { 
+  errorStyle = "display: block"
+  errorText = error;
+ } else { 
+  errorStyle = "display: none"
+  errorText = "";
+ } 
+%>
+<div class="w3-panel w3-red divError" style="<%= errorStyle %>">
+  <p class="pError"><%= errorText %></p>
+</div>
+
+<% 
+  let successStyle; 
+  let successText;
+ if (success) { 
+  successStyle = "display: block"
+  successText = success;
+ } else { 
+  successStyle = "display: none"
+  successText = "";
+ } 
+%>
+<div class="w3-panel w3-green divSuccess" style="<%= successStyle %>">
+  <p class="pSuccess"><%= successText %></p>
+</div>
+
+<form action="/admin/early-reminder" method="post">
+  <label><%= t('score.early.reminder.select') %></label>
+  <select name="signature" class="w3-select w3-border" required>
+    <option value="" disabled selected><%= t('choose') %></option>
+    <% signatures.forEach(signature => { %>
+      <% if (signature.id !== 'ALL') { %>
+        <option value="<%= signature.id %>"><%= signature.name %> (<%= signature.id %>)</option>
+      <% } %>
+    <% }); %>
+  </select>
+  <p></p>
+  <button class="w3-button w3-black" type="submit"><%= t('score.early.reminder.send') %></button>
+</form>
+
+<% if (typeof borrowers !== 'undefined' && borrowers && borrowers.length > 0) { %>
+  <div class="w3-responsive divBorrowers" style="margin-top: 20px;">
+    <h3>Aktive Ausleiher für diese Noten:</h3>
+    <table class="w3-table-all">
+      <tr>
+        <th>Name</th>
+        <th>E-Mail</th>
+        <th>Noten ID</th>
+        <th>Ausgeliehen am</th>
+      </tr>
+      <% borrowers.forEach(borrower => { %>
+      <tr>
+        <td><%= borrower.userName %></td>
+        <td><%= borrower.userEmail %></td>
+        <td><%= borrower.scoreId %></td>
+        <td><%= borrower.checkoutDate %></td>
+      </tr>
+      <% }); %>
+    </table>
+  </div>
+<% } %>
+
+<%- include('partials/footer'); -%>
