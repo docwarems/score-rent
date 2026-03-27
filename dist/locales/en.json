@@ -23,6 +23,12 @@
         "user.search.by.name": "Search user by name",
         "user.not.found": "User not found",
         "home": "Home",
-        "scan.score": "Scan score"
+        "scan.score": "Scan score",
+        "score.early.reminder": "Send early reminder",
+        "score.early.reminder.select": "Select score to remind borrowers",
+        "score.early.reminder.send": "Send reminder",
+        "score.early.reminder.success": "Early reminder emails queued for {{count}} borrower(s)",
+        "score.early.reminder.error": "Error sending early reminders",
+        "score.early.reminder.no.borrowers": "No active borrowers found for this score"
     }
 }

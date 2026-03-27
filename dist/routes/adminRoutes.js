@@ -82,5 +82,7 @@ exports.admin.post("/checkouts-vue", adminController.checkouts_vue_post);
 exports.admin.get("/users-vue", adminController.users_vue_get);
 exports.admin.post("/users-vue", adminController.users_vue_post);
 exports.admin.get("/register-score-vue", (req, res) => res.render("register-score-vue"));
+exports.admin.get("/early-reminder", adminController.early_reminder_get);
+exports.admin.post("/early-reminder", adminController.early_reminder_post);
 exports.admin.get("/email-queue-stats", adminController.email_queue_stats_get);
 exports.admin.get("/test-email", adminController.send_test_email_get);

@@ -26,6 +26,12 @@
         "scan.score": "Noten scannen",
         "score.search.by.id": "Noten über ID suchen",
         "score.not.found": "Noten nicht gefunden",
-        "score.id": "Noten ID"
+        "score.id": "Noten ID",
+        "score.early.reminder": "Frühzeitige Rückgabe-Erinnerung senden",
+        "score.early.reminder.select": "Noten auswählen für Erinnerung an Ausleiher",
+        "score.early.reminder.send": "Erinnerung senden",
+        "score.early.reminder.success": "Erinnerungs-E-Mails für {{count}} Ausleiher in Warteschlange",
+        "score.early.reminder.error": "Fehler beim Senden der Erinnerungen",
+        "score.early.reminder.no.borrowers": "Keine aktiven Ausleiher für diese Noten gefunden"
     }
 }
