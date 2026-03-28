@@ -393,12 +393,6 @@ module.exports.checkin_post = async (req: any, res: any) => {
   }
 };
 
-module.exports.checkouts_post = async (req: any, res: any) => {
-  const { signature, checkedOut, userId } = req.body;
-  const admin = true;
-  await checkouts(res, signature, checkedOut == "true", admin, userId);
-};
-
 /**
  * Fälle
  * - Checkouts ermitteln
@@ -768,31 +762,6 @@ module.exports.userSearch_post = async (req: any, res: any) => {
     });
   }
   res.status(201).json({ users });
-};
-
-module.exports.users_get = async (req: any, res: any) => {
-  const active = true;
-  const users = await User.find({ $or: [{ active }, { active: null }] }).sort(
-    "lastName"
-  ); // active field was added later with default true
-  res.render("users", {
-    users,
-    filter: { active },
-    error: undefined,
-  });
-};
-
-module.exports.users_post = async (req: any, res: any) => {
-  const { cbActive } = req.body;
-  const active = !!cbActive;
-  const users = await User.find({ $or: [{ active }, { active: null }] }).sort(
-    "lastName"
-  ); // active field was added later with default true
-  res.render("users", {
-    users,
-    filter: { active },
-    error: undefined,
-  });
 };
 
 module.exports.updateUser_post = async (req: any, res: any) => {

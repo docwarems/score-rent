@@ -384,11 +384,6 @@ module.exports.checkin_post = (req, res) => __awaiter(void 0, void 0, void 0, fu
         res.status(500).json({ error });
     }
 });
-module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { signature, checkedOut, userId } = req.body;
-    const admin = true;
-    yield checkouts(res, signature, checkedOut == "true", admin, userId);
-});
 /**
  * Fälle
  * - Checkouts ermitteln
@@ -674,25 +669,6 @@ module.exports.userSearch_post = (req, res) => __awaiter(void 0, void 0, void 0,
         });
     }
     res.status(201).json({ users });
-});
-module.exports.users_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const active = true;
-    const users = yield User_1.User.find({ $or: [{ active }, { active: null }] }).sort("lastName"); // active field was added later with default true
-    res.render("users", {
-        users,
-        filter: { active },
-        error: undefined,
-    });
-});
-module.exports.users_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { cbActive } = req.body;
-    const active = !!cbActive;
-    const users = yield User_1.User.find({ $or: [{ active }, { active: null }] }).sort("lastName"); // active field was added later with default true
-    res.render("users", {
-        users,
-        filter: { active },
-        error: undefined,
-    });
 });
 module.exports.updateUser_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id, email, active, voice } = req.body;

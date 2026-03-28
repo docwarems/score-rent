@@ -44,21 +44,9 @@ admin.get("/checkin", (req: any, res: any) =>
   })
 );
 admin.post("/checkin", adminController.checkin_post);
-admin.get("/checkouts", async (req: any, res: any) =>
-  res.render("checkouts", {
-    admin: true,
-    signatures: await getScoreTypes(),
-    filter: { signature: "", checkedOut: true },
-    checkouts: undefined,
-    error: undefined,
-  })
-);
-admin.post("/checkouts", adminController.checkouts_post);
 
 // User management routes
 admin.post("/userSearch", adminController.userSearch_post);
-admin.get("/users", adminController.users_get);
-admin.post("/users", adminController.users_post);
 admin.post("/updateUser", adminController.updateUser_post);
 
 exports.admin.get("/history", async (req: any, res: any) =>

@@ -39,20 +39,8 @@ exports.admin.get("/checkin", (req, res) => res.render("checkin", {
     checkinScore: res.locals.checkinScore,
 }));
 exports.admin.post("/checkin", adminController.checkin_post);
-exports.admin.get("/checkouts", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    return res.render("checkouts", {
-        admin: true,
-        signatures: yield (0, score_utils_1.getScoreTypes)(),
-        filter: { signature: "", checkedOut: true },
-        checkouts: undefined,
-        error: undefined,
-    });
-}));
-exports.admin.post("/checkouts", adminController.checkouts_post);
 // User management routes
 exports.admin.post("/userSearch", adminController.userSearch_post);
-exports.admin.get("/users", adminController.users_get);
-exports.admin.post("/users", adminController.users_post);
 exports.admin.post("/updateUser", adminController.updateUser_post);
 exports.admin.get("/history", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     return res.render("score-history", {
