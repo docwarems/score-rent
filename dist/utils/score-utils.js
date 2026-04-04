@@ -15,7 +15,7 @@ exports.SIGNATURE_ALL = { id: "ALL", name: "Alle" };
 function getScoreTypes() {
     return __awaiter(this, void 0, void 0, function* () {
         const signatures = [exports.SIGNATURE_ALL];
-        const scoreTypes = yield Score_1.ScoreType.find();
+        const scoreTypes = yield Score_1.ScoreType.find().sort({ createdAt: -1 });
         for (const scoreType of scoreTypes) {
             signatures.push({
                 id: scoreType.signature,
@@ -29,7 +29,7 @@ exports.getScoreTypes = getScoreTypes;
 function getScoreTypeMap() {
     return __awaiter(this, void 0, void 0, function* () {
         const scoreTypeMap = new Map();
-        const scoreTypes = yield Score_1.ScoreType.find();
+        const scoreTypes = yield Score_1.ScoreType.find().sort({ createdAt: -1 });
         for (const scoreType of scoreTypes) {
             scoreTypeMap.set(scoreType.signature, `${scoreType.composer} ${scoreType.work}`);
         }

@@ -1,10 +1,10 @@
 import { ScoreType } from "../models/Score";
 
-export const SIGNATURE_ALL = { id: "ALL", name: "Alle"}; 
+export const SIGNATURE_ALL = { id: "ALL", name: "Alle" };
 
 export async function getScoreTypes() {
   const signatures = [SIGNATURE_ALL];
-  const scoreTypes = await ScoreType.find();
+  const scoreTypes = await ScoreType.find().sort({ createdAt: -1 });
   for (const scoreType of scoreTypes) {
     signatures.push({
       id: scoreType.signature,
@@ -16,9 +16,12 @@ export async function getScoreTypes() {
 
 export async function getScoreTypeMap() {
   const scoreTypeMap = new Map();
-  const scoreTypes = await ScoreType.find();
+  const scoreTypes = await ScoreType.find().sort({ createdAt: -1 });
   for (const scoreType of scoreTypes) {
-    scoreTypeMap.set(scoreType.signature, `${scoreType.composer} ${scoreType.work}`);
+    scoreTypeMap.set(
+      scoreType.signature,
+      `${scoreType.composer} ${scoreType.work}`
+    );
   }
   return scoreTypeMap;
 }

@@ -23,6 +23,8 @@ const scoreTypeSchema = new mongoose_1.Schema({
         type: Number,
         required: [true, "Bitte Anzahl angeben"],
     },
+}, {
+    timestamps: true,
 });
 const scoreSchema = new mongoose_1.Schema({
     signature: {

@@ -16,8 +16,7 @@
         <form @submit.prevent="handleCheckoutsFilterSubmit">
             <h3>Filter</h3>
             <label>Noten Signatur</label>
-            <select class="w3-select" v-model="signature">                
-                <option value="">Noten auswählen</option>
+            <select class="w3-select" v-model="signature">
                 <option v-for="signature in signatures" :value="signature.id">{{signature.name}}</option>
             </select>
             <label>Nur offene&nbsp;</label>
@@ -127,10 +126,11 @@ const app = Vue.createApp({
         EditModal
     },
     data() {
+        const signatures = JSON.parse('<%- signatures %>');
         return {
             admin: JSON.parse('<%- admin %>'),
-            signature: "",
-            signatures: JSON.parse('<%- signatures %>'),
+            signature: signatures.length > 1 ? signatures[1].id : "",
+            signatures: signatures,
             filter: JSON.parse('<%- filter %>'),
             checkouts: undefined,
             checkedOut: true,

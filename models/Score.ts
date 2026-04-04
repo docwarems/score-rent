@@ -10,30 +10,37 @@ interface IScoreType {
   work: string;
   signature: string;
   count: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 interface ScoreTypeModel extends Model<IScoreType> {}
 
-const scoreTypeSchema = new Schema<IScoreType, ScoreTypeModel>({
-  composer: {
-    type: String,
-    required: [true, "Bitte Komponist angeben"],
+const scoreTypeSchema = new Schema<IScoreType, ScoreTypeModel>(
+  {
+    composer: {
+      type: String,
+      required: [true, "Bitte Komponist angeben"],
+    },
+    work: {
+      type: String,
+      required: [true, "Bitte Werk angeben"],
+    },
+    signature: {
+      type: String,
+      required: [true, "Bitte Signatur angeben"],
+      uppercase: true,
+      unique: true,
+    },
+    count: {
+      type: Number,
+      required: [true, "Bitte Anzahl angeben"],
+    },
   },
-  work: {
-    type: String,
-    required: [true, "Bitte Werk angeben"],
-  },
-  signature: {
-    type: String,
-    required: [true, "Bitte Signatur angeben"],
-    uppercase: true,
-    unique: true,
-  },
-  count: {
-    type: Number,
-    required: [true, "Bitte Anzahl angeben"],
-  },
-});
+  {
+    timestamps: true,
+  }
+);
 
 export interface IScore {
   signature: string;
