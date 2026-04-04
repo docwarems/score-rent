@@ -177,6 +177,7 @@ Vorlagen
 
 z.B. für Text BRFS-AD-xxx
 
+- note that for existing templates, there's a edit function
 - klicke auf "Fortlaufende Nummer"
 - Startwert 1
 - Endwert 500
@@ -188,8 +189,9 @@ z.B. für Text BRFS-AD-xxx
 
 z.B. für Text BRFS-AD-xxx
 
+- note that for existing templates, there's a edit function
 - KLick auf "QR und Barcodes"
-- Klick auf "Fügen Sie Barcode ein"
+- Klick auf "Fügen Sie Barcode ein" bzw. "Barcode bearbeiten" bei bestehender Vorlage
 - Wie möchten Sie Ihre Daten anbieten: Tabelle oder fortlaufende Nummer
 - Schritt 1 Daten vorbereiten
   - auswählen: "Zähler" -> Schalter mit Stift wird sichtbar
@@ -214,12 +216,14 @@ z.B. für Text BRFS-AD-xxx
 Etiketten müssen mit dem Einzeleinzug des Laserdruckers gedruckt werden, da sich die Etiketten sonst evtl. ablösen und die Trommel beschädigen könnten.
 
 - Anleitung für Brother HL-L3210D https://www.brother.de/support/hl-l2310d/faqs/how-to-trouble-shooting/faq00000063_052
+  - Klappen vorne und hinten öffnen
+  - Drucker einschalten
+  - Etikettenseite mit Druckseite oben in den manuellen Einzug einlegen bis sie etwas vom Drucker eingezogen wird
 - PDF-Datei mit Etiketten wie oben erzeugt auswählen
 - weitere Einstellungen / über Systemdialog drucken
 - gewünschte Seitennummer auswählen
 - Einstellungen -> Brother Einstellungen öffnen sich
 - Papierquelle manuell
-- Drucker einschalten
-- Etikettenseite mit Druckseite oben in den manuellen Einzug einlegen bis sie etwas vom Drucker eingezogen wird
+- manchmal bleiben die Jobs in der Drucker Queue hängen (ich bin dann Druck aus Browser nach Acrobat gewechselt)
 
 [Mongo DB](docs/mongodb.md)
