@@ -18,7 +18,6 @@ const scoreTypeSchema = new Schema<IScoreType, ScoreTypeModel>({
   composer: {
     type: String,
     required: [true, "Bitte Komponist angeben"],
-    unique: true,
   },
   work: {
     type: String,

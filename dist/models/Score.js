@@ -8,7 +8,6 @@ const scoreTypeSchema = new mongoose_1.Schema({
     composer: {
         type: String,
         required: [true, "Bitte Komponist angeben"],
-        unique: true,
     },
     work: {
         type: String,
