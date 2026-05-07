@@ -65,6 +65,13 @@
     "email.queue.stats.priority": "Priorität",
     "email.queue.stats.yes": "Ja",
     "email.queue.stats.mode.verbose": "Verbose-Modus aktiv",
-    "email.queue.stats.pending.empty": "Keine wartenden E-Mails vorhanden"
+    "email.queue.stats.pending.empty": "Keine wartenden E-Mails vorhanden",
+    "email.queue.stats.failed.list": "Fehlgeschlagene E-Mails",
+    "email.queue.stats.mode.failed": "Fehlgeschlagene E-Mails werden angezeigt",
+    "email.queue.stats.failed.details": "Fehlgeschlagene E-Mails",
+    "email.queue.stats.error": "Fehler",
+    "email.queue.stats.attempts": "Versuche",
+    "email.queue.stats.failed.date": "Fehlgeschlagen am",
+    "email.queue.stats.failed.empty": "Keine fehlgeschlagenen E-Mails vorhanden"
   }
 }

@@ -62,6 +62,13 @@
         "email.queue.stats.priority": "Priority",
         "email.queue.stats.yes": "Yes",
         "email.queue.stats.mode.verbose": "Verbose mode active",
-        "email.queue.stats.pending.empty": "No pending emails"
+        "email.queue.stats.pending.empty": "No pending emails",
+        "email.queue.stats.failed.list": "Failed emails",
+        "email.queue.stats.mode.failed": "Displaying failed emails",
+        "email.queue.stats.failed.details": "Failed emails",
+        "email.queue.stats.error": "Error",
+        "email.queue.stats.attempts": "Attempts",
+        "email.queue.stats.failed.date": "Failed on",
+        "email.queue.stats.failed.empty": "No failed emails"
     }
 }

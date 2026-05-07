@@ -88,6 +88,7 @@ const Checkout_1 = require("../models/Checkout");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 require("dotenv").config();
 const misc_utils_1 = require("../utils/misc-utils");
+const EmailQueue_1 = require("../models/EmailQueue");
 const uuid_1 = require("uuid");
 const i18next_1 = __importDefault(require("i18next"));
 const score_utils_1 = require("../utils/score-utils");
@@ -758,11 +759,26 @@ module.exports.users_vue_post = (req, res) => __awaiter(void 0, void 0, void 0, 
 module.exports.email_queue_stats_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const verbose = req.query.verbose === "1" || req.query.verbose === "true";
+        const showFailed = req.query.showFailed === "1" || req.query.showFailed === "true";
         const stats = yield email_queue_utils_1.emailQueueService.getQueueStats(verbose);
         const canSend = yield email_queue_utils_1.emailQueueService.canSendEmail();
+        // Fetch failed emails if requested
+        let failedEmails = [];
+        if (showFailed) {
+            failedEmails = yield EmailQueue_1.EmailQueue.find({ status: "failed" })
+                .sort({ createdAt: -1 })
+                .select("to subject error attempts maxAttempts createdAt")
+                .lean();
+            // Debug logging
+            if (failedEmails.length > 0) {
+                console.log("DEBUG: Failed emails retrieved:", JSON.stringify(failedEmails.slice(0, 3), null, 2));
+            }
+        }
         res.render("email-queue-stats", {
             stats: Object.assign(Object.assign({}, stats), { canSendMore: canSend }),
             verbose,
+            showFailed,
+            failedEmails,
             error: undefined,
             generatedAt: new Date(),
         });
@@ -771,6 +787,8 @@ module.exports.email_queue_stats_get = (req, res) => __awaiter(void 0, void 0, v
         res.status(500).render("email-queue-stats", {
             stats: undefined,
             verbose: req.query.verbose === "1" || req.query.verbose === "true",
+            showFailed: false,
+            failedEmails: [],
             error: error instanceof Error ? error.message : "Unknown error",
             generatedAt: new Date(),
         });

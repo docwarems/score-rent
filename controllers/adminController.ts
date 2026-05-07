@@ -73,6 +73,7 @@ import { Checkout, ICheckout } from "../models/Checkout";
 import jwt from "jsonwebtoken";
 require("dotenv").config();
 import { getEnvVar, mailTransporter } from "../utils/misc-utils";
+import { EmailQueue } from "../models/EmailQueue";
 import { v4 as uuidv4 } from "uuid";
 import i18next from "i18next";
 import {
@@ -857,8 +858,27 @@ module.exports.users_vue_post = async (req: any, res: any) => {
 module.exports.email_queue_stats_get = async (req: any, res: any) => {
   try {
     const verbose = req.query.verbose === "1" || req.query.verbose === "true";
+    const showFailed =
+      req.query.showFailed === "1" || req.query.showFailed === "true";
     const stats = await emailQueueService.getQueueStats(verbose);
     const canSend = await emailQueueService.canSendEmail();
+
+    // Fetch failed emails if requested
+    let failedEmails: any[] = [];
+    if (showFailed) {
+      failedEmails = await EmailQueue.find({ status: "failed" })
+        .sort({ createdAt: -1 })
+        .select("to subject error attempts maxAttempts createdAt")
+        .lean();
+
+      // Debug logging
+      if (failedEmails.length > 0) {
+        console.log(
+          "DEBUG: Failed emails retrieved:",
+          JSON.stringify(failedEmails.slice(0, 3), null, 2)
+        );
+      }
+    }
 
     res.render("email-queue-stats", {
       stats: {
@@ -866,6 +886,8 @@ module.exports.email_queue_stats_get = async (req: any, res: any) => {
         canSendMore: canSend,
       },
       verbose,
+      showFailed,
+      failedEmails,
       error: undefined,
       generatedAt: new Date(),
     });
@@ -873,6 +895,8 @@ module.exports.email_queue_stats_get = async (req: any, res: any) => {
     res.status(500).render("email-queue-stats", {
       stats: undefined,
       verbose: req.query.verbose === "1" || req.query.verbose === "true",
+      showFailed: false,
+      failedEmails: [],
       error: error instanceof Error ? error.message : "Unknown error",
       generatedAt: new Date(),
     });

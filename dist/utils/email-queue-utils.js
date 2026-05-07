@@ -26,6 +26,15 @@ class EmailQueueService {
     queueEmail(emailOptions) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                // Validate email format before storing
+                if (!emailOptions.to || !emailOptions.to.includes("@")) {
+                    console.error(`WARNING: Invalid email address detected: "${emailOptions.to}". Expected format: user@domain.com`);
+                }
+                // Debug: check for non-ASCII characters in email
+                const emailCharCodes = Array.from(emailOptions.to).map((c) => `${c}(${c.charCodeAt(0)})`);
+                if (emailOptions.to.includes(" ") || emailOptions.to.includes("\u00a0")) {
+                    console.warn(`WARNING: Email contains space/non-breaking-space: ${emailOptions.to}. Char codes: ${emailCharCodes.join(", ")}`);
+                }
                 yield EmailQueue_1.EmailQueue.create({
                     to: emailOptions.to,
                     subject: emailOptions.subject,

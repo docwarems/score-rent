@@ -2,6 +2,12 @@
 
 <h1><%= t('email.queue.stats.title') %></h1>
 
+<style>
+  .email-cell {
+    white-space: nowrap;
+  }
+</style>
+
 <%
   const hasError = !!error;
   const errorStyle = hasError ? 'display: block' : 'display: none';
@@ -43,8 +49,15 @@
 <div class="w3-bar" style="margin-bottom: 16px;">
   <a href="/admin/email-queue-stats" class="w3-button w3-black"><%= t('email.queue.stats.simple') %></a>
   <a href="/admin/email-queue-stats?verbose=1" class="w3-button w3-dark-grey"><%= t('email.queue.stats.verbose') %></a>
+  <a href="/admin/email-queue-stats?showFailed=1" class="w3-button w3-orange"><%= t('email.queue.stats.failed.list') %></a>
   <a href="/" class="w3-button w3-light-grey"><%= t('home') %></a>
 </div>
+
+<% if (showFailed) { %>
+  <div class="w3-panel w3-orange">
+    <p><%= t('email.queue.stats.mode.failed') %></p>
+  </div>
+<% } %>
 
 <% if (verbose) { %>
   <div class="w3-panel w3-blue">
@@ -132,7 +145,7 @@
           </tr>
           <% stats.pendingEmails.forEach((email) => { %>
             <tr>
-              <td><%= email.to %></td>
+              <td class="email-cell"><%= email.to %></td>
               <td><%= email.subject %></td>
               <td><%= formatDateTime(email.createdAt) %></td>
               <td><%= email.priority ? t('email.queue.stats.yes') : '-' %></td>
@@ -143,6 +156,36 @@
     <% } else { %>
       <div class="w3-panel w3-pale-blue w3-border">
         <p><%= t('email.queue.stats.pending.empty') %></p>
+      </div>
+    <% } %>
+  <% } %>
+
+  <% if (showFailed) { %>
+    <h3 style="margin-top: 20px;"><%= t('email.queue.stats.failed.details') %></h3>
+    <% if (failedEmails && failedEmails.length > 0) { %>
+      <div class="w3-responsive">
+        <table class="w3-table-all">
+          <tr>
+            <th><%= t('email.queue.stats.to') %></th>
+            <th><%= t('email.queue.stats.subject') %></th>
+            <th><%= t('email.queue.stats.error') %></th>
+            <th><%= t('email.queue.stats.attempts') %></th>
+            <th><%= t('email.queue.stats.failed.date') %></th>
+          </tr>
+          <% failedEmails.forEach((email) => { %>
+            <tr>
+              <td class="email-cell"><%= email.to %></td>
+              <td><%= email.subject %></td>
+              <td><small><%= email.error %></small></td>
+              <td><%= email.attempts %> / <%= email.maxAttempts %></td>
+              <td><%= formatDateTime(email.createdAt) %></td>
+            </tr>
+          <% }); %>
+        </table>
+      </div>
+    <% } else { %>
+      <div class="w3-panel w3-pale-orange w3-border">
+        <p><%= t('email.queue.stats.failed.empty') %></p>
       </div>
     <% } %>
   <% } %>
