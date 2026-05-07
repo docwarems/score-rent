@@ -54,7 +54,16 @@ const DataTable = {
         return filtered;
     },
   },
+  mounted() {
+    this.emitFilteredRowsCount();
+  },
+  updated() {
+    this.emitFilteredRowsCount();
+  },
   methods: {
+    emitFilteredRowsCount() {
+      this.$emit('filtered-rows-change', this.filteredRows.length);
+    },
     getCellValue(row, column) {
       if (column.formatter) {
         return column.formatter(row[column.key], row);

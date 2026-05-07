@@ -16,14 +16,14 @@
         <form @submit.prevent="handleCheckoutsFilterSubmit">
             <h3>Filter</h3>
             <label>Noten Signatur</label>
-            <select class="w3-select" v-model="signature">
+            <select class="w3-select" v-model="signature" @change="handleCheckoutsFilterSubmit">
                 <option v-for="signature in signatures" :value="signature.id">{{signature.name}}</option>
             </select>
             <label>Nur offene&nbsp;</label>
-            <input type="checkbox" class="w3-check" v-model="checkedOut">
+            <input type="checkbox" class="w3-check" v-model="checkedOut" @change="handleCheckoutsFilterSubmit">
             &nbsp;
             <label>Mit Ausleihzettel&nbsp;</label>
-            <input type="checkbox" class="w3-check" v-model="withCheckoutSheet">
+            <input type="checkbox" class="w3-check" v-model="withCheckoutSheet" @change="handleCheckoutsFilterSubmit">
             <p></p>
             <button class="w3-button w3-black">Suchen</button>
             <p></p>
@@ -31,12 +31,14 @@
     </div>
 
     <div v-if="checkouts">
+        <div class="w3-left-align"><p>Treffer: {{ filteredCheckoutCount }}</p></div>
         <div class="w3-left-align"><p>{{ statSummary }}</p></div>
         <data-table
             :columns="checkoutColumns"
             :rows="checkouts"
             row-key="id"
             @cell-click="handleCellClick"
+            @filtered-rows-change="handleFilteredRowsChange"
         ></data-table>
     </div>
 
@@ -135,6 +137,7 @@ const app = Vue.createApp({
             checkouts: undefined,
             checkedOut: true,
             withCheckoutSheet: false,
+            filteredCheckoutCount: 0,
             scoreTypeTotalCount: 0,
             scoreTypeTotalCheckedOutCount: 0,
             statSummary: '',
@@ -228,6 +231,9 @@ const app = Vue.createApp({
                 this.openFotoDialog(row);
             }            
         },
+        handleFilteredRowsChange(count) {
+            this.filteredCheckoutCount = count;
+        },
         userDetails(user) {
             this.userDetailsName = user.name;
             this.userDetailsEmail = user.email;
@@ -303,6 +309,7 @@ const app = Vue.createApp({
                 }
                 this.admin = data.admin;
                 this.checkouts = data.checkouts;
+                this.filteredCheckoutCount = data.checkouts.length;
             } catch (err) {
                 console.log("err=", err);
                 this.error = err.message;
