@@ -856,16 +856,26 @@ module.exports.users_vue_post = async (req: any, res: any) => {
 
 module.exports.email_queue_stats_get = async (req: any, res: any) => {
   try {
-    const verbose = req.query.verbose === "1";
+    const verbose = req.query.verbose === "1" || req.query.verbose === "true";
     const stats = await emailQueueService.getQueueStats(verbose);
     const canSend = await emailQueueService.canSendEmail();
 
-    res.json({
-      ...stats,
-      canSendMore: canSend,
+    res.render("email-queue-stats", {
+      stats: {
+        ...stats,
+        canSendMore: canSend,
+      },
+      verbose,
+      error: undefined,
+      generatedAt: new Date(),
     });
   } catch (error) {
-    res.status(500).json({ error });
+    res.status(500).render("email-queue-stats", {
+      stats: undefined,
+      verbose: req.query.verbose === "1" || req.query.verbose === "true",
+      error: error instanceof Error ? error.message : "Unknown error",
+      generatedAt: new Date(),
+    });
   }
 };
 

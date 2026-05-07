@@ -757,13 +757,23 @@ module.exports.users_vue_post = (req, res) => __awaiter(void 0, void 0, void 0, 
 });
 module.exports.email_queue_stats_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const verbose = req.query.verbose === "1";
+        const verbose = req.query.verbose === "1" || req.query.verbose === "true";
         const stats = yield email_queue_utils_1.emailQueueService.getQueueStats(verbose);
         const canSend = yield email_queue_utils_1.emailQueueService.canSendEmail();
-        res.json(Object.assign(Object.assign({}, stats), { canSendMore: canSend }));
+        res.render("email-queue-stats", {
+            stats: Object.assign(Object.assign({}, stats), { canSendMore: canSend }),
+            verbose,
+            error: undefined,
+            generatedAt: new Date(),
+        });
     }
     catch (error) {
-        res.status(500).json({ error });
+        res.status(500).render("email-queue-stats", {
+            stats: undefined,
+            verbose: req.query.verbose === "1" || req.query.verbose === "true",
+            error: error instanceof Error ? error.message : "Unknown error",
+            generatedAt: new Date(),
+        });
     }
 });
 module.exports.send_test_email_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {

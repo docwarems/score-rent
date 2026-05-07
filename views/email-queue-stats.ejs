@@ -1,0 +1,151 @@
+<%- include('partials/header'); -%>
+
+<h1><%= t('email.queue.stats.title') %></h1>
+
+<%
+  const hasError = !!error;
+  const errorStyle = hasError ? 'display: block' : 'display: none';
+  const successStyle = !hasError && stats ? 'display: block' : 'display: none';
+
+  const formatAge = (minutes) => {
+    if (!minutes || minutes <= 0) {
+      return t('email.queue.stats.age.none');
+    }
+    const days = Math.floor(minutes / (24 * 60));
+    const hours = Math.floor((minutes % (24 * 60)) / 60);
+    const mins = minutes % 60;
+    const parts = [];
+    if (days > 0) parts.push(days + 'd');
+    if (hours > 0) parts.push(hours + 'h');
+    if (mins > 0) parts.push(mins + 'm');
+    return parts.join(' ');
+  };
+
+  const formatDateTime = (value) => {
+    if (!value) {
+      return '';
+    }
+    return new Date(value).toLocaleString('de-DE', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+  };
+%>
+
+<div class="w3-panel w3-red" style="<%= errorStyle %>">
+  <p><%= error %></p>
+</div>
+
+<div class="w3-panel w3-green" style="<%= successStyle %>">
+  <p><%= t('email.queue.stats.updated') %>: <%= formatDateTime(generatedAt) %></p>
+</div>
+
+<div class="w3-bar" style="margin-bottom: 16px;">
+  <a href="/admin/email-queue-stats" class="w3-button w3-black"><%= t('email.queue.stats.simple') %></a>
+  <a href="/admin/email-queue-stats?verbose=1" class="w3-button w3-dark-grey"><%= t('email.queue.stats.verbose') %></a>
+  <a href="/" class="w3-button w3-light-grey"><%= t('home') %></a>
+</div>
+
+<% if (verbose) { %>
+  <div class="w3-panel w3-blue">
+    <p><%= t('email.queue.stats.mode.verbose') %></p>
+  </div>
+<% } %>
+
+<% if (stats) { %>
+  <div class="w3-row-padding" style="margin-bottom: 16px;">
+    <div class="w3-quarter">
+      <div class="w3-panel w3-pale-yellow w3-border">
+        <h4><%= t('email.queue.stats.pending') %></h4>
+        <p><b><%= stats.pending %></b></p>
+      </div>
+    </div>
+    <div class="w3-quarter">
+      <div class="w3-panel w3-pale-green w3-border">
+        <h4><%= t('email.queue.stats.sent') %></h4>
+        <p><b><%= stats.sent %></b></p>
+      </div>
+    </div>
+    <div class="w3-quarter">
+      <div class="w3-panel w3-pale-red w3-border">
+        <h4><%= t('email.queue.stats.failed') %></h4>
+        <p><b><%= stats.failed %></b></p>
+      </div>
+    </div>
+    <div class="w3-quarter">
+      <div class="w3-panel w3-pale-blue w3-border">
+        <h4><%= t('email.queue.stats.total') %></h4>
+        <p><b><%= stats.total %></b></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="w3-panel w3-border">
+    <h3><%= t('email.queue.stats.delivery') %></h3>
+    <p>
+      <% if (stats.canSendMore) { %>
+        <span class="w3-tag w3-green"><%= t('email.queue.stats.ready') %></span>
+      <% } else { %>
+        <span class="w3-tag w3-red"><%= t('email.queue.stats.paused') %></span>
+      <% } %>
+    </p>
+    <p><%= t('email.queue.stats.oldest') %>: <b><%= formatAge(stats.oldestPendingAge) %></b></p>
+  </div>
+
+  <div class="w3-responsive">
+    <table class="w3-table-all">
+      <tr>
+        <th><%= t('email.queue.stats.metric') %></th>
+        <th><%= t('email.queue.stats.value') %></th>
+      </tr>
+      <tr>
+        <td><%= t('email.queue.stats.last.hour') %></td>
+        <td><%= stats.rateLimit.sentLastHour %> / <%= stats.rateLimit.maxEmailsPerHour %></td>
+      </tr>
+      <tr>
+        <td><%= t('email.queue.stats.last.day') %></td>
+        <td><%= stats.rateLimit.sentLastDay %> / <%= stats.rateLimit.maxEmailsPerDay %></td>
+      </tr>
+      <tr>
+        <td><%= t('email.queue.stats.window') %></td>
+        <td>
+          <% if (stats.rateLimit.nextAvailableIn) { %>
+            <%= stats.rateLimit.nextAvailableIn.minutes %>m (<%= stats.rateLimit.nextAvailableIn.reason %>)
+          <% } else { %>
+            <%= t('email.queue.stats.available.now') %>
+          <% } %>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <% if (verbose) { %>
+    <h3 style="margin-top: 20px;"><%= t('email.queue.stats.pending.list') %></h3>
+    <% if (stats.pendingEmails && stats.pendingEmails.length > 0) { %>
+      <div class="w3-responsive">
+        <table class="w3-table-all">
+          <tr>
+            <th><%= t('email.queue.stats.to') %></th>
+            <th><%= t('email.queue.stats.subject') %></th>
+            <th><%= t('email.queue.stats.created') %></th>
+            <th><%= t('email.queue.stats.priority') %></th>
+          </tr>
+          <% stats.pendingEmails.forEach((email) => { %>
+            <tr>
+              <td><%= email.to %></td>
+              <td><%= email.subject %></td>
+              <td><%= formatDateTime(email.createdAt) %></td>
+              <td><%= email.priority ? t('email.queue.stats.yes') : '-' %></td>
+            </tr>
+          <% }); %>
+        </table>
+      </div>
+    <% } else { %>
+      <div class="w3-panel w3-pale-blue w3-border">
+        <p><%= t('email.queue.stats.pending.empty') %></p>
+      </div>
+    <% } %>
+  <% } %>
+<% } %>
+
+<%- include('partials/footer'); -%>
