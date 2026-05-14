@@ -75,6 +75,7 @@ exports.admin.get("/checkouts-vue", async (req: any, res: any) =>
     checkouts: undefined,
     error: undefined,
     hasError: false,
+    checkoutsApiPath: "/admin/checkouts-vue",
   })
 );
 admin.post("/checkouts-vue", adminController.checkouts_vue_post);

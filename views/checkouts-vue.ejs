@@ -131,11 +131,12 @@ const app = Vue.createApp({
         const signatures = JSON.parse('<%- signatures %>');
         return {
             admin: JSON.parse('<%- admin %>'),
+            checkoutsApiPath: '<%- checkoutsApiPath || "/admin/checkouts-vue" %>',
             signature: signatures.length > 1 ? signatures[1].id : "",
             signatures: signatures,
             filter: JSON.parse('<%- filter %>'),
             checkouts: undefined,
-            checkedOut: true,
+            checkedOut: JSON.parse('<%- filter %>').checkedOut,
             withCheckoutSheet: false,
             filteredCheckoutCount: 0,
             scoreTypeTotalCount: 0,
@@ -289,7 +290,7 @@ const app = Vue.createApp({
         async handleCheckoutsFilterSubmit() {
             this.error = "";
             try {
-                const res = await fetch('/admin/checkouts-vue', {
+                const res = await fetch(this.checkoutsApiPath, {
                     method: 'POST',
                     body: JSON.stringify({
                         signature: this.signature,
@@ -437,6 +438,12 @@ const app = Vue.createApp({
                 this.fotoUploadStatus = err.message || 'Fehler beim Speichern.';
             }
         },
+    },
+    mounted() {
+        this.signature = this.filter.signature || this.signature;
+        if (!this.admin) {
+            this.handleCheckoutsFilterSubmit();
+        }
     },
 })
 

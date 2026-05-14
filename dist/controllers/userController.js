@@ -12,15 +12,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const adminController_1 = require("./adminController");
 const score_utils_1 = require("../utils/score-utils");
 module.exports.checkouts_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const userId = res.locals.user.id;
-    const signature = score_utils_1.SIGNATURE_ALL.id;
-    const checkedOut = false;
-    const admin = false;
-    yield (0, adminController_1.checkouts)(res, signature, checkedOut, admin, userId);
+    res.render("checkouts-vue", {
+        admin: false,
+        signatures: JSON.stringify(yield (0, score_utils_1.getScoreTypes)()),
+        filter: JSON.stringify({ signature: score_utils_1.SIGNATURE_ALL.id, checkedOut: false }),
+        checkouts: undefined,
+        error: undefined,
+        hasError: false,
+        checkoutsApiPath: "/user/checkouts",
+    });
 });
 module.exports.checkouts_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = res.locals.user.id;
     const admin = false;
     const { signature, checkedOut } = req.body;
-    yield (0, adminController_1.checkouts)(res, signature, checkedOut, admin, userId);
+    yield (0, adminController_1.checkouts_vue)(res, signature, checkedOut, admin, userId);
 });
