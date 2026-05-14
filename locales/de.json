@@ -72,6 +72,14 @@
     "email.queue.stats.error": "Fehler",
     "email.queue.stats.attempts": "Versuche",
     "email.queue.stats.failed.date": "Fehlgeschlagen am",
-    "email.queue.stats.failed.empty": "Keine fehlgeschlagenen E-Mails vorhanden"
+    "email.queue.stats.failed.empty": "Keine fehlgeschlagenen E-Mails vorhanden",
+    "score.edit.state": "Notenzustand bearbeiten",
+    "score.edit.state.scan": "Note scannen",
+    "score.edit.state.save": "Speichern",
+    "score.edit.state.success": "Zustand gespeichert",
+    "score.edit.state.error": "Fehler beim Speichern",
+    "score.edit.state.not.found": "Note nicht gefunden",
+    "score.edit.state.label": "Zustand / Beschädigungskommentar",
+    "score.state.warning": "Die Noten haben diesen Zustand: "
   }
 }

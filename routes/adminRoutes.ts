@@ -95,3 +95,9 @@ admin.post("/return-reminder", adminController.return_reminder_post);
 
 admin.get("/email-queue-stats", adminController.email_queue_stats_get);
 admin.get("/test-email", adminController.send_test_email_get);
+
+admin.get("/edit-score-state", (req: any, res: any) =>
+  res.render("edit-score-state")
+);
+admin.post("/edit-score-state", adminController.editScoreState_post);
+admin.post("/edit-score-state/update", adminController.updateScoreState_post);

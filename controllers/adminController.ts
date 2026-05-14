@@ -1050,6 +1050,36 @@ module.exports.return_reminder_get = async (req: any, res: any) => {
   });
 };
 
+module.exports.editScoreState_post = async (req: any, res: any) => {
+  const { scoreId } = req.body;
+  try {
+    const score = await Score.findOne({ id: scoreId });
+    if (score) {
+      res.status(200).json({ score });
+    } else {
+      res.status(404).json({ errors: `Score with Id ${scoreId} not found` });
+    }
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+};
+
+module.exports.updateScoreState_post = async (req: any, res: any) => {
+  const { scoreId, state } = req.body;
+  try {
+    let score = await Score.findOne({ id: scoreId });
+    if (score) {
+      score.state = state;
+      score = await score.save();
+      res.status(200).json({ score });
+    } else {
+      res.status(404).json({ errors: `Score with Id ${scoreId} not found` });
+    }
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+};
+
 module.exports.return_reminder_post = async (req: any, res: any) => {
   const { signature } = req.body;
   const signatures = await getScoreTypes();
