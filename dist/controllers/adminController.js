@@ -921,6 +921,38 @@ module.exports.return_reminder_get = (req, res) => __awaiter(void 0, void 0, voi
         borrowers: undefined,
     });
 });
+module.exports.editScoreState_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { scoreId } = req.body;
+    try {
+        const score = yield Score_1.Score.findOne({ id: scoreId });
+        if (score) {
+            res.status(200).json({ score });
+        }
+        else {
+            res.status(404).json({ errors: `Score with Id ${scoreId} not found` });
+        }
+    }
+    catch (error) {
+        res.status(500).json({ error });
+    }
+});
+module.exports.updateScoreState_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { scoreId, state } = req.body;
+    try {
+        let score = yield Score_1.Score.findOne({ id: scoreId });
+        if (score) {
+            score.state = state;
+            score = yield score.save();
+            res.status(200).json({ score });
+        }
+        else {
+            res.status(404).json({ errors: `Score with Id ${scoreId} not found` });
+        }
+    }
+    catch (error) {
+        res.status(500).json({ error });
+    }
+});
 module.exports.return_reminder_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _b;
     const { signature } = req.body;

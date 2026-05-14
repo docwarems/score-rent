@@ -30,6 +30,7 @@
   <p id="checkout.scan.user.sheet"><%= t('checkout.scan.user.sheet') %></p>
   <p id="score.checkout.double"><%= t('score.checkout.double') %></p>
   <p id="user.not.found"><%= t('user.not.found') %></p>
+  <p id="score.state.warning"><%= t('score.state.warning') %></p>
 </div>
 
 <div class="w3-panel w3-green divSuccess" style="display: none">
@@ -123,6 +124,21 @@
   <a href="/admin/checkout" class="w3-button w3-black"><%= t('checkout.another') %></a>
   <p></p>
   <a href="/" class="w3-button w3-black"><%= t('home') %></a>
+</div>
+
+<!-- State warning modal -->
+<div id="stateWarningModal" class="w3-modal" style="display: none">
+  <div class="w3-modal-content w3-card-4 w3-animate-top" style="max-width:500px">
+    <header class="w3-container w3-orange">
+      <h3>&#9888; Vorhandener Zustand</h3>
+    </header>
+    <div class="w3-container w3-padding">
+      <p id="stateWarningText"></p>
+    </div>
+    <footer class="w3-container w3-padding">
+      <button onclick="document.getElementById('stateWarningModal').style.display='none'" class="w3-button w3-black">OK</button>
+    </footer>
+  </div>
 </div>
 
 <%- include('partials/footer'); -%>
@@ -274,6 +290,11 @@ const formScan = document.querySelector('#formScan');
           inputScoreId.value = data.checkoutScore.id;
           inputScoreExtId.value = data.checkoutScore.extId ? data.checkoutScore.extId : "";
           inputState.value = data.checkoutScore.state ? data.checkoutScore.state : "";
+          if (data.checkoutScore.state) {
+            document.getElementById('stateWarningText').textContent =
+              document.getElementById('score.state.warning').textContent + `"${data.checkoutScore.state}"`;
+            document.getElementById('stateWarningModal').style.display = 'block';
+          }
         } else {
           console.log("We should not be here");
         }

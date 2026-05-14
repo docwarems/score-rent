@@ -69,6 +69,14 @@
         "email.queue.stats.error": "Error",
         "email.queue.stats.attempts": "Attempts",
         "email.queue.stats.failed.date": "Failed on",
-        "email.queue.stats.failed.empty": "No failed emails"
+        "email.queue.stats.failed.empty": "No failed emails",
+        "score.edit.state": "Edit score state",
+        "score.edit.state.scan": "Scan score",
+        "score.edit.state.save": "Save",
+        "score.edit.state.success": "State saved",
+        "score.edit.state.error": "Error saving state",
+        "score.edit.state.not.found": "Score not found",
+        "score.edit.state.label": "State / damage comment",
+        "score.state.warning": "The score has this state: "
     }
 }
