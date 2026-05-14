@@ -55,15 +55,15 @@
 <table class="w3-table-all userTable" id="userTable">
   <tr>
     <th>Name</th>
-    <th>E-Mail</th>
     <th></th>
+    <th>E-Mail</th>
   </tr>
 
   <% users.forEach(user => { %>
   <tr>
     <td class="userName"><%= user.firstName %>&nbsp;<%= user.lastName %></td>
+    <td><button onclick="document.querySelector('.userTable').style = 'display: none'; postCheckout({ userId: '<%= user.id %>' });" class="w3-button w3-black"><%= t('choose') %></button></td>
     <td class="userEmail"><%= user.email %></td>
-    <td><button onclick="document.querySelector('.userTable').style = 'display: none'; postCheckout({ userId: '<%= user.id %>' });" class="w3-button"><%= t('choose') %></button></td>
   </tr>
   <% }); %>
 </table>
@@ -101,6 +101,8 @@
 <div class="w3-panel w3-border divScore" style="display: none">
   <form id="formCheckout">
     <h3><%= t('scores') %></h3>
+    <button class="w3-button w3-black btnCheckout"><%= t('checkout') %></button>
+    <p></p>
     <label>ID</label>
     <input type="text" name="scoreId" value="" class="w3-input scoreId" readonly>
     <label>Ext. ID</label>
@@ -113,8 +115,6 @@
     <input type="text" name="comment" value="" class="w3-input comment">
     <label>Doppelte Ausleihe erlauben</label>
     <input type="checkbox" name="allowDoubleCheckout" value="allow" class="w3-check allowDoubleCheckout">
-    <p></p>
-    <button class="w3-button w3-black btnCheckout"><%= t('checkout') %></button>
   </form>
 </div>
 
