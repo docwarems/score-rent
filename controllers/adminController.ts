@@ -610,6 +610,7 @@ export async function checkouts_vue(
             scoreId: score.id,
             scoreExtId: score.extId,
             signature: score.signature,
+            scoreState: score.state,
             user: { id: checkout.userId, name: userName, namePlusVoice, email },
           });
         }

@@ -177,8 +177,7 @@ const app = Vue.createApp({
                     visible: this.filter.signature === this.SIGNATURE_ALL.id,
                     formatter: (val, row) => row.signature // Add signatureMap lookup if needed
                 },
-                { key: 'scoreId', label: 'Noten Id' },
-                { key: 'scoreExtId', label: 'Noten ext. Id', filterable: true },
+                { key: 'scoreId', label: 'Noten Id', filterable: true, visible: this.admin },
                 { 
                     key: 'userName', 
                     label: 'Benutzer', 
@@ -191,6 +190,11 @@ const app = Vue.createApp({
                     key: 'checkoutTimestamp', 
                     label: 'Ausgeliehen am',
                     clickable: this.admin
+                },
+                { 
+                    key: 'scoreState', 
+                    label: 'Zustand',
+                    visible: !this.admin
                 },
                 { key: 'checkoutComment', label: 'Kommentar Ausleihe' },
                 { key: 'checkinTimestamp', label: 'Rückgabe am' },
