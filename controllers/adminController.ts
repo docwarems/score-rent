@@ -647,9 +647,7 @@ const sendCheckoutConfirmationEmail = async (
     <p>
     Du hast Noten "${(await getScoreTypeMap()).get(
       score.signature
-    )}" mit HSC-Nummer ${
-    score.id
-  } ${extIdText} vom Hans-Sachs-Chor ausgeliehen.<br>
+    )}" mit Nummer ${score.id} ${extIdText} vom Hans-Sachs-Chor ausgeliehen.<br>
     Bitte behandle die Noten pfleglich und nehme Eintragungen nur mit Bleistift vor.<br>
     Nach dem Konzert gebe die Noten bitte zeitnah an den Chor zurück.<br>
     Vorher radiere bitte deine Eintragungen aus.<br>    
@@ -658,7 +656,7 @@ const sendCheckoutConfirmationEmail = async (
     <p>
     Und nun viel Spaß beim Proben und viel Erfolg beim Konzert!
     <p>
-    Dein Hans-Sachs-Chor Notenwart
+    Michael S. (Hans-Sachs-Chor Notenwart)
     <p>
     P.S.: Diese E-Mail wurde automatisch versendet
   `;
@@ -679,9 +677,9 @@ const sendCheckinConfirmationEmail = async (
   <p>
   Du hast die Noten "${(await getScoreTypeMap()).get(
     score.signature
-  )}" mit HSC-Nummer ${score.id}${extIdText} zurückgegeben. Vielen Dank!
+  )}" mit Nummer ${score.id}${extIdText} zurückgegeben. Vielen Dank!
   <p>
-  Dein Hans-Sachs-Chor Notenwart
+  Michael S. (Hans-Sachs-Chor Notenwart)
   <p>
   p.s.: Diese E-Mail wurde automatisch versendet
 `;
@@ -991,7 +989,7 @@ module.exports.early_reminder_post = async (req: any, res: any) => {
 
     // Send emails to all unique borrowers
     const scoreTypeMap = await getScoreTypeMap();
-    const scoreName = scoreTypeMap.get(signature);
+    const scoreName = scoreTypeMap.get(signature); // composer + work
     const testRecipient = getEnvVar("EMAIL_TEST_RECIPIENT");
     let emailCount = 0;
 
@@ -1003,16 +1001,16 @@ module.exports.early_reminder_post = async (req: any, res: any) => {
       const html = `
 Liebe(r) ${user.firstName} ${user.lastName},
 <p>
-Du hast die Noten "${scoreName}" mit HSC-Nummer ${scoreIdList} ausgeliehen.
+Du hast die Noten "${scoreName}" mit Nummer ${scoreIdList} vom Hans-Sachs-Chor ausgeliehen.
 <p>
-Falls Du die Proben nicht bis zum Konzert weiterführen möchtest, bitten wir Dich, die Noten möglichst bald zurückzugeben, 
+Falls Du die Chorproben nicht bis zum Konzert weiterführst, bitte ich Dich, die Noten möglichst bald zurückzugeben, 
 damit andere Chormitglieder sie nutzen können, und damit es nach dem Konzert keine Verzögerung bei der Rückgabe der Noten an den Verlag gibt.
 <p>
-Du kannst auf diese E-Mail antworten!
+Du kannst auf diese E-Mail antworten um die Rückgabe mit mir abzustimmen!
 <p>
-Vielen Dank für Dein Verständnis!
+Vielen Dank für Deine Kooperation!
 <p>
-Dein Hans-Sachs-Chor Notenwart
+Michael S. (Hans-Sachs-Chor Notenwart)
 `;
 
       await emailQueueService.queueEmail({
@@ -1158,7 +1156,7 @@ Du kannst auf diese E-Mail antworten!
 <p>
 Vielen Dank!
 <p>
-Dein Hans-Sachs-Chor Notenwart
+Michael S. (Hans-Sachs-Chor Notenwart)
 `;
 
       await emailQueueService.queueEmail({

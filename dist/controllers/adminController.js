@@ -867,7 +867,7 @@ module.exports.early_reminder_post = (req, res) => __awaiter(void 0, void 0, voi
         }
         // Send emails to all unique borrowers
         const scoreTypeMap = yield (0, score_utils_1.getScoreTypeMap)();
-        const scoreName = scoreTypeMap.get(signature);
+        const scoreName = scoreTypeMap.get(signature); // composer + work
         const testRecipient = (0, misc_utils_1.getEnvVar)("EMAIL_TEST_RECIPIENT");
         let emailCount = 0;
         for (const [userId, { user, scoreIds }] of borrowerMap) {
@@ -879,14 +879,14 @@ Liebe(r) ${user.firstName} ${user.lastName},
 <p>
 Du hast die Noten "${scoreName}" mit HSC-Nummer ${scoreIdList} ausgeliehen.
 <p>
-Falls Du die Proben nicht bis zum Konzert weiterführen möchtest, bitten wir Dich, die Noten möglichst bald zurückzugeben, 
+Falls Du die Chorproben nicht bis zum Konzert weiterführst, bitte ich Dich, die Noten möglichst bald zurückzugeben, 
 damit andere Chormitglieder sie nutzen können, und damit es nach dem Konzert keine Verzögerung bei der Rückgabe der Noten an den Verlag gibt.
 <p>
-Du kannst auf diese E-Mail antworten!
+Du kannst auf diese E-Mail antworten um die Rückgabe mit mir abzustimmen!
 <p>
-Vielen Dank für Dein Verständnis!
+Vielen Dank für Deine Kooperation!
 <p>
-Dein Hans-Sachs-Chor Notenwart
+Michael S. (Hans-Sachs-Chor Notenwart)
 `;
             yield email_queue_utils_1.emailQueueService.queueEmail({
                 to: recipientEmail,
