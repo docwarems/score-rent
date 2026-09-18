@@ -997,7 +997,7 @@ module.exports.early_reminder_post = async (req: any, res: any) => {
       const recipientEmail = testRecipient ? testRecipient : user.email;
       const scoreIdList =
         scoreIds.length > 1 ? scoreIds.join(", ") : scoreIds[0];
-      const subject = `Erinnerung: Rückgabe der Noten "${scoreName}"`;
+      const subject = `Benötigst du die Leihnoten "${scoreName}" vom Hans-Sachs-Chor noch?`;
       const html = `
 Liebe(r) ${user.firstName} ${user.lastName},
 <p>
