@@ -120,6 +120,10 @@
         <td><%= stats.rateLimit.sentLastDay %> / <%= stats.rateLimit.maxEmailsPerDay %></td>
       </tr>
       <tr>
+        <td><%= t('email.queue.stats.dry.run') %></td>
+        <td><%= stats.dryRun %></td>
+      </tr>
+      <tr>
         <td><%= t('email.queue.stats.window') %></td>
         <td>
           <% if (stats.rateLimit.nextAvailableIn) { %>

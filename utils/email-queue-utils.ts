@@ -2,6 +2,10 @@ import { EmailQueue } from "../models/EmailQueue";
 import { mailTransporter, getEnvVar } from "./misc-utils";
 import mongoose from "mongoose";
 
+const localLogOnlyMode =
+  !process.env.AWS_LAMBDA_FUNCTION_NAME &&
+  process.env.EMAIL_QUEUE_MODE === "log";
+
 interface EmailOptions {
   to: string;
   subject: string;
@@ -101,6 +105,7 @@ export class EmailQueueService {
 
     const sentToday = await EmailQueue.find({
       status: "sent",
+      dryRun: { $ne: true },
       sentAt: { $gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) },
     })
       .sort({ sentAt: 1 })
@@ -143,12 +148,14 @@ export class EmailQueueService {
     // Count emails sent in last hour
     const sentLastHour = await EmailQueue.countDocuments({
       status: "sent",
+      dryRun: { $ne: true },
       sentAt: { $gte: oneHourAgo },
     });
 
     // Count emails sent in last 24 hours
     const sentLastDay = await EmailQueue.countDocuments({
       status: "sent",
+      dryRun: { $ne: true },
       sentAt: { $gte: oneDayAgo },
     });
 
@@ -171,10 +178,12 @@ export class EmailQueueService {
    */
   async processQueue(): Promise<{
     sent: number;
+    dryRun: number;
     failed: number;
     skipped: number;
   }> {
     let sent = 0;
+    let dryRun = 0;
     let failed = 0;
     let skipped = 0;
 
@@ -199,20 +208,20 @@ export class EmailQueueService {
         .limit(this.rateLimitConfig.batchSize);
 
       if (pendingEmails.length === 0) {
-        return { sent, failed, skipped };
+        return { sent, dryRun, failed, skipped };
       }
 
       console.log(`Processing ${pendingEmails.length} pending emails`);
 
       for (const emailDoc of pendingEmails) {
         console.log(
-          `[${sent + failed + skipped + 1}/${
+          `[${sent + dryRun + failed + skipped + 1}/${
             pendingEmails.length
           }] Processing email: ${emailDoc.subject}`
         );
 
         // Check rate limits before each send
-        if (!(await this.canSendEmail())) {
+        if (!localLogOnlyMode && !(await this.canSendEmail())) {
           console.log("Rate limit reached, stopping queue processing");
           skipped = pendingEmails.length - sent - failed;
           break;
@@ -232,24 +241,37 @@ export class EmailQueueService {
             continue;
           }
 
-          // Send email
-          await mailTransporter.sendMail({
-            from: emailDoc.from,
-            to: emailDoc.to,
-            subject: emailDoc.subject,
-            html: emailDoc.html,
-            text: emailDoc.text,
-            attachments: emailDoc.attachments || [],
-          });
+          if (localLogOnlyMode) {
+            console.log(`[EMAIL DRY RUN] Would send: ${emailDoc.subject}`);
+          } else {
+            await mailTransporter.sendMail({
+              from: emailDoc.from,
+              to: emailDoc.to,
+              subject: emailDoc.subject,
+              html: emailDoc.html,
+              text: emailDoc.text,
+              attachments: emailDoc.attachments || [],
+            });
+          }
 
-          // Mark as sent atomically
+          // Complete dry runs without counting them as delivered or quota usage.
           await EmailQueue.updateOne(
             { _id: emailDoc._id },
-            { $set: { status: "sent", sentAt: new Date() } }
+            {
+              $set: {
+                status: "sent",
+                sentAt: new Date(),
+                dryRun: localLogOnlyMode,
+              },
+            }
           );
 
-          sent++;
-          console.log(`✓ Email sent: ${emailDoc.subject} to ${emailDoc.to}`);
+          if (localLogOnlyMode) {
+            dryRun++;
+          } else {
+            sent++;
+            console.log(`✓ Email sent: ${emailDoc.subject} to ${emailDoc.to}`);
+          }
         } catch (error: any) {
           // Log full error for debugging
           console.error("Email send error:", error);
@@ -287,7 +309,7 @@ export class EmailQueueService {
       console.error("Error processing email queue:", error);
     }
 
-    return { sent, failed, skipped };
+    return { sent, dryRun, failed, skipped };
   }
 
   /**
@@ -307,7 +329,14 @@ export class EmailQueueService {
         ? pendingEmailDocs[pendingEmailDocs.length - 1]
         : null;
 
-    const sent = await EmailQueue.countDocuments({ status: "sent" });
+    const sent = await EmailQueue.countDocuments({
+      status: "sent",
+      dryRun: { $ne: true },
+    });
+    const dryRun = await EmailQueue.countDocuments({
+      status: "sent",
+      dryRun: true,
+    });
     const failed = await EmailQueue.countDocuments({ status: "failed" });
     const total = await EmailQueue.countDocuments();
 
@@ -318,11 +347,13 @@ export class EmailQueueService {
 
     const sentLastHour = await EmailQueue.countDocuments({
       status: "sent",
+      dryRun: { $ne: true },
       sentAt: { $gte: oneHourAgo },
     });
 
     const sentLastDay = await EmailQueue.countDocuments({
       status: "sent",
+      dryRun: { $ne: true },
       sentAt: { $gte: oneDayAgo },
     });
 
@@ -333,6 +364,7 @@ export class EmailQueueService {
       // Find oldest email in the last hour
       const oldestInHour = await EmailQueue.findOne({
         status: "sent",
+        dryRun: { $ne: true },
         sentAt: { $gte: oneHourAgo },
       })
         .sort({ sentAt: 1 })
@@ -354,6 +386,7 @@ export class EmailQueueService {
       // Find oldest email in the last day
       const oldestInDay = await EmailQueue.findOne({
         status: "sent",
+        dryRun: { $ne: true },
         sentAt: { $gte: oneDayAgo },
       })
         .sort({ sentAt: 1 })
@@ -388,6 +421,7 @@ export class EmailQueueService {
     return {
       pending,
       sent,
+      dryRun,
       failed,
       total,
       oldestPendingAge: oldestPending

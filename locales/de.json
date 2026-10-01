@@ -45,6 +45,7 @@
     "email.queue.stats.verbose": "Verbose Ansicht",
     "email.queue.stats.pending": "Wartend",
     "email.queue.stats.sent": "Gesendet",
+    "email.queue.stats.dry.run": "Testlauf (nicht gesendet)",
     "email.queue.stats.failed": "Fehlgeschlagen",
     "email.queue.stats.total": "Gesamt",
     "email.queue.stats.delivery": "Versandstatus",
