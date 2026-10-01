@@ -20,6 +20,23 @@ provider:
         - "ses:SendRawEmail"
       Resource:
         - "arn:aws:ses:eu-central-1:891376994214:identity/*"
+    - Effect: "Allow"
+      Action:
+        - "lambda:InvokeFunction"
+      Resource:
+        - "arn:aws:lambda:${self:provider.region}:${aws:accountId}:function:${self:service}-${self:provider.stage}-emailQueueWorker"
+    - Effect: "Allow"
+      Action:
+        - "scheduler:CreateSchedule"
+        - "scheduler:UpdateSchedule"
+        - "scheduler:DeleteSchedule"
+      Resource:
+        - "arn:aws:scheduler:${self:provider.region}:${aws:accountId}:schedule/default/email-queue-resume-${self:provider.stage}"
+    - Effect: "Allow"
+      Action:
+        - "iam:PassRole"
+      Resource:
+        - "arn:aws:iam::${aws:accountId}:role/${self:service}-${self:provider.stage}-email-queue-scheduler"
 
 functions:
   api:
@@ -36,14 +53,58 @@ functions:
       JWT_SECRET: ${env:JWT_SECRET}
       EMAIL_JWT_EXPIRY: ${env:EMAIL_JWT_EXPIRY_${self:provider.stage}}
       EMAIL_VERIFICATION_SECRET: ${env:EMAIL_VERIFICATION_SECRET}
+      EMAIL_BATCH_SIZE: ${env:EMAIL_BATCH_SIZE}
       EMAIL_LIMIT_HOUR: ${env:EMAIL_LIMIT_HOUR_${self:provider.stage}}
       EMAIL_LIMIT_DAY: ${env:EMAIL_LIMIT_DAY_${self:provider.stage}}
+      EMAIL_QUEUE_WORKER_ARN: "arn:aws:lambda:${self:provider.region}:${aws:accountId}:function:${self:service}-${self:provider.stage}-emailQueueWorker"
       EMAIL_TEST_RECIPIENT: ${env:EMAIL_TEST_RECIPIENT_${self:provider.stage}}
       CYCLIC_URL: ${env:CYCLIC_URL_${self:provider.stage}}
       MANUAL_REGISTRATION_SECRET: ${env:MANUAL_REGISTRATION_SECRET}
 
     events:
       - httpApi: "*"
+
+  emailQueueWorker:
+    handler: dist/email-queue-worker.handler
+    name: ${self:service}-${self:provider.stage}-emailQueueWorker
+    memorySize: 512
+    timeout: 120
+    reservedConcurrency: 1
+    environment:
+      STAGE: ${self:provider.stage}
+      MONGODB_URL: ${env:MONGODB_URL_${self:provider.stage}}
+      SMTP_HOST: ${env:SMTP_HOST}
+      SMTP_USER: ${env:SMTP_USER}
+      SMTP_PASS: ${env:SMTP_PASS}
+      SMTP_FROM: ${env:SMTP_FROM}
+      SMTP_DEBUG: ${env:SMTP_DEBUG}
+      EMAIL_BATCH_SIZE: ${env:EMAIL_BATCH_SIZE}
+      EMAIL_LIMIT_HOUR: ${env:EMAIL_LIMIT_HOUR_${self:provider.stage}}
+      EMAIL_LIMIT_DAY: ${env:EMAIL_LIMIT_DAY_${self:provider.stage}}
+      EMAIL_QUEUE_WORKER_ARN: "arn:aws:lambda:${self:provider.region}:${aws:accountId}:function:${self:service}-${self:provider.stage}-emailQueueWorker"
+      EMAIL_QUEUE_SCHEDULER_ROLE_ARN: "arn:aws:iam::${aws:accountId}:role/${self:service}-${self:provider.stage}-email-queue-scheduler"
+
+resources:
+  Resources:
+    EmailQueueSchedulerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: ${self:service}-${self:provider.stage}-email-queue-scheduler
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: scheduler.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: InvokeEmailQueueWorker
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action: lambda:InvokeFunction
+                  Resource: "arn:aws:lambda:${self:provider.region}:${aws:accountId}:function:${self:service}-${self:provider.stage}-emailQueueWorker"
 
 package:
   exclude:

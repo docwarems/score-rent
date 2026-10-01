@@ -24,6 +24,7 @@ import en from "./locales/en.json";
 import de from "./locales/de.json";
 import { User } from "./models/User";
 import { emailQueueService } from "./utils/email-queue-utils";
+import { triggerEmailQueueWorker } from "./utils/email-queue-triggers";
 import { stage, getEnvVar } from "./utils/misc-utils";
 
 i18next.use(middleware.LanguageDetector).init({
@@ -99,30 +100,6 @@ app.use(
   })
 );
 
-// AWS Lambda global scope variable for email queue throttling
-let lastEmailQueueCheck = 0;
-const EMAIL_QUEUE_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
-let activeQueueProcessing: Promise<any> | null = null;
-
-app.use(async (req: any, res: any, next: any) => {
-  // Process queue in background only if 5+ minutes have passed
-  const now = Date.now();
-  if (now - lastEmailQueueCheck >= EMAIL_QUEUE_CHECK_INTERVAL_MS) {
-    lastEmailQueueCheck = now;
-    // Store promise to prevent Lambda exit before completion
-    // await would also wait for completion but would block the request until completed.
-    activeQueueProcessing = emailQueueService
-      .processQueue()
-      .catch((error) => {
-        console.error("Error processing email queue:", error);
-      })
-      .finally(() => {
-        activeQueueProcessing = null;
-      });
-  }
-  next();
-});
-
 // view engine
 app.set("view engine", "ejs");
 app.engine("vue", ejs.renderFile); // render files with ".vue" extension in views folder by EJS too
@@ -170,6 +147,12 @@ if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
   app.listen(3000, () => {
     console.log("Server listening on http://localhost:3000");
   });
+
+  setInterval(() => {
+    emailQueueService.processQueue().catch((error) => {
+      console.error("Error processing local email queue:", error);
+    });
+  }, 60 * 1000);
 }
 
 // routes
@@ -207,13 +190,17 @@ const originalHandler = serverless(app, {
 });
 exports.handler = async (event: any, context: any) => {
   await connect(); // Check connection on every invocation
-  const response = await originalHandler(event, context);
-
-  // Wait for any background email queue processing to complete
-  if (activeQueueProcessing) {
-    console.log("Waiting for email queue processing to complete...");
-    await activeQueueProcessing;
+  let response: any;
+  try {
+    response = await originalHandler(event, context);
+  } finally {
+    if (emailQueueService.consumeWorkerTriggerRequest()) {
+      try {
+        await triggerEmailQueueWorker();
+      } catch (error) {
+        console.error("Error starting email queue worker:", error);
+      }
+    }
   }
-
   return response;
 };

@@ -17,16 +17,21 @@ interface EmailOptions {
 interface RateLimitConfig {
   maxEmailsPerHour: number;
   maxEmailsPerDay: number;
+  batchSize: number;
 }
 
 export class EmailQueueService {
   private rateLimitConfig: RateLimitConfig;
+  private workerTriggerRequested = false;
 
-  constructor(config?: RateLimitConfig) {
+  constructor(config?: Partial<RateLimitConfig>) {
     // Default limits for typical personal email accounts (adjust to your limits)
-    this.rateLimitConfig = config || {
+    const parsedBatchSize = parseInt(getEnvVar("EMAIL_BATCH_SIZE") || "5", 10);
+    this.rateLimitConfig = {
       maxEmailsPerHour: 50, // Adjust to your provider's limit
       maxEmailsPerDay: 200, // Adjust to your provider's limit
+      batchSize: parsedBatchSize,
+      ...(config ?? {}),
     };
   }
 
@@ -64,16 +69,67 @@ export class EmailQueueService {
         priority: emailOptions.priority || false,
         status: "pending",
       });
+      this.workerTriggerRequested = true;
       console.log(
         `Email queued: ${emailOptions.subject} to ${emailOptions.to}`
       );
-
-      // Immediately process the queue to ensure Lambda waits for email to send
-      await this.processQueue();
     } catch (error) {
       console.error("Error queueing email:", error);
       throw error;
     }
+  }
+
+  consumeWorkerTriggerRequest(): boolean {
+    const requested = this.workerTriggerRequested;
+    this.workerTriggerRequested = false;
+    return requested;
+  }
+
+  async getNextProcessingTime(): Promise<Date | null> {
+    const now = new Date();
+    const pendingEmail = await EmailQueue.findOne({
+      status: "pending",
+      attempts: { $lt: 3 },
+    })
+      .sort({ scheduledFor: 1, createdAt: 1 })
+      .select("scheduledFor")
+      .lean();
+
+    if (!pendingEmail) {
+      return null;
+    }
+
+    const sentToday = await EmailQueue.find({
+      status: "sent",
+      sentAt: { $gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) },
+    })
+      .sort({ sentAt: 1 })
+      .select("sentAt")
+      .lean();
+
+    const sentThisHour = sentToday.filter(
+      (email) =>
+        email.sentAt && email.sentAt >= new Date(now.getTime() - 60 * 60 * 1000)
+    );
+
+    let quotaAvailableAt = now.getTime();
+    if (sentThisHour.length >= this.rateLimitConfig.maxEmailsPerHour) {
+      const index = sentThisHour.length - this.rateLimitConfig.maxEmailsPerHour;
+      quotaAvailableAt = Math.max(
+        quotaAvailableAt,
+        sentThisHour[index].sentAt!.getTime() + 60 * 60 * 1000 + 1000
+      );
+    }
+    if (sentToday.length >= this.rateLimitConfig.maxEmailsPerDay) {
+      const index = sentToday.length - this.rateLimitConfig.maxEmailsPerDay;
+      quotaAvailableAt = Math.max(
+        quotaAvailableAt,
+        sentToday[index].sentAt!.getTime() + 24 * 60 * 60 * 1000 + 1000
+      );
+    }
+
+    const scheduledAt = pendingEmail.scheduledFor?.getTime() ?? now.getTime();
+    return new Date(Math.max(quotaAvailableAt, scheduledAt));
   }
 
   /**
@@ -140,7 +196,7 @@ export class EmailQueueService {
         attempts: { $lt: 3 }, // Or whatever your maxAttempts default is
       })
         .sort({ priority: -1, createdAt: 1 }) // Priority emails first, then oldest first
-        .limit(5); // Process max 5 emails at a time
+        .limit(this.rateLimitConfig.batchSize);
 
       if (pendingEmails.length === 0) {
         return { sent, failed, skipped };
@@ -375,4 +431,5 @@ export const emailQueueService = new EmailQueueService({
   // defaults are assumed 1&1 limits
   maxEmailsPerHour: parseInt(getEnvVar("EMAIL_LIMIT_HOUR") || "20"),
   maxEmailsPerDay: parseInt(getEnvVar("EMAIL_LIMIT_DAY") || "100"),
+  batchSize: parseInt(getEnvVar("EMAIL_BATCH_SIZE") || "5"),
 });
