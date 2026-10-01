@@ -211,13 +211,18 @@ export class EmailQueueService {
         return { sent, dryRun, failed, skipped };
       }
 
-      console.log(`Processing ${pendingEmails.length} pending emails`);
+      const totalPending = await EmailQueue.countDocuments({
+        status: "pending",
+      });
+      console.log(
+        `Processing ${pendingEmails.length} of ${totalPending} pending emails`
+      );
 
       for (const emailDoc of pendingEmails) {
         console.log(
           `[${sent + dryRun + failed + skipped + 1}/${
             pendingEmails.length
-          }] Processing email: ${emailDoc.subject}`
+          }] Processing email: ${emailDoc.subject} to ${emailDoc.to}`
         );
 
         // Check rate limits before each send
@@ -242,7 +247,9 @@ export class EmailQueueService {
           }
 
           if (localLogOnlyMode) {
-            console.log(`[EMAIL DRY RUN] Would send: ${emailDoc.subject}`);
+            console.log(
+              `[EMAIL DRY RUN] Would send to ${emailDoc.to}: ${emailDoc.subject}`
+            );
           } else {
             await mailTransporter.sendMail({
               from: emailDoc.from,
