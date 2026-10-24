@@ -925,6 +925,79 @@ module.exports.send_test_email_get = async (req: any, res: any) => {
   res.redirect("/admin/email-queue-stats");
 };
 
+/**
+ * Collect all users that currently have a score of the given signature checked out.
+ * Returns one list entry per checked out score and a map grouping the scores by user,
+ * because a reminder e-mail is sent once per user, not once per score.
+ */
+const collectReminderBorrowers = async (signature: string) => {
+  const scores = await Score.find({
+    signature: signature,
+    checkedOutByUserId: { $ne: "" }, // not empty means checked out
+  });
+
+  const borrowerMap = new Map(); // userId -> { user, scoreIds[] }
+  const borrowersInfo = [];
+
+  for (const score of scores) {
+    if (score.checkedOutByUserId) {
+      const user = await User.findOne({ id: score.checkedOutByUserId });
+      if (user && user.email) {
+        if (!borrowerMap.has(user.id)) {
+          borrowerMap.set(user.id, { user, scoreIds: [] });
+        }
+        borrowerMap.get(user.id).scoreIds.push(score.id);
+
+        // Find the latest checkout for this score
+        const latestCheckout = score.checkouts
+          .filter((c: any) => !c.checkinTimestamp)
+          .sort(
+            (a: any, b: any) =>
+              b.checkoutTimestamp.getTime() - a.checkoutTimestamp.getTime()
+          )[0];
+
+        borrowersInfo.push({
+          userName: `${user.firstName} ${user.lastName}`,
+          userEmail: user.email,
+          scoreId: score.id,
+          checkoutDate:
+            latestCheckout?.checkoutTimestamp?.toLocaleDateString("de-DE") ||
+            "",
+        });
+      }
+    }
+  }
+
+  return { scoreCount: scores.length, borrowerMap, borrowersInfo };
+};
+
+/**
+ * Preview endpoint for the reminder pages: lists the borrowers that would receive
+ * an e-mail for the selected score, before the mailing is actually triggered.
+ */
+module.exports.reminder_borrowers_get = async (req: any, res: any) => {
+  try {
+    const signature = (req.query.signature || "").trim();
+    if (!signature) {
+      return res.status(400).json({ error: "signature required" });
+    }
+
+    const { borrowerMap, borrowersInfo } = await collectReminderBorrowers(
+      signature
+    );
+    const testRecipient = getEnvVar("EMAIL_TEST_RECIPIENT");
+
+    return res.json({
+      borrowers: borrowersInfo,
+      recipientCount: borrowerMap.size,
+      testRecipient: testRecipient || null,
+    });
+  } catch (error) {
+    console.error("Error loading reminder borrowers:", error);
+    return res.status(500).json({ error: "Error loading borrowers" });
+  }
+};
+
 module.exports.early_reminder_get = async (req: any, res: any) => {
   const signatures = await getScoreTypes();
   res.render("early-reminder", {
@@ -933,6 +1006,8 @@ module.exports.early_reminder_get = async (req: any, res: any) => {
     success: undefined,
     borrowers: undefined,
     campaign: "",
+    signature: "",
+    sent: false,
   });
 };
 
@@ -948,56 +1023,25 @@ module.exports.early_reminder_post = async (req: any, res: any) => {
       success: undefined,
       borrowers: undefined,
       campaign,
+      signature,
+      sent: false,
     });
   }
 
   try {
-    // Find all scores with this signature that are currently checked out
-    const scores = await Score.find({
-      signature: signature,
-      checkedOutByUserId: { $ne: "" }, // not empty means checked out
-    });
+    const { scoreCount, borrowerMap, borrowersInfo } =
+      await collectReminderBorrowers(signature);
 
-    if (scores.length === 0) {
+    if (scoreCount === 0 || borrowerMap.size === 0) {
       return res.render("early-reminder", {
         signatures,
         error: t(req, "score.early.reminder.no.borrowers"),
         success: undefined,
         borrowers: undefined,
         campaign,
+        signature,
+        sent: false,
       });
-    }
-
-    // Get unique user IDs and prepare borrower info
-    const borrowerMap = new Map(); // userId -> { user, scoreIds[] }
-    const borrowersInfo = [];
-    for (const score of scores) {
-      if (score.checkedOutByUserId) {
-        const user = await User.findOne({ id: score.checkedOutByUserId });
-        if (user && user.email) {
-          if (!borrowerMap.has(user.id)) {
-            borrowerMap.set(user.id, { user, scoreIds: [] });
-          }
-          borrowerMap.get(user.id).scoreIds.push(score.id);
-
-          // Find the latest checkout for this score
-          const latestCheckout = score.checkouts
-            .filter((c: any) => !c.checkinTimestamp)
-            .sort(
-              (a: any, b: any) =>
-                b.checkoutTimestamp.getTime() - a.checkoutTimestamp.getTime()
-            )[0];
-
-          borrowersInfo.push({
-            userName: `${user.firstName} ${user.lastName}`,
-            userEmail: user.email,
-            scoreId: score.id,
-            checkoutDate:
-              latestCheckout?.checkoutTimestamp?.toLocaleDateString("de-DE") ||
-              "",
-          });
-        }
-      }
     }
 
     // Send emails to all unique borrowers
@@ -1042,6 +1086,8 @@ Michael S. (Hans-Sachs-Chor Notenwart)
       success: t(req, "score.early.reminder.success", { count: emailCount }),
       borrowers: borrowersInfo,
       campaign,
+      signature,
+      sent: true,
     });
   } catch (error) {
     console.error("Error sending early reminders:", error);
@@ -1051,6 +1097,8 @@ Michael S. (Hans-Sachs-Chor Notenwart)
       success: undefined,
       borrowers: undefined,
       campaign,
+      signature,
+      sent: false,
     });
   }
 };
@@ -1063,6 +1111,8 @@ module.exports.return_reminder_get = async (req: any, res: any) => {
     success: undefined,
     borrowers: undefined,
     campaign: "",
+    signature: "",
+    sent: false,
   });
 };
 
@@ -1108,56 +1158,25 @@ module.exports.return_reminder_post = async (req: any, res: any) => {
       success: undefined,
       borrowers: undefined,
       campaign,
+      signature,
+      sent: false,
     });
   }
 
   try {
-    // Find all scores with this signature that are currently checked out
-    const scores = await Score.find({
-      signature: signature,
-      checkedOutByUserId: { $ne: "" }, // not empty means checked out
-    });
+    const { scoreCount, borrowerMap, borrowersInfo } =
+      await collectReminderBorrowers(signature);
 
-    if (scores.length === 0) {
+    if (scoreCount === 0 || borrowerMap.size === 0) {
       return res.render("return-reminder", {
         signatures,
         error: t(req, "score.return.reminder.no.borrowers"),
         success: undefined,
         borrowers: undefined,
         campaign,
+        signature,
+        sent: false,
       });
-    }
-
-    // Get unique user IDs and prepare borrower info
-    const borrowerMap = new Map(); // userId -> { user, scoreIds[] }
-    const borrowersInfo = [];
-    for (const score of scores) {
-      if (score.checkedOutByUserId) {
-        const user = await User.findOne({ id: score.checkedOutByUserId });
-        if (user && user.email) {
-          if (!borrowerMap.has(user.id)) {
-            borrowerMap.set(user.id, { user, scoreIds: [] });
-          }
-          borrowerMap.get(user.id).scoreIds.push(score.id);
-
-          // Find the latest checkout for this score
-          const latestCheckout = score.checkouts
-            .filter((c: any) => !c.checkinTimestamp)
-            .sort(
-              (a: any, b: any) =>
-                b.checkoutTimestamp.getTime() - a.checkoutTimestamp.getTime()
-            )[0];
-
-          borrowersInfo.push({
-            userName: `${user.firstName} ${user.lastName}`,
-            userEmail: user.email,
-            scoreId: score.id,
-            checkoutDate:
-              latestCheckout?.checkoutTimestamp?.toLocaleDateString("de-DE") ||
-              "",
-          });
-        }
-      }
     }
 
     // Send emails to all unique borrowers
@@ -1204,6 +1223,8 @@ Michael S. (Hans-Sachs-Chor Notenwart)
       success: t(req, "score.return.reminder.success", { count: emailCount }),
       borrowers: borrowersInfo,
       campaign,
+      signature,
+      sent: true,
     });
   } catch (error) {
     console.error("Error sending return reminders:", error);
@@ -1213,6 +1234,8 @@ Michael S. (Hans-Sachs-Chor Notenwart)
       success: undefined,
       borrowers: undefined,
       campaign,
+      signature,
+      sent: false,
     });
   }
 };
