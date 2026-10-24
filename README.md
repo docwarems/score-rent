@@ -81,6 +81,17 @@ As a maintainer I need to get a view of all checkouts.
   - mark the checkout record as returned
   - log some metadata (e.g. date)
 
+## E-mail delivery and mass mailings
+
+Application e-mails, including reminder and mass-mailing messages, are stored in a MongoDB-backed queue before delivery. The AWS deployment has two Lambda functions: the API Lambda handles web requests, while a separate `emailQueueWorker` Lambda sends queued e-mails. When mail is queued, the API starts the worker asynchronously; it does not wait for delivery to finish. This prevents larger mailings from being cut short when an API Lambda invocation times out.
+
+- The worker sends priority messages first, then processes older messages before newer ones.
+- Processing is limited by `EMAIL_BATCH_SIZE` (default `5`), `EMAIL_LIMIT_HOUR` (default `20`), and `EMAIL_LIMIT_DAY` (default `100`). These limits apply to successfully delivered messages.
+- The worker waits briefly between messages. Failed deliveries are retried up to three times; messages that still fail are marked failed.
+- When a batch finishes, the worker starts another run if more messages can be sent immediately, or schedules a later run when the sending quota or a message's scheduled time requires a wait. It continues this way until there are no eligible messages, without requiring another API request. The worker has its own longer Lambda timeout and single-instance concurrency limit.
+- Locally, the queue is checked once a minute while the app is running. Set `EMAIL_QUEUE_MODE=log` to exercise the queue without sending messages; messages are logged and recorded as dry runs.
+- Administrators can inspect pending, sent, and failed messages, rate-limit usage, and the next available sending window at `/admin/email-queue-stats`.
+
 ## TODO:
 
 - mit einem Leihzettel können mehrere Ausleihen erzeugt werden
