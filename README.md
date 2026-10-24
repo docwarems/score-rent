@@ -91,6 +91,7 @@ Application e-mails, including reminder and mass-mailing messages, are stored in
 - When a batch finishes, the worker starts another run if more messages can be sent immediately, or schedules a later run when the sending quota or a message's scheduled time requires a wait. It continues this way until there are no eligible messages, without requiring another API request. The worker has its own longer Lambda timeout and single-instance concurrency limit.
 - Locally, the queue is checked once a minute while the app is running. Set `EMAIL_QUEUE_MODE=log` to exercise the queue without sending messages; messages are logged and recorded as dry runs.
 - Administrators can inspect pending, sent, and failed messages, rate-limit usage, and the next available sending window at `/admin/email-queue-stats`.
+- Every mass mailing (early reminder, return reminder) requires a **campaign** name, entered on the page that triggers the mailing. It is stored with each queued message, is shown in the verbose and failed lists of the queue stats page, and is indexed so that a mailing can be evaluated later, e.g. `db.emailqueues.find({ campaign: "orff-2026-return", status: "failed" })`.
 
 ### Testing e-mail delivery
 

@@ -16,6 +16,7 @@ interface EmailOptions {
     { path: string } | { filename: string; content: string | Buffer }
   >;
   priority?: boolean;
+  campaign?: string;
 }
 
 interface RateLimitConfig {
@@ -71,6 +72,7 @@ export class EmailQueueService {
         from: emailOptions.from || process.env.SMTP_FROM,
         attachments: emailOptions.attachments || [],
         priority: emailOptions.priority || false,
+        campaign: emailOptions.campaign,
         status: "pending",
       });
       this.workerTriggerRequested = true;
@@ -327,7 +329,7 @@ export class EmailQueueService {
     // Query pending emails once to ensure consistency
     const pendingEmailDocs = await EmailQueue.find({ status: "pending" })
       .sort({ priority: -1, createdAt: 1 })
-      .select("to subject createdAt priority")
+      .select("to subject createdAt priority campaign")
       .lean();
 
     const pending = pendingEmailDocs.length;
@@ -421,6 +423,7 @@ export class EmailQueueService {
         to: email.to,
         subject: email.subject,
         createdAt: email.createdAt,
+        campaign: email.campaign,
         ...(email.priority && { priority: true }),
       }));
     }

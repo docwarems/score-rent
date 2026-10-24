@@ -867,7 +867,7 @@ module.exports.email_queue_stats_get = async (req: any, res: any) => {
     if (showFailed) {
       failedEmails = await EmailQueue.find({ status: "failed" })
         .sort({ createdAt: -1 })
-        .select("to subject error attempts maxAttempts createdAt")
+        .select("to subject error attempts maxAttempts createdAt campaign")
         .lean();
 
       // Debug logging
@@ -932,12 +932,24 @@ module.exports.early_reminder_get = async (req: any, res: any) => {
     error: undefined,
     success: undefined,
     borrowers: undefined,
+    campaign: "",
   });
 };
 
 module.exports.early_reminder_post = async (req: any, res: any) => {
   const { signature } = req.body;
+  const campaign = (req.body.campaign || "").trim();
   const signatures = await getScoreTypes();
+
+  if (!campaign) {
+    return res.render("early-reminder", {
+      signatures,
+      error: t(req, "score.reminder.campaign.required"),
+      success: undefined,
+      borrowers: undefined,
+      campaign,
+    });
+  }
 
   try {
     // Find all scores with this signature that are currently checked out
@@ -952,6 +964,7 @@ module.exports.early_reminder_post = async (req: any, res: any) => {
         error: t(req, "score.early.reminder.no.borrowers"),
         success: undefined,
         borrowers: undefined,
+        campaign,
       });
     }
 
@@ -1018,6 +1031,7 @@ Michael S. (Hans-Sachs-Chor Notenwart)
         subject,
         html,
         from: process.env.SMTP_FROM,
+        campaign,
       });
       emailCount++;
     }
@@ -1027,6 +1041,7 @@ Michael S. (Hans-Sachs-Chor Notenwart)
       error: undefined,
       success: t(req, "score.early.reminder.success", { count: emailCount }),
       borrowers: borrowersInfo,
+      campaign,
     });
   } catch (error) {
     console.error("Error sending early reminders:", error);
@@ -1035,6 +1050,7 @@ Michael S. (Hans-Sachs-Chor Notenwart)
       error: t(req, "score.early.reminder.error"),
       success: undefined,
       borrowers: undefined,
+      campaign,
     });
   }
 };
@@ -1046,6 +1062,7 @@ module.exports.return_reminder_get = async (req: any, res: any) => {
     error: undefined,
     success: undefined,
     borrowers: undefined,
+    campaign: "",
   });
 };
 
@@ -1081,7 +1098,18 @@ module.exports.updateScoreState_post = async (req: any, res: any) => {
 
 module.exports.return_reminder_post = async (req: any, res: any) => {
   const { signature } = req.body;
+  const campaign = (req.body.campaign || "").trim();
   const signatures = await getScoreTypes();
+
+  if (!campaign) {
+    return res.render("return-reminder", {
+      signatures,
+      error: t(req, "score.reminder.campaign.required"),
+      success: undefined,
+      borrowers: undefined,
+      campaign,
+    });
+  }
 
   try {
     // Find all scores with this signature that are currently checked out
@@ -1096,6 +1124,7 @@ module.exports.return_reminder_post = async (req: any, res: any) => {
         error: t(req, "score.return.reminder.no.borrowers"),
         success: undefined,
         borrowers: undefined,
+        campaign,
       });
     }
 
@@ -1164,6 +1193,7 @@ Michael S. (Hans-Sachs-Chor Notenwart)
         subject,
         html,
         from: process.env.SMTP_FROM,
+        campaign,
       });
       emailCount++;
     }
@@ -1173,6 +1203,7 @@ Michael S. (Hans-Sachs-Chor Notenwart)
       error: undefined,
       success: t(req, "score.return.reminder.success", { count: emailCount }),
       borrowers: borrowersInfo,
+      campaign,
     });
   } catch (error) {
     console.error("Error sending return reminders:", error);
@@ -1181,6 +1212,7 @@ Michael S. (Hans-Sachs-Chor Notenwart)
       error: t(req, "score.return.reminder.error"),
       success: undefined,
       borrowers: undefined,
+      campaign,
     });
   }
 };

@@ -28,6 +28,10 @@ const emailQueueSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  campaign: {
+    type: String,
+    trim: true,
+  },
   status: {
     type: String,
     enum: ["pending", "processing", "sent", "failed"],
@@ -63,5 +67,7 @@ const emailQueueSchema = new mongoose.Schema({
 
 // Index for efficient querying
 emailQueueSchema.index({ status: 1, priority: -1, scheduledFor: 1 });
+// Index for filtering emails belonging to a mass mailing campaign
+emailQueueSchema.index({ campaign: 1, createdAt: -1 });
 
 export const EmailQueue = mongoose.model("EmailQueue", emailQueueSchema);

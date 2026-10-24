@@ -43,6 +43,11 @@
     <% }); %>
   </select>
   <p></p>
+  <label><%= t('score.reminder.campaign') %></label>
+  <input type="text" name="campaign" class="w3-input w3-border" required
+         maxlength="100" placeholder="<%= t('score.reminder.campaign.placeholder') %>"
+         value="<%= typeof campaign !== 'undefined' && campaign ? campaign : '' %>">
+  <p></p>
   <button class="w3-button w3-black" type="submit"><%= t('score.return.reminder.send') %></button>
 </form>
 
