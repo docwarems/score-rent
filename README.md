@@ -92,6 +92,15 @@ Application e-mails, including reminder and mass-mailing messages, are stored in
 - Locally, the queue is checked once a minute while the app is running. Set `EMAIL_QUEUE_MODE=log` to exercise the queue without sending messages; messages are logged and recorded as dry runs.
 - Administrators can inspect pending, sent, and failed messages, rate-limit usage, and the next available sending window at `/admin/email-queue-stats`.
 
+### Testing e-mail delivery
+
+- **Dry run (`EMAIL_QUEUE_MODE=log`)**: only effective when running locally (ignored in Lambda). The queue is processed as usual, but nothing is sent and the SMTP connection is not verified at startup. Each message is logged (`[EMAIL DRY RUN]`) and stored as `sent` with `dryRun: true`. Dry-run messages don't count against the hourly/daily limits and are shown separately on the queue stats page.
+- **Test recipient (`EMAIL_TEST_RECIPIENT`)**: if set, the early-reminder, return-reminder, checkout and checkin confirmation e-mails are sent to this address instead of the real borrowers. It can be set per stage (e.g. `EMAIL_TEST_RECIPIENT_dev`); in the deployed Lambdas it comes from the environment, locally from `.env`. **Make sure it is unset in production**, otherwise real users won't receive their e-mails.
+- **Test e-mail**: on all stages except `prod`, the admin home page offers a "Send test e-mail" button (`/admin/test-email`). It queues a message to `EMAIL_TEST_RECIPIENT` and redirects to the queue stats page, so the complete queue/worker path can be verified.
+- **Queue stats** (`/admin/email-queue-stats`): shows counts, rate-limit usage, the next sending window and the dry-run count; `?verbose=1` lists pending messages and `?showFailed=1` lists failed ones.
+- **Playwright**: e2e test users don't trigger checkout/checkin confirmation e-mails.
+- **Rate limits for testing**: lower `EMAIL_BATCH_SIZE`, `EMAIL_LIMIT_HOUR` and `EMAIL_LIMIT_DAY` to exercise batching and the scheduled resume without sending many messages.
+
 ## TODO:
 
 - mit einem Leihzettel können mehrere Ausleihen erzeugt werden
