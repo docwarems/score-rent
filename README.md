@@ -93,6 +93,17 @@ Application e-mails, including reminder and mass-mailing messages, are stored in
 - Administrators can inspect pending, sent, and failed messages, rate-limit usage, and the next available sending window at `/admin/email-queue-stats`.
 - Every mass mailing (early reminder, return reminder) requires a **campaign** name, entered on the page that triggers the mailing. It is stored with each queued message, is shown in the verbose and failed lists of the queue stats page, and is indexed so that a mailing can be evaluated later, e.g. `db.emailqueues.find({ campaign: "orff-2026-return", status: "failed" })`.
 
+### Reminder mailings
+
+The early-reminder and return-reminder pages let an administrator select a score and then show, before anything is sent, the list of borrowers that would receive a message, the number of recipients, and a warning if a test recipient is configured.
+
+The subject and body of both reminder mails are editable on the page itself and are stored in the `emailtemplates` collection (one document per reminder type). If no document exists yet, the built-in German default text is used, so no migration is needed.
+
+- The text may contain the placeholders `{{firstName}}`, `{{lastName}}`, `{{scoreName}}` and `{{scoreIds}}`, which are replaced per recipient. Unknown placeholders are left in place so that typos remain visible.
+- The preview renders the subject and body with the data of the first borrower in the list; the body is shown in a sandboxed frame because it is HTML.
+- The text is saved automatically when the mailing is started, so the stored template always matches what was sent last.
+- A **Reset** button restores the built-in default text in the form; it is persisted on the next send.
+
 ### Testing e-mail delivery
 
 - **Dry run (`EMAIL_QUEUE_MODE=log`)**: only effective when running locally (ignored in Lambda). The queue is processed as usual, but nothing is sent and the SMTP connection is not verified at startup. Each message is logged (`[EMAIL DRY RUN]`) and stored as `sent` with `dryRun: true`. Dry-run messages don't count against the hourly/daily limits and are shown separately on the queue stats page.

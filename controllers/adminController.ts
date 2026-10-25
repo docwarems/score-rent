@@ -82,6 +82,14 @@ import {
   getScoreTypeMap,
 } from "../utils/score-utils";
 import { emailQueueService } from "../utils/email-queue-utils";
+import {
+  DEFAULT_REMINDER_TEMPLATES,
+  ReminderTemplateKey,
+  TEMPLATE_PLACEHOLDERS,
+  getReminderTemplate,
+  renderTemplate,
+  saveReminderTemplate,
+} from "../utils/email-template-utils";
 
 const handleSaveErrors = (err: any, type: string | undefined) => {
   console.log(err.message, err.code);
@@ -972,8 +980,23 @@ const collectReminderBorrowers = async (signature: string) => {
 };
 
 /**
+ * Values available as {{placeholder}} in a reminder template for one recipient.
+ */
+const buildTemplateContext = (
+  user: any,
+  scoreIds: string[],
+  scoreName: string
+): Record<string, string> => ({
+  firstName: user.firstName || "",
+  lastName: user.lastName || "",
+  scoreName: scoreName || "",
+  scoreIds: scoreIds.length > 1 ? scoreIds.join(", ") : scoreIds[0] || "",
+});
+
+/**
  * Preview endpoint for the reminder pages: lists the borrowers that would receive
  * an e-mail for the selected score, before the mailing is actually triggered.
+ * The sample context lets the page preview the template with real data.
  */
 module.exports.reminder_borrowers_get = async (req: any, res: any) => {
   try {
@@ -987,10 +1010,22 @@ module.exports.reminder_borrowers_get = async (req: any, res: any) => {
     );
     const testRecipient = getEnvVar("EMAIL_TEST_RECIPIENT");
 
+    const scoreTypeMap = await getScoreTypeMap();
+    const scoreName = scoreTypeMap.get(signature) || "";
+    const firstBorrower = borrowerMap.values().next().value;
+    const sampleContext = firstBorrower
+      ? buildTemplateContext(
+          firstBorrower.user,
+          firstBorrower.scoreIds,
+          scoreName
+        )
+      : null;
+
     return res.json({
       borrowers: borrowersInfo,
       recipientCount: borrowerMap.size,
       testRecipient: testRecipient || null,
+      sampleContext,
     });
   } catch (error) {
     console.error("Error loading reminder borrowers:", error);
@@ -998,10 +1033,28 @@ module.exports.reminder_borrowers_get = async (req: any, res: any) => {
   }
 };
 
+/**
+ * Shared state for rendering a reminder page, so that an edited template is kept
+ * when the page is re-rendered after an error.
+ */
+const reminderRenderState = async (
+  key: ReminderTemplateKey,
+  body?: { subject?: string; html?: string }
+) => {
+  const stored = await getReminderTemplate(key);
+  return {
+    signatures: await getScoreTypes(),
+    templateSubject: body?.subject ?? stored.subject,
+    templateHtml: body?.html ?? stored.html,
+    defaultSubject: DEFAULT_REMINDER_TEMPLATES[key].subject,
+    defaultHtml: DEFAULT_REMINDER_TEMPLATES[key].html,
+    placeholders: TEMPLATE_PLACEHOLDERS,
+  };
+};
+
 module.exports.early_reminder_get = async (req: any, res: any) => {
-  const signatures = await getScoreTypes();
   res.render("early-reminder", {
-    signatures,
+    ...(await reminderRenderState("early-reminder")),
     error: undefined,
     success: undefined,
     borrowers: undefined,
@@ -1011,21 +1064,50 @@ module.exports.early_reminder_get = async (req: any, res: any) => {
   });
 };
 
-module.exports.early_reminder_post = async (req: any, res: any) => {
+/**
+ * Queues a reminder mailing for the selected score using the submitted template.
+ * Shared by the early and the return reminder page, which only differ in texts.
+ */
+const handleReminderPost = async (
+  req: any,
+  res: any,
+  options: {
+    view: string;
+    key: ReminderTemplateKey;
+    noBorrowersKey: string;
+    successKey: string;
+    errorKey: string;
+    logLabel: string;
+  }
+) => {
   const { signature } = req.body;
   const campaign = (req.body.campaign || "").trim();
-  const signatures = await getScoreTypes();
+  const subject = (req.body.subject || "").trim();
+  const html = (req.body.html || "").trim();
 
-  if (!campaign) {
-    return res.render("early-reminder", {
-      signatures,
-      error: t(req, "score.reminder.campaign.required"),
+  // Keep the submitted template in the form when the page is re-rendered.
+  const state = await reminderRenderState(options.key, {
+    subject: req.body.subject,
+    html: req.body.html,
+  });
+
+  const renderError = (errorKey: string) =>
+    res.render(options.view, {
+      ...state,
+      error: t(req, errorKey),
       success: undefined,
       borrowers: undefined,
       campaign,
       signature,
       sent: false,
     });
+
+  if (!campaign) {
+    return renderError("score.reminder.campaign.required");
+  }
+
+  if (!subject || !html) {
+    return renderError("score.reminder.template.required");
   }
 
   try {
@@ -1033,80 +1115,63 @@ module.exports.early_reminder_post = async (req: any, res: any) => {
       await collectReminderBorrowers(signature);
 
     if (scoreCount === 0 || borrowerMap.size === 0) {
-      return res.render("early-reminder", {
-        signatures,
-        error: t(req, "score.early.reminder.no.borrowers"),
-        success: undefined,
-        borrowers: undefined,
-        campaign,
-        signature,
-        sent: false,
-      });
+      return renderError(options.noBorrowersKey);
     }
 
     // Send emails to all unique borrowers
     const scoreTypeMap = await getScoreTypeMap();
-    const scoreName = scoreTypeMap.get(signature); // composer + work
+    const scoreName = scoreTypeMap.get(signature) || ""; // composer + work
     const testRecipient = getEnvVar("EMAIL_TEST_RECIPIENT");
     let emailCount = 0;
 
-    for (const [userId, { user, scoreIds }] of borrowerMap) {
-      const recipientEmail = testRecipient ? testRecipient : user.email;
-      const scoreIdList =
-        scoreIds.length > 1 ? scoreIds.join(", ") : scoreIds[0];
-      const subject = `Benötigst du die Leihnoten "${scoreName}" vom Hans-Sachs-Chor noch?`;
-      const html = `
-Liebe(r) ${user.firstName} ${user.lastName},
-<p>
-Du hast die Noten "${scoreName}" mit Nummer ${scoreIdList} vom Hans-Sachs-Chor ausgeliehen.
-<p>
-Falls Du die Chorproben nicht bis zum Konzert weiterführst, bitte ich Dich, die Noten möglichst bald zurückzugeben, 
-damit andere Chormitglieder sie nutzen können, und damit es nach dem Konzert keine Verzögerung bei der Rückgabe der Noten an den Verlag gibt.
-<p>
-Du kannst auf diese E-Mail antworten um die Rückgabe mit mir abzustimmen!
-<p>
-Vielen Dank für Deine Kooperation!
-<p>
-Michael S. (Hans-Sachs-Chor Notenwart)
-`;
+    for (const [, { user, scoreIds }] of borrowerMap) {
+      const context = buildTemplateContext(user, scoreIds, scoreName);
 
       await emailQueueService.queueEmail({
-        to: recipientEmail,
-        subject,
-        html,
+        to: testRecipient ? testRecipient : user.email,
+        subject: renderTemplate(subject, context),
+        html: renderTemplate(html, context),
         from: process.env.SMTP_FROM,
         campaign,
       });
       emailCount++;
     }
 
-    return res.render("early-reminder", {
-      signatures,
+    // The text that was actually sent becomes the default for the next mailing.
+    await saveReminderTemplate(
+      options.key,
+      { subject, html },
+      res.locals.user?.email
+    );
+
+    return res.render(options.view, {
+      ...state,
       error: undefined,
-      success: t(req, "score.early.reminder.success", { count: emailCount }),
+      success: t(req, options.successKey, { count: emailCount }),
       borrowers: borrowersInfo,
       campaign,
       signature,
       sent: true,
     });
   } catch (error) {
-    console.error("Error sending early reminders:", error);
-    return res.render("early-reminder", {
-      signatures,
-      error: t(req, "score.early.reminder.error"),
-      success: undefined,
-      borrowers: undefined,
-      campaign,
-      signature,
-      sent: false,
-    });
+    console.error(options.logLabel, error);
+    return renderError(options.errorKey);
   }
 };
 
+module.exports.early_reminder_post = async (req: any, res: any) =>
+  handleReminderPost(req, res, {
+    view: "early-reminder",
+    key: "early-reminder",
+    noBorrowersKey: "score.early.reminder.no.borrowers",
+    successKey: "score.early.reminder.success",
+    errorKey: "score.early.reminder.error",
+    logLabel: "Error sending early reminders:",
+  });
+
 module.exports.return_reminder_get = async (req: any, res: any) => {
-  const signatures = await getScoreTypes();
   res.render("return-reminder", {
-    signatures,
+    ...(await reminderRenderState("return-reminder")),
     error: undefined,
     success: undefined,
     borrowers: undefined,
@@ -1146,96 +1211,12 @@ module.exports.updateScoreState_post = async (req: any, res: any) => {
   }
 };
 
-module.exports.return_reminder_post = async (req: any, res: any) => {
-  const { signature } = req.body;
-  const campaign = (req.body.campaign || "").trim();
-  const signatures = await getScoreTypes();
-
-  if (!campaign) {
-    return res.render("return-reminder", {
-      signatures,
-      error: t(req, "score.reminder.campaign.required"),
-      success: undefined,
-      borrowers: undefined,
-      campaign,
-      signature,
-      sent: false,
-    });
-  }
-
-  try {
-    const { scoreCount, borrowerMap, borrowersInfo } =
-      await collectReminderBorrowers(signature);
-
-    if (scoreCount === 0 || borrowerMap.size === 0) {
-      return res.render("return-reminder", {
-        signatures,
-        error: t(req, "score.return.reminder.no.borrowers"),
-        success: undefined,
-        borrowers: undefined,
-        campaign,
-        signature,
-        sent: false,
-      });
-    }
-
-    // Send emails to all unique borrowers
-    const scoreTypeMap = await getScoreTypeMap();
-    const scoreName = scoreTypeMap.get(signature);
-    const testRecipient = getEnvVar("EMAIL_TEST_RECIPIENT");
-    let emailCount = 0;
-
-    for (const [userId, { user, scoreIds }] of borrowerMap) {
-      const recipientEmail = testRecipient ? testRecipient : user.email;
-      const scoreIdList =
-        scoreIds.length > 1 ? scoreIds.join(", ") : scoreIds[0];
-      const subject = `Rückgabe der Noten "${scoreName}" nach dem Konzert`;
-      const html = `
-Liebe(r) ${user.firstName} ${user.lastName},
-<p>
-Du hast die Noten "${scoreName}" mit HSC-Nummer ${scoreIdList} vom Hans-Sachs-Chor ausgeliehen.
-<p>
-Nun ist das Konzert vorbei - wir hoffen, es hat Dir Freude bereitet!
-<p>
-Bitte gib die Noten zeitnah zurück, damit wir sie an den Verlag zurücksenden können.<br>
-Bitte radiere vorher Deine Eintragungen aus.
-<p>
-Du kannst auf diese E-Mail antworten!
-<p>
-Vielen Dank!
-<p>
-Michael S. (Hans-Sachs-Chor Notenwart)
-`;
-
-      await emailQueueService.queueEmail({
-        to: recipientEmail,
-        subject,
-        html,
-        from: process.env.SMTP_FROM,
-        campaign,
-      });
-      emailCount++;
-    }
-
-    return res.render("return-reminder", {
-      signatures,
-      error: undefined,
-      success: t(req, "score.return.reminder.success", { count: emailCount }),
-      borrowers: borrowersInfo,
-      campaign,
-      signature,
-      sent: true,
-    });
-  } catch (error) {
-    console.error("Error sending return reminders:", error);
-    return res.render("return-reminder", {
-      signatures,
-      error: t(req, "score.return.reminder.error"),
-      success: undefined,
-      borrowers: undefined,
-      campaign,
-      signature,
-      sent: false,
-    });
-  }
-};
+module.exports.return_reminder_post = async (req: any, res: any) =>
+  handleReminderPost(req, res, {
+    view: "return-reminder",
+    key: "return-reminder",
+    noBorrowersKey: "score.return.reminder.no.borrowers",
+    successKey: "score.return.reminder.success",
+    errorKey: "score.return.reminder.error",
+    logLabel: "Error sending return reminders:",
+  });

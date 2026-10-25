@@ -1,11 +1,25 @@
 <%
   // Shared markup for the early- and return-reminder pages.
-  // Expects: action, selectLabel, sendLabel, signatures, signature, campaign, borrowers, sent
+  // Expects: action, selectLabel, sendLabel, signatures, signature, campaign, borrowers, sent,
+  //          templateSubject, templateHtml, defaultSubject, defaultHtml, placeholders
   const selectedSignature = typeof signature !== 'undefined' && signature ? signature : '';
   const selectedCampaign = typeof campaign !== 'undefined' && campaign ? campaign : '';
   const resultBorrowers = typeof borrowers !== 'undefined' && borrowers ? borrowers : null;
   const wasSent = typeof sent !== 'undefined' && sent;
 %>
+
+<style>
+  .template-text {
+    font-family: monospace;
+    font-size: 13px;
+  }
+  .mail-preview-frame {
+    width: 100%;
+    height: 340px;
+    border: 1px solid #ccc;
+    background: #fff;
+  }
+</style>
 
 <form action="<%= action %>" method="post" id="reminderForm">
   <label><%= selectLabel %></label>
@@ -22,6 +36,30 @@
   <input type="text" name="campaign" id="campaignInput" class="w3-input w3-border" required
          maxlength="100" placeholder="<%= t('score.reminder.campaign.placeholder') %>"
          value="<%= selectedCampaign %>">
+  <p></p>
+
+  <div class="w3-panel w3-border" style="padding-bottom: 12px;">
+    <h3><%= t('score.reminder.template.title') %></h3>
+    <p class="w3-small">
+      <%= t('score.reminder.template.hint') %>
+      <% placeholders.forEach(placeholder => { %>
+        <code>{{<%= placeholder %>}}</code>
+      <% }); %>
+    </p>
+
+    <label><%= t('score.reminder.template.subject') %></label>
+    <input type="text" name="subject" id="subjectInput" class="w3-input w3-border template-text"
+           required maxlength="300" value="<%= templateSubject %>">
+    <p></p>
+    <label><%= t('score.reminder.template.body') %></label>
+    <textarea name="html" id="htmlInput" class="w3-input w3-border template-text"
+              required rows="16"><%= templateHtml %></textarea>
+    <p class="w3-small"><%= t('score.reminder.template.autosave') %></p>
+    <button type="button" class="w3-button w3-light-grey" id="resetTemplateButton">
+      <%= t('score.reminder.template.reset') %>
+    </button>
+  </div>
+
   <p></p>
   <button class="w3-button w3-black" type="submit" id="submitButton"><%= sendLabel %></button>
 </form>
@@ -63,11 +101,23 @@
       email: <%- JSON.stringify(t('score.reminder.table.email')) %>,
       scoreId: <%- JSON.stringify(t('score.reminder.table.score.id')) %>,
       checkoutDate: <%- JSON.stringify(t('score.reminder.table.checkout.date')) %>,
+      mailTitle: <%- JSON.stringify(t('score.reminder.mail.preview.title')) %>,
+      mailSubject: <%- JSON.stringify(t('score.reminder.template.subject')) %>,
+      mailFor: <%- JSON.stringify(t('score.reminder.mail.preview.for')) %>,
+      resetConfirm: <%- JSON.stringify(t('score.reminder.template.reset.confirm')) %>,
+    };
+
+    const defaults = {
+      subject: <%- JSON.stringify(defaultSubject) %>,
+      html: <%- JSON.stringify(defaultHtml) %>,
     };
 
     const select = document.getElementById('signatureSelect');
     const preview = document.getElementById('previewArea');
     const submitButton = document.getElementById('submitButton');
+    const subjectInput = document.getElementById('subjectInput');
+    const htmlInput = document.getElementById('htmlInput');
+    const resetButton = document.getElementById('resetTemplateButton');
     // The server-rendered list belongs to the previous submit and would be
     // misleading next to a preview of a newly selected score.
     const resultTable = document.querySelector('.divBorrowers');
@@ -80,8 +130,15 @@
     const panel = (cssClass, html) =>
       '<div class="w3-panel ' + cssClass + ' w3-border">' + html + '</div>';
 
+    // Same substitution as on the server: unknown placeholders stay visible.
+    const renderTemplate = (template, context) =>
+      String(template).replace(/\{\{\s*(\w+)\s*\}\}/g, (match, key) =>
+        Object.prototype.hasOwnProperty.call(context, key) ? context[key] : match
+      );
+
     // Guards against an out-of-order response overwriting a newer selection.
     let requestId = 0;
+    let currentData = null;
 
     async function loadBorrowers(signature) {
       if (resultTable) {
@@ -89,6 +146,7 @@
       }
 
       if (!signature) {
+        currentData = null;
         preview.innerHTML = '';
         return;
       }
@@ -108,18 +166,25 @@
         if (currentRequest !== requestId) {
           return;
         }
-        render(data);
+        currentData = data;
+        render();
       } catch (error) {
         if (currentRequest !== requestId) {
           return;
         }
         console.error('Error loading borrowers:', error);
+        currentData = null;
         preview.innerHTML = panel('w3-pale-red', '<p>' + escapeHtml(i18n.loadError) + '</p>');
         submitButton.disabled = false;
       }
     }
 
-    function render(data) {
+    function render() {
+      const data = currentData;
+      if (!data) {
+        return;
+      }
+
       const borrowers = data.borrowers || [];
 
       if (borrowers.length === 0) {
@@ -137,6 +202,18 @@
       if (data.testRecipient) {
         const warning = i18n.testRecipient.replace('{{email}}', data.testRecipient);
         html += panel('w3-pale-red', '<p>' + escapeHtml(warning) + '</p>');
+      }
+
+      if (data.sampleContext) {
+        const sampleName = [data.sampleContext.firstName, data.sampleContext.lastName]
+          .filter(Boolean)
+          .join(' ');
+        html +=
+          '<h3>' + escapeHtml(i18n.mailTitle) + '</h3>' +
+          '<p class="w3-small">' + escapeHtml(i18n.mailFor.replace('{{name}}', sampleName)) + '</p>' +
+          '<p><b>' + escapeHtml(i18n.mailSubject) + ':</b> ' +
+          escapeHtml(renderTemplate(subjectInput.value, data.sampleContext)) + '</p>' +
+          '<iframe class="mail-preview-frame" id="mailPreviewFrame" sandbox></iframe>';
       }
 
       html +=
@@ -160,9 +237,34 @@
         '</table></div>';
 
       preview.innerHTML = html;
+
+      // The mail body is admin authored HTML; the sandboxed frame keeps it from
+      // interfering with this page.
+      const frame = document.getElementById('mailPreviewFrame');
+      if (frame && data.sampleContext) {
+        frame.srcdoc = renderTemplate(htmlInput.value, data.sampleContext);
+      }
+
       submitButton.disabled = false;
     }
 
+    let renderTimer = null;
+    const scheduleRender = () => {
+      clearTimeout(renderTimer);
+      renderTimer = setTimeout(render, 300);
+    };
+
     select.addEventListener('change', () => loadBorrowers(select.value));
+    subjectInput.addEventListener('input', scheduleRender);
+    htmlInput.addEventListener('input', scheduleRender);
+
+    resetButton.addEventListener('click', () => {
+      if (!window.confirm(i18n.resetConfirm)) {
+        return;
+      }
+      subjectInput.value = defaults.subject;
+      htmlInput.value = defaults.html;
+      render();
+    });
   })();
 </script>
