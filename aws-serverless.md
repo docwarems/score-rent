@@ -207,3 +207,16 @@ serverless deploy --stage prod
 
 - AWS Console → SES → Account dashboard → Request production access
 - This allows sending to any email address (not just verified ones)
+
+## Logging
+
+sls logs -f emailQueueWorker --stage dev # the mail worker
+sls logs -f api --stage dev # the web/API lambda
+
+**with tail**
+
+sls logs -f emailQueueWorker --stage dev -t --startTime 30m
+
+**failures of last days**
+
+sls logs -f emailQueueWorker --stage dev --startTime 1d --filter "ERROR"

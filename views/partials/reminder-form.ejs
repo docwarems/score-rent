@@ -1,0 +1,287 @@
+<%
+  // Shared markup for the early- and return-reminder pages.
+  // Expects: action, selectLabel, sendLabel, signatures, signature, campaign, borrowers, sent,
+  //          templateSubject, templateHtml, defaultSubject, defaultHtml, placeholders
+  const selectedSignature = typeof signature !== 'undefined' && signature ? signature : '';
+  const selectedCampaign = typeof campaign !== 'undefined' && campaign ? campaign : '';
+  const resultBorrowers = typeof borrowers !== 'undefined' && borrowers ? borrowers : null;
+  const wasSent = typeof sent !== 'undefined' && sent;
+%>
+
+<style>
+  .template-text {
+    font-family: monospace;
+    font-size: 13px;
+  }
+  #subjectInput {
+    resize: vertical;
+  }
+  .mail-preview-frame {
+    width: 100%;
+    height: 340px;
+    border: 1px solid #ccc;
+    background: #fff;
+  }
+</style>
+
+<form action="<%= action %>" method="post" id="reminderForm">
+  <label><%= selectLabel %></label>
+  <select name="signature" id="signatureSelect" class="w3-select w3-border" required>
+    <option value="" disabled <%= selectedSignature ? '' : 'selected' %>><%= t('choose') %></option>
+    <% signatures.forEach(signature => { %>
+      <% if (signature.id !== 'ALL') { %>
+        <option value="<%= signature.id %>" <%= signature.id === selectedSignature ? 'selected' : '' %>><%= signature.name %> (<%= signature.id %>)</option>
+      <% } %>
+    <% }); %>
+  </select>
+  <p></p>
+  <label><%= t('score.reminder.campaign') %></label>
+  <input type="text" name="campaign" id="campaignInput" class="w3-input w3-border" required
+         maxlength="100" placeholder="<%= t('score.reminder.campaign.placeholder') %>"
+         value="<%= selectedCampaign %>">
+  <p></p>
+
+  <div class="w3-panel w3-border" style="padding-bottom: 12px;">
+    <h3><%= t('score.reminder.template.title') %></h3>
+    <p class="w3-small">
+      <%= t('score.reminder.template.hint') %>
+      <% placeholders.forEach(placeholder => { %>
+        <code>{{<%= placeholder %>}}</code>
+      <% }); %>
+    </p>
+
+    <label><%= t('score.reminder.template.subject') %></label>
+    <textarea name="subject" id="subjectInput" class="w3-input w3-border template-text"
+              required maxlength="300" rows="2"><%= templateSubject %></textarea>
+    <p></p>
+    <label><%= t('score.reminder.template.body') %></label>
+    <textarea name="html" id="htmlInput" class="w3-input w3-border template-text"
+              required rows="16"><%= templateHtml %></textarea>
+    <p class="w3-small"><%= t('score.reminder.template.autosave') %></p>
+    <button type="button" class="w3-button w3-light-grey" id="resetTemplateButton">
+      <%= t('score.reminder.template.reset') %>
+    </button>
+  </div>
+
+  <p></p>
+  <button class="w3-button w3-black" type="submit" id="submitButton"><%= sendLabel %></button>
+</form>
+
+<div id="previewArea" style="margin-top: 20px;"></div>
+
+<% if (resultBorrowers && resultBorrowers.length > 0) { %>
+  <div class="w3-responsive divBorrowers" style="margin-top: 20px;">
+    <h3><%= wasSent ? t('score.reminder.sent.title') : t('score.reminder.preview.title') %></h3>
+    <table class="w3-table-all">
+      <tr>
+        <th><%= t('score.reminder.table.name') %></th>
+        <th><%= t('score.reminder.table.email') %></th>
+        <th><%= t('score.reminder.table.score.id') %></th>
+        <th><%= t('score.reminder.table.checkout.date') %></th>
+      </tr>
+      <% resultBorrowers.forEach(borrower => { %>
+      <tr>
+        <td><%= borrower.userName %></td>
+        <td><%= borrower.userEmail %></td>
+        <td><%= borrower.scoreId %></td>
+        <td><%= borrower.checkoutDate %></td>
+      </tr>
+      <% }); %>
+    </table>
+  </div>
+<% } %>
+
+<script>
+  (function () {
+    const i18n = {
+      loading: <%- JSON.stringify(t('score.reminder.preview.loading')) %>,
+      loadError: <%- JSON.stringify(t('score.reminder.preview.error')) %>,
+      empty: <%- JSON.stringify(t('score.reminder.preview.empty')) %>,
+      summary: <%- JSON.stringify(t('score.reminder.preview.summary')) %>,
+      title: <%- JSON.stringify(t('score.reminder.preview.title')) %>,
+      testRecipient: <%- JSON.stringify(t('score.reminder.preview.test.recipient')) %>,
+      name: <%- JSON.stringify(t('score.reminder.table.name')) %>,
+      email: <%- JSON.stringify(t('score.reminder.table.email')) %>,
+      scoreId: <%- JSON.stringify(t('score.reminder.table.score.id')) %>,
+      checkoutDate: <%- JSON.stringify(t('score.reminder.table.checkout.date')) %>,
+      mailTitle: <%- JSON.stringify(t('score.reminder.mail.preview.title')) %>,
+      mailSubject: <%- JSON.stringify(t('score.reminder.template.subject')) %>,
+      mailFor: <%- JSON.stringify(t('score.reminder.mail.preview.for')) %>,
+      resetConfirm: <%- JSON.stringify(t('score.reminder.template.reset.confirm')) %>,
+    };
+
+    const defaults = {
+      subject: <%- JSON.stringify(defaultSubject) %>,
+      html: <%- JSON.stringify(defaultHtml) %>,
+    };
+
+    const select = document.getElementById('signatureSelect');
+    const preview = document.getElementById('previewArea');
+    const submitButton = document.getElementById('submitButton');
+    const subjectInput = document.getElementById('subjectInput');
+    const htmlInput = document.getElementById('htmlInput');
+    const resetButton = document.getElementById('resetTemplateButton');
+    // The server-rendered list belongs to the previous submit and would be
+    // misleading next to a preview of a newly selected score.
+    const resultTable = document.querySelector('.divBorrowers');
+
+    const escapeHtml = (value) =>
+      String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+      })[c]);
+
+    const panel = (cssClass, html) =>
+      '<div class="w3-panel ' + cssClass + ' w3-border">' + html + '</div>';
+
+    // Same substitution as on the server: unknown placeholders stay visible.
+    const renderTemplate = (template, context) =>
+      String(template).replace(/\{\{\s*(\w+)\s*\}\}/g, (match, key) =>
+        Object.prototype.hasOwnProperty.call(context, key) ? context[key] : match
+      );
+
+    // Guards against an out-of-order response overwriting a newer selection.
+    let requestId = 0;
+    let currentData = null;
+
+    async function loadBorrowers(signature) {
+      if (resultTable) {
+        resultTable.style.display = 'none';
+      }
+
+      if (!signature) {
+        currentData = null;
+        preview.innerHTML = '';
+        return;
+      }
+
+      const currentRequest = ++requestId;
+      preview.innerHTML = panel('w3-pale-blue', '<p>' + escapeHtml(i18n.loading) + '</p>');
+      submitButton.disabled = true;
+
+      try {
+        const res = await fetch(
+          '/admin/reminder-borrowers?signature=' + encodeURIComponent(signature)
+        );
+        if (!res.ok) {
+          throw new Error('Request failed with status ' + res.status);
+        }
+        const data = await res.json();
+        if (currentRequest !== requestId) {
+          return;
+        }
+        currentData = data;
+        render();
+      } catch (error) {
+        if (currentRequest !== requestId) {
+          return;
+        }
+        console.error('Error loading borrowers:', error);
+        currentData = null;
+        preview.innerHTML = panel('w3-pale-red', '<p>' + escapeHtml(i18n.loadError) + '</p>');
+        submitButton.disabled = false;
+      }
+    }
+
+    function render() {
+      const data = currentData;
+      if (!data) {
+        return;
+      }
+
+      const borrowers = data.borrowers || [];
+
+      if (borrowers.length === 0) {
+        preview.innerHTML = panel('w3-pale-yellow', '<p>' + escapeHtml(i18n.empty) + '</p>');
+        submitButton.disabled = true;
+        return;
+      }
+
+      const summary = i18n.summary
+        .replace('{{count}}', data.recipientCount)
+        .replace('{{borrowers}}', data.borrowerCount);
+
+      let html = panel('w3-pale-green', '<p><b>' + escapeHtml(summary) + '</b></p>');
+
+      if (data.testRecipient) {
+        const warning = i18n.testRecipient.replace('{{email}}', data.testRecipient);
+        html += panel('w3-pale-red', '<p>' + escapeHtml(warning) + '</p>');
+      }
+
+      if (data.sampleContext) {
+        const sampleName = [data.sampleContext.firstName, data.sampleContext.lastName]
+          .filter(Boolean)
+          .join(' ');
+        html +=
+          '<h3>' + escapeHtml(i18n.mailTitle) + '</h3>' +
+          '<p class="w3-small">' + escapeHtml(i18n.mailFor.replace('{{name}}', sampleName)) + '</p>' +
+          '<p><b>' + escapeHtml(i18n.mailSubject) + ':</b> ' +
+          escapeHtml(renderTemplate(subjectInput.value, data.sampleContext)) + '</p>' +
+          '<iframe class="mail-preview-frame" id="mailPreviewFrame" sandbox></iframe>';
+      }
+
+      html +=
+        '<h3>' + escapeHtml(i18n.title) + '</h3>' +
+        '<div class="w3-responsive"><table class="w3-table-all"><tr>' +
+        '<th>' + escapeHtml(i18n.name) + '</th>' +
+        '<th>' + escapeHtml(i18n.email) + '</th>' +
+        '<th>' + escapeHtml(i18n.scoreId) + '</th>' +
+        '<th>' + escapeHtml(i18n.checkoutDate) + '</th>' +
+        '</tr>' +
+        borrowers
+          .map(
+            (b) =>
+              '<tr><td>' + escapeHtml(b.userName) +
+              '</td><td>' + escapeHtml(b.userEmail) +
+              '</td><td>' + escapeHtml(b.scoreId) +
+              '</td><td>' + escapeHtml(b.checkoutDate) +
+              '</td></tr>'
+          )
+          .join('') +
+        '</table></div>';
+
+      preview.innerHTML = html;
+
+      // The mail body is admin authored HTML; the sandboxed frame keeps it from
+      // interfering with this page.
+      const frame = document.getElementById('mailPreviewFrame');
+      if (frame && data.sampleContext) {
+        frame.srcdoc = renderTemplate(htmlInput.value, data.sampleContext);
+      }
+
+      submitButton.disabled = false;
+    }
+
+    let renderTimer = null;
+    const scheduleRender = () => {
+      clearTimeout(renderTimer);
+      renderTimer = setTimeout(render, 300);
+    };
+
+    select.addEventListener('change', () => loadBorrowers(select.value));
+    // A subject is a single line; the textarea is only there so that long
+    // subjects wrap instead of scrolling sideways.
+    subjectInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+      }
+    });
+    subjectInput.addEventListener('input', () => {
+      if (/[\r\n]/.test(subjectInput.value)) {
+        const caret = subjectInput.selectionStart;
+        subjectInput.value = subjectInput.value.replace(/[\r\n]+/g, ' ');
+        subjectInput.setSelectionRange(caret, caret);
+      }
+      scheduleRender();
+    });
+    htmlInput.addEventListener('input', scheduleRender);
+
+    resetButton.addEventListener('click', () => {
+      if (!window.confirm(i18n.resetConfirm)) {
+        return;
+      }
+      subjectInput.value = defaults.subject;
+      htmlInput.value = defaults.html;
+      render();
+    });
+  })();
+</script>
