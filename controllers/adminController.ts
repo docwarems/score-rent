@@ -1082,12 +1082,14 @@ const handleReminderPost = async (
 ) => {
   const { signature } = req.body;
   const campaign = (req.body.campaign || "").trim();
-  const subject = (req.body.subject || "").trim();
+  // The subject is edited in a textarea so that it wraps, so strip any newlines
+  // that were pasted in.
+  const subject = (req.body.subject || "").replace(/[\r\n]+/g, " ").trim();
   const html = (req.body.html || "").trim();
 
   // Keep the submitted template in the form when the page is re-rendered.
   const state = await reminderRenderState(options.key, {
-    subject: req.body.subject,
+    subject,
     html: req.body.html,
   });
 

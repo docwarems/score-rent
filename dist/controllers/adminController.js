@@ -918,11 +918,13 @@ const handleReminderPost = (req, res, options) => __awaiter(void 0, void 0, void
     var _d;
     const { signature } = req.body;
     const campaign = (req.body.campaign || "").trim();
-    const subject = (req.body.subject || "").trim();
+    // The subject is edited in a textarea so that it wraps, so strip any newlines
+    // that were pasted in.
+    const subject = (req.body.subject || "").replace(/[\r\n]+/g, " ").trim();
     const html = (req.body.html || "").trim();
     // Keep the submitted template in the form when the page is re-rendered.
     const state = yield reminderRenderState(options.key, {
-        subject: req.body.subject,
+        subject,
         html: req.body.html,
     });
     const renderError = (errorKey) => res.render(options.view, Object.assign(Object.assign({}, state), { error: t(req, errorKey), success: undefined, borrowers: undefined, campaign,

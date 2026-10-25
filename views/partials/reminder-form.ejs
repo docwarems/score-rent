@@ -13,6 +13,9 @@
     font-family: monospace;
     font-size: 13px;
   }
+  #subjectInput {
+    resize: vertical;
+  }
   .mail-preview-frame {
     width: 100%;
     height: 340px;
@@ -48,8 +51,8 @@
     </p>
 
     <label><%= t('score.reminder.template.subject') %></label>
-    <input type="text" name="subject" id="subjectInput" class="w3-input w3-border template-text"
-           required maxlength="300" value="<%= templateSubject %>">
+    <textarea name="subject" id="subjectInput" class="w3-input w3-border template-text"
+              required maxlength="300" rows="2"><%= templateSubject %></textarea>
     <p></p>
     <label><%= t('score.reminder.template.body') %></label>
     <textarea name="html" id="htmlInput" class="w3-input w3-border template-text"
@@ -255,7 +258,21 @@
     };
 
     select.addEventListener('change', () => loadBorrowers(select.value));
-    subjectInput.addEventListener('input', scheduleRender);
+    // A subject is a single line; the textarea is only there so that long
+    // subjects wrap instead of scrolling sideways.
+    subjectInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+      }
+    });
+    subjectInput.addEventListener('input', () => {
+      if (/[\r\n]/.test(subjectInput.value)) {
+        const caret = subjectInput.selectionStart;
+        subjectInput.value = subjectInput.value.replace(/[\r\n]+/g, ' ');
+        subjectInput.setSelectionRange(caret, caret);
+      }
+      scheduleRender();
+    });
     htmlInput.addEventListener('input', scheduleRender);
 
     resetButton.addEventListener('click', () => {
