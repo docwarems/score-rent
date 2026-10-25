@@ -934,9 +934,9 @@ module.exports.send_test_email_get = async (req: any, res: any) => {
 };
 
 /**
- * Collect all users that currently have a score of the given signature checked out.
- * Returns one list entry per checked out score and a map grouping the scores by user,
- * because a reminder e-mail is sent once per user, not once per score.
+ * Collect all checked out scores of the given signature together with their
+ * borrower. Returns one entry per checked out copy, because a reminder e-mail is
+ * sent for every borrowed copy - a user with two copies receives two e-mails.
  */
 const collectReminderBorrowers = async (signature: string) => {
   const scores = await Score.find({
@@ -944,53 +944,74 @@ const collectReminderBorrowers = async (signature: string) => {
     checkedOutByUserId: { $ne: "" }, // not empty means checked out
   });
 
-  const borrowerMap = new Map(); // userId -> { user, scoreIds[] }
-  const borrowersInfo = [];
+  const recipients = []; // one entry per checked out copy
+  const userIds = new Set<string>();
+  const userCache = new Map(); // avoids re-reading a user that borrowed several copies
 
   for (const score of scores) {
-    if (score.checkedOutByUserId) {
-      const user = await User.findOne({ id: score.checkedOutByUserId });
-      if (user && user.email) {
-        if (!borrowerMap.has(user.id)) {
-          borrowerMap.set(user.id, { user, scoreIds: [] });
-        }
-        borrowerMap.get(user.id).scoreIds.push(score.id);
-
-        // Find the latest checkout for this score
-        const latestCheckout = score.checkouts
-          .filter((c: any) => !c.checkinTimestamp)
-          .sort(
-            (a: any, b: any) =>
-              b.checkoutTimestamp.getTime() - a.checkoutTimestamp.getTime()
-          )[0];
-
-        borrowersInfo.push({
-          userName: `${user.firstName} ${user.lastName}`,
-          userEmail: user.email,
-          scoreId: score.id,
-          checkoutDate:
-            latestCheckout?.checkoutTimestamp?.toLocaleDateString("de-DE") ||
-            "",
-        });
-      }
+    if (!score.checkedOutByUserId) {
+      continue;
     }
+
+    if (!userCache.has(score.checkedOutByUserId)) {
+      userCache.set(
+        score.checkedOutByUserId,
+        await User.findOne({ id: score.checkedOutByUserId })
+      );
+    }
+    const user = userCache.get(score.checkedOutByUserId);
+
+    if (!user || !user.email) {
+      continue;
+    }
+
+    // Find the latest checkout for this score
+    const latestCheckout = score.checkouts
+      .filter((c: any) => !c.checkinTimestamp)
+      .sort(
+        (a: any, b: any) =>
+          b.checkoutTimestamp.getTime() - a.checkoutTimestamp.getTime()
+      )[0];
+
+    userIds.add(user.id);
+    recipients.push({
+      user,
+      scoreId: score.id,
+      checkoutDate:
+        latestCheckout?.checkoutTimestamp?.toLocaleDateString("de-DE") || "",
+    });
   }
 
-  return { scoreCount: scores.length, borrowerMap, borrowersInfo };
+  const borrowersInfo = recipients.map((recipient) => ({
+    userName: `${recipient.user.firstName} ${recipient.user.lastName}`,
+    userEmail: recipient.user.email,
+    scoreId: recipient.scoreId,
+    checkoutDate: recipient.checkoutDate,
+  }));
+
+  return {
+    scoreCount: scores.length,
+    recipients,
+    borrowerCount: userIds.size,
+    borrowersInfo,
+  };
 };
 
 /**
  * Values available as {{placeholder}} in a reminder template for one recipient.
+ * A mail covers exactly one copy, so {{scoreId}} holds a single score number.
  */
 const buildTemplateContext = (
   user: any,
-  scoreIds: string[],
+  scoreId: string,
   scoreName: string
 ): Record<string, string> => ({
   firstName: user.firstName || "",
   lastName: user.lastName || "",
   scoreName: scoreName || "",
-  scoreIds: scoreIds.length > 1 ? scoreIds.join(", ") : scoreIds[0] || "",
+  scoreId: scoreId || "",
+  // Alias for templates that were saved before the rename.
+  scoreIds: scoreId || "",
 });
 
 /**
@@ -1005,25 +1026,25 @@ module.exports.reminder_borrowers_get = async (req: any, res: any) => {
       return res.status(400).json({ error: "signature required" });
     }
 
-    const { borrowerMap, borrowersInfo } = await collectReminderBorrowers(
-      signature
-    );
+    const { recipients, borrowerCount, borrowersInfo } =
+      await collectReminderBorrowers(signature);
     const testRecipient = getEnvVar("EMAIL_TEST_RECIPIENT");
 
     const scoreTypeMap = await getScoreTypeMap();
     const scoreName = scoreTypeMap.get(signature) || "";
-    const firstBorrower = borrowerMap.values().next().value;
-    const sampleContext = firstBorrower
+    const firstRecipient = recipients[0];
+    const sampleContext = firstRecipient
       ? buildTemplateContext(
-          firstBorrower.user,
-          firstBorrower.scoreIds,
+          firstRecipient.user,
+          firstRecipient.scoreId,
           scoreName
         )
       : null;
 
     return res.json({
       borrowers: borrowersInfo,
-      recipientCount: borrowerMap.size,
+      recipientCount: recipients.length,
+      borrowerCount,
       testRecipient: testRecipient || null,
       sampleContext,
     });
@@ -1113,21 +1134,22 @@ const handleReminderPost = async (
   }
 
   try {
-    const { scoreCount, borrowerMap, borrowersInfo } =
+    const { scoreCount, recipients, borrowersInfo } =
       await collectReminderBorrowers(signature);
 
-    if (scoreCount === 0 || borrowerMap.size === 0) {
+    if (scoreCount === 0 || recipients.length === 0) {
       return renderError(options.noBorrowersKey);
     }
 
-    // Send emails to all unique borrowers
+    // One e-mail per checked out copy, so a user with several copies is
+    // reminded of each of them separately.
     const scoreTypeMap = await getScoreTypeMap();
     const scoreName = scoreTypeMap.get(signature) || ""; // composer + work
     const testRecipient = getEnvVar("EMAIL_TEST_RECIPIENT");
     let emailCount = 0;
 
-    for (const [, { user, scoreIds }] of borrowerMap) {
-      const context = buildTemplateContext(user, scoreIds, scoreName);
+    for (const { user, scoreId } of recipients) {
+      const context = buildTemplateContext(user, scoreId, scoreName);
 
       await emailQueueService.queueEmail({
         to: testRecipient ? testRecipient : user.email,

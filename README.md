@@ -95,12 +95,14 @@ Application e-mails, including reminder and mass-mailing messages, are stored in
 
 ### Reminder mailings
 
-The early-reminder and return-reminder pages let an administrator select a score and then show, before anything is sent, the list of borrowers that would receive a message, the number of recipients, and a warning if a test recipient is configured.
+The early-reminder and return-reminder pages let an administrator select a score and then show, before anything is sent, the list of copies that would be reminded, the number of e-mails and borrowers, and a warning if a test recipient is configured.
+
+One e-mail is sent **per checked-out copy**, so a borrower who has several copies of the same score receives one reminder for each of them, each naming its own score number.
 
 The subject and body of both reminder mails are editable on the page itself and are stored in the `emailtemplates` collection (one document per reminder type). If no document exists yet, the built-in German default text is used, so no migration is needed.
 
-- The text may contain the placeholders `{{firstName}}`, `{{lastName}}`, `{{scoreName}}` and `{{scoreIds}}`, which are replaced per recipient. Unknown placeholders are left in place so that typos remain visible.
-- The preview renders the subject and body with the data of the first borrower in the list; the body is shown in a sandboxed frame because it is HTML.
+- The text may contain the placeholders `{{firstName}}`, `{{lastName}}`, `{{scoreName}}` and `{{scoreId}}` (the score number of the copy the mail is about), which are replaced per recipient. Unknown placeholders are left in place so that typos remain visible.
+- The preview renders the subject and body with the data of the first entry in the list; the body is shown in a sandboxed frame because it is HTML.
 - The text is saved automatically when the mailing is started, so the stored template always matches what was sent last.
 - A **Reset** button restores the built-in default text in the form; it is persisted on the next send.
 

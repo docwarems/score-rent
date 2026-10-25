@@ -14,7 +14,7 @@ export const TEMPLATE_PLACEHOLDERS = [
   "firstName",
   "lastName",
   "scoreName",
-  "scoreIds",
+  "scoreId",
 ];
 
 /**
@@ -30,7 +30,7 @@ export const DEFAULT_REMINDER_TEMPLATES: Record<
     html: `
 Liebe(r) {{firstName}} {{lastName}},
 <p>
-Du hast die Noten "{{scoreName}}" mit Nummer {{scoreIds}} vom Hans-Sachs-Chor ausgeliehen.
+Du hast die Noten "{{scoreName}}" mit Nummer {{scoreId}} vom Hans-Sachs-Chor ausgeliehen.
 <p>
 Falls Du die Chorproben nicht bis zum Konzert weiterführst, bitte ich Dich, die Noten möglichst bald zurückzugeben, 
 damit andere Chormitglieder sie nutzen können, und damit es nach dem Konzert keine Verzögerung bei der Rückgabe der Noten an den Verlag gibt.
@@ -47,7 +47,7 @@ Michael S. (Hans-Sachs-Chor Notenwart)
     html: `
 Liebe(r) {{firstName}} {{lastName}},
 <p>
-Du hast die Noten "{{scoreName}}" mit HSC-Nummer {{scoreIds}} vom Hans-Sachs-Chor ausgeliehen.
+Du hast die Noten "{{scoreName}}" mit HSC-Nummer {{scoreId}} vom Hans-Sachs-Chor ausgeliehen.
 <p>
 Nun ist das Konzert vorbei - wir hoffen, es hat Dir Freude bereitet!
 <p>
@@ -64,6 +64,14 @@ Michael S. (Hans-Sachs-Chor Notenwart)
 };
 
 /**
+ * A reminder covers a single copy, so the former plural {{scoreIds}} became
+ * {{scoreId}}. Templates stored under the old name are rewritten when read.
+ */
+function renameLegacyPlaceholders(text: string): string {
+  return text.replace(/\{\{\s*scoreIds\s*\}\}/g, "{{scoreId}}");
+}
+
+/**
  * Replace {{placeholder}} occurrences. Unknown placeholders are kept verbatim so
  * that a typo stays visible in the preview instead of silently producing a gap.
  */
@@ -78,6 +86,8 @@ export function renderTemplate(
 
 /**
  * Returns the stored template or, if none has been saved yet, the built-in text.
+ * Templates saved before {{scoreIds}} was renamed are migrated on read, so the
+ * editor always shows the current placeholder name.
  */
 export async function getReminderTemplate(
   key: ReminderTemplateKey
@@ -85,7 +95,10 @@ export async function getReminderTemplate(
   const stored = await EmailTemplate.findOne({ key }).lean();
 
   if (stored && stored.subject && stored.html) {
-    return { subject: stored.subject, html: stored.html };
+    return {
+      subject: renameLegacyPlaceholders(stored.subject),
+      html: renameLegacyPlaceholders(stored.html),
+    };
   }
 
   return DEFAULT_REMINDER_TEMPLATES[key];

@@ -815,9 +815,9 @@ module.exports.send_test_email_get = (req, res) => __awaiter(void 0, void 0, voi
     res.redirect("/admin/email-queue-stats");
 });
 /**
- * Collect all users that currently have a score of the given signature checked out.
- * Returns one list entry per checked out score and a map grouping the scores by user,
- * because a reminder e-mail is sent once per user, not once per score.
+ * Collect all checked out scores of the given signature together with their
+ * borrower. Returns one entry per checked out copy, because a reminder e-mail is
+ * sent for every borrowed copy - a user with two copies receives two e-mails.
  */
 const collectReminderBorrowers = (signature) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -825,40 +825,55 @@ const collectReminderBorrowers = (signature) => __awaiter(void 0, void 0, void 0
         signature: signature,
         checkedOutByUserId: { $ne: "" }, // not empty means checked out
     });
-    const borrowerMap = new Map(); // userId -> { user, scoreIds[] }
-    const borrowersInfo = [];
+    const recipients = []; // one entry per checked out copy
+    const userIds = new Set();
+    const userCache = new Map(); // avoids re-reading a user that borrowed several copies
     for (const score of scores) {
-        if (score.checkedOutByUserId) {
-            const user = yield User_1.User.findOne({ id: score.checkedOutByUserId });
-            if (user && user.email) {
-                if (!borrowerMap.has(user.id)) {
-                    borrowerMap.set(user.id, { user, scoreIds: [] });
-                }
-                borrowerMap.get(user.id).scoreIds.push(score.id);
-                // Find the latest checkout for this score
-                const latestCheckout = score.checkouts
-                    .filter((c) => !c.checkinTimestamp)
-                    .sort((a, b) => b.checkoutTimestamp.getTime() - a.checkoutTimestamp.getTime())[0];
-                borrowersInfo.push({
-                    userName: `${user.firstName} ${user.lastName}`,
-                    userEmail: user.email,
-                    scoreId: score.id,
-                    checkoutDate: ((_a = latestCheckout === null || latestCheckout === void 0 ? void 0 : latestCheckout.checkoutTimestamp) === null || _a === void 0 ? void 0 : _a.toLocaleDateString("de-DE")) ||
-                        "",
-                });
-            }
+        if (!score.checkedOutByUserId) {
+            continue;
         }
+        if (!userCache.has(score.checkedOutByUserId)) {
+            userCache.set(score.checkedOutByUserId, yield User_1.User.findOne({ id: score.checkedOutByUserId }));
+        }
+        const user = userCache.get(score.checkedOutByUserId);
+        if (!user || !user.email) {
+            continue;
+        }
+        // Find the latest checkout for this score
+        const latestCheckout = score.checkouts
+            .filter((c) => !c.checkinTimestamp)
+            .sort((a, b) => b.checkoutTimestamp.getTime() - a.checkoutTimestamp.getTime())[0];
+        userIds.add(user.id);
+        recipients.push({
+            user,
+            scoreId: score.id,
+            checkoutDate: ((_a = latestCheckout === null || latestCheckout === void 0 ? void 0 : latestCheckout.checkoutTimestamp) === null || _a === void 0 ? void 0 : _a.toLocaleDateString("de-DE")) || "",
+        });
     }
-    return { scoreCount: scores.length, borrowerMap, borrowersInfo };
+    const borrowersInfo = recipients.map((recipient) => ({
+        userName: `${recipient.user.firstName} ${recipient.user.lastName}`,
+        userEmail: recipient.user.email,
+        scoreId: recipient.scoreId,
+        checkoutDate: recipient.checkoutDate,
+    }));
+    return {
+        scoreCount: scores.length,
+        recipients,
+        borrowerCount: userIds.size,
+        borrowersInfo,
+    };
 });
 /**
  * Values available as {{placeholder}} in a reminder template for one recipient.
+ * A mail covers exactly one copy, so {{scoreId}} holds a single score number.
  */
-const buildTemplateContext = (user, scoreIds, scoreName) => ({
+const buildTemplateContext = (user, scoreId, scoreName) => ({
     firstName: user.firstName || "",
     lastName: user.lastName || "",
     scoreName: scoreName || "",
-    scoreIds: scoreIds.length > 1 ? scoreIds.join(", ") : scoreIds[0] || "",
+    scoreId: scoreId || "",
+    // Alias for templates that were saved before the rename.
+    scoreIds: scoreId || "",
 });
 /**
  * Preview endpoint for the reminder pages: lists the borrowers that would receive
@@ -871,17 +886,18 @@ module.exports.reminder_borrowers_get = (req, res) => __awaiter(void 0, void 0, 
         if (!signature) {
             return res.status(400).json({ error: "signature required" });
         }
-        const { borrowerMap, borrowersInfo } = yield collectReminderBorrowers(signature);
+        const { recipients, borrowerCount, borrowersInfo } = yield collectReminderBorrowers(signature);
         const testRecipient = (0, misc_utils_1.getEnvVar)("EMAIL_TEST_RECIPIENT");
         const scoreTypeMap = yield (0, score_utils_1.getScoreTypeMap)();
         const scoreName = scoreTypeMap.get(signature) || "";
-        const firstBorrower = borrowerMap.values().next().value;
-        const sampleContext = firstBorrower
-            ? buildTemplateContext(firstBorrower.user, firstBorrower.scoreIds, scoreName)
+        const firstRecipient = recipients[0];
+        const sampleContext = firstRecipient
+            ? buildTemplateContext(firstRecipient.user, firstRecipient.scoreId, scoreName)
             : null;
         return res.json({
             borrowers: borrowersInfo,
-            recipientCount: borrowerMap.size,
+            recipientCount: recipients.length,
+            borrowerCount,
             testRecipient: testRecipient || null,
             sampleContext,
         });
@@ -936,17 +952,18 @@ const handleReminderPost = (req, res, options) => __awaiter(void 0, void 0, void
         return renderError("score.reminder.template.required");
     }
     try {
-        const { scoreCount, borrowerMap, borrowersInfo } = yield collectReminderBorrowers(signature);
-        if (scoreCount === 0 || borrowerMap.size === 0) {
+        const { scoreCount, recipients, borrowersInfo } = yield collectReminderBorrowers(signature);
+        if (scoreCount === 0 || recipients.length === 0) {
             return renderError(options.noBorrowersKey);
         }
-        // Send emails to all unique borrowers
+        // One e-mail per checked out copy, so a user with several copies is
+        // reminded of each of them separately.
         const scoreTypeMap = yield (0, score_utils_1.getScoreTypeMap)();
         const scoreName = scoreTypeMap.get(signature) || ""; // composer + work
         const testRecipient = (0, misc_utils_1.getEnvVar)("EMAIL_TEST_RECIPIENT");
         let emailCount = 0;
-        for (const [, { user, scoreIds }] of borrowerMap) {
-            const context = buildTemplateContext(user, scoreIds, scoreName);
+        for (const { user, scoreId } of recipients) {
+            const context = buildTemplateContext(user, scoreId, scoreName);
             yield email_queue_utils_1.emailQueueService.queueEmail({
                 to: testRecipient ? testRecipient : user.email,
                 subject: (0, email_template_utils_1.renderTemplate)(subject, context),

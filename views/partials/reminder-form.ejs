@@ -198,7 +198,7 @@
 
       const summary = i18n.summary
         .replace('{{count}}', data.recipientCount)
-        .replace('{{scores}}', borrowers.length);
+        .replace('{{borrowers}}', data.borrowerCount);
 
       let html = panel('w3-pale-green', '<p><b>' + escapeHtml(summary) + '</b></p>');
 
