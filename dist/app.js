@@ -31,6 +31,7 @@ var middleware = require("i18next-http-middleware");
 const en_json_1 = __importDefault(require("./locales/en.json"));
 const de_json_1 = __importDefault(require("./locales/de.json"));
 const email_queue_utils_1 = require("./utils/email-queue-utils");
+const email_queue_triggers_1 = require("./utils/email-queue-triggers");
 const misc_utils_1 = require("./utils/misc-utils");
 i18next_1.default.use(middleware.LanguageDetector).init({
     preload: ["de"],
@@ -89,28 +90,6 @@ app.use(middleware.handle(i18next_1.default, {
     ignoreRoutes: ["/foo"],
     removeLngFromUrl: false, // removes the language from the url when language detected in path
 }));
-// AWS Lambda global scope variable for email queue throttling
-let lastEmailQueueCheck = 0;
-const EMAIL_QUEUE_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
-let activeQueueProcessing = null;
-app.use((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    // Process queue in background only if 5+ minutes have passed
-    const now = Date.now();
-    if (now - lastEmailQueueCheck >= EMAIL_QUEUE_CHECK_INTERVAL_MS) {
-        lastEmailQueueCheck = now;
-        // Store promise to prevent Lambda exit before completion
-        // await would also wait for completion but would block the request until completed.
-        activeQueueProcessing = email_queue_utils_1.emailQueueService
-            .processQueue()
-            .catch((error) => {
-            console.error("Error processing email queue:", error);
-        })
-            .finally(() => {
-            activeQueueProcessing = null;
-        });
-    }
-    next();
-}));
 // view engine
 app.set("view engine", "ejs");
 app.engine("vue", ejs.renderFile); // render files with ".vue" extension in views folder by EJS too
@@ -156,6 +135,11 @@ if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
     app.listen(3000, () => {
         console.log("Server listening on http://localhost:3000");
     });
+    setInterval(() => {
+        email_queue_utils_1.emailQueueService.processQueue().catch((error) => {
+            console.error("Error processing local email queue:", error);
+        });
+    }, 60 * 1000);
 }
 // routes
 app.use("*", checkUser);
@@ -183,11 +167,19 @@ const originalHandler = (0, serverless_http_1.default)(app, {
 });
 exports.handler = (event, context) => __awaiter(void 0, void 0, void 0, function* () {
     yield connect(); // Check connection on every invocation
-    const response = yield originalHandler(event, context);
-    // Wait for any background email queue processing to complete
-    if (activeQueueProcessing) {
-        console.log("Waiting for email queue processing to complete...");
-        yield activeQueueProcessing;
+    let response;
+    try {
+        response = yield originalHandler(event, context);
+    }
+    finally {
+        if (email_queue_utils_1.emailQueueService.consumeWorkerTriggerRequest()) {
+            try {
+                yield (0, email_queue_triggers_1.triggerEmailQueueWorker)();
+            }
+            catch (error) {
+                console.error("Error starting email queue worker:", error);
+            }
+        }
     }
     return response;
 });

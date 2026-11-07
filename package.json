@@ -4,6 +4,8 @@
   "description": "",
   "main": "dist/app.js",
   "dependencies": {
+    "@aws-sdk/client-lambda": "^3.1144.0",
+    "@aws-sdk/client-scheduler": "^3.1144.0",
     "@aws-sdk/client-ses": "^3.826.0",
     "bcrypt": "^5.1.0",
     "cookie-parser": "^1.4.5",

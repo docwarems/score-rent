@@ -12,13 +12,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.emailQueueService = exports.EmailQueueService = void 0;
 const EmailQueue_1 = require("../models/EmailQueue");
 const misc_utils_1 = require("./misc-utils");
+const localLogOnlyMode = !process.env.AWS_LAMBDA_FUNCTION_NAME &&
+    process.env.EMAIL_QUEUE_MODE === "log";
 class EmailQueueService {
     constructor(config) {
+        this.workerTriggerRequested = false;
         // Default limits for typical personal email accounts (adjust to your limits)
-        this.rateLimitConfig = config || {
-            maxEmailsPerHour: 50,
-            maxEmailsPerDay: 200, // Adjust to your provider's limit
-        };
+        const parsedBatchSize = parseInt((0, misc_utils_1.getEnvVar)("EMAIL_BATCH_SIZE") || "5", 10);
+        this.rateLimitConfig = Object.assign({ maxEmailsPerHour: 50, maxEmailsPerDay: 200, batchSize: parsedBatchSize }, (config !== null && config !== void 0 ? config : {}));
     }
     /**
      * Add email to queue
@@ -43,16 +44,57 @@ class EmailQueueService {
                     from: emailOptions.from || process.env.SMTP_FROM,
                     attachments: emailOptions.attachments || [],
                     priority: emailOptions.priority || false,
+                    campaign: emailOptions.campaign,
                     status: "pending",
                 });
+                this.workerTriggerRequested = true;
                 console.log(`Email queued: ${emailOptions.subject} to ${emailOptions.to}`);
-                // Immediately process the queue to ensure Lambda waits for email to send
-                yield this.processQueue();
             }
             catch (error) {
                 console.error("Error queueing email:", error);
                 throw error;
             }
+        });
+    }
+    consumeWorkerTriggerRequest() {
+        const requested = this.workerTriggerRequested;
+        this.workerTriggerRequested = false;
+        return requested;
+    }
+    getNextProcessingTime() {
+        var _a, _b;
+        return __awaiter(this, void 0, void 0, function* () {
+            const now = new Date();
+            const pendingEmail = yield EmailQueue_1.EmailQueue.findOne({
+                status: "pending",
+                attempts: { $lt: 3 },
+            })
+                .sort({ scheduledFor: 1, createdAt: 1 })
+                .select("scheduledFor")
+                .lean();
+            if (!pendingEmail) {
+                return null;
+            }
+            const sentToday = yield EmailQueue_1.EmailQueue.find({
+                status: "sent",
+                dryRun: { $ne: true },
+                sentAt: { $gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) },
+            })
+                .sort({ sentAt: 1 })
+                .select("sentAt")
+                .lean();
+            const sentThisHour = sentToday.filter((email) => email.sentAt && email.sentAt >= new Date(now.getTime() - 60 * 60 * 1000));
+            let quotaAvailableAt = now.getTime();
+            if (sentThisHour.length >= this.rateLimitConfig.maxEmailsPerHour) {
+                const index = sentThisHour.length - this.rateLimitConfig.maxEmailsPerHour;
+                quotaAvailableAt = Math.max(quotaAvailableAt, sentThisHour[index].sentAt.getTime() + 60 * 60 * 1000 + 1000);
+            }
+            if (sentToday.length >= this.rateLimitConfig.maxEmailsPerDay) {
+                const index = sentToday.length - this.rateLimitConfig.maxEmailsPerDay;
+                quotaAvailableAt = Math.max(quotaAvailableAt, sentToday[index].sentAt.getTime() + 24 * 60 * 60 * 1000 + 1000);
+            }
+            const scheduledAt = (_b = (_a = pendingEmail.scheduledFor) === null || _a === void 0 ? void 0 : _a.getTime()) !== null && _b !== void 0 ? _b : now.getTime();
+            return new Date(Math.max(quotaAvailableAt, scheduledAt));
         });
     }
     /**
@@ -66,11 +108,13 @@ class EmailQueueService {
             // Count emails sent in last hour
             const sentLastHour = yield EmailQueue_1.EmailQueue.countDocuments({
                 status: "sent",
+                dryRun: { $ne: true },
                 sentAt: { $gte: oneHourAgo },
             });
             // Count emails sent in last 24 hours
             const sentLastDay = yield EmailQueue_1.EmailQueue.countDocuments({
                 status: "sent",
+                dryRun: { $ne: true },
                 sentAt: { $gte: oneDayAgo },
             });
             // Only log if there are pending emails
@@ -88,6 +132,7 @@ class EmailQueueService {
     processQueue() {
         return __awaiter(this, void 0, void 0, function* () {
             let sent = 0;
+            let dryRun = 0;
             let failed = 0;
             let skipped = 0;
             try {
@@ -104,15 +149,18 @@ class EmailQueueService {
                     attempts: { $lt: 3 }, // Or whatever your maxAttempts default is
                 })
                     .sort({ priority: -1, createdAt: 1 }) // Priority emails first, then oldest first
-                    .limit(5); // Process max 5 emails at a time
+                    .limit(this.rateLimitConfig.batchSize);
                 if (pendingEmails.length === 0) {
-                    return { sent, failed, skipped };
+                    return { sent, dryRun, failed, skipped };
                 }
-                console.log(`Processing ${pendingEmails.length} pending emails`);
+                const totalPending = yield EmailQueue_1.EmailQueue.countDocuments({
+                    status: "pending",
+                });
+                console.log(`Processing ${pendingEmails.length} of ${totalPending} pending emails`);
                 for (const emailDoc of pendingEmails) {
-                    console.log(`[${sent + failed + skipped + 1}/${pendingEmails.length}] Processing email: ${emailDoc.subject}`);
+                    console.log(`[${sent + dryRun + failed + skipped + 1}/${pendingEmails.length}] Processing email: ${emailDoc.subject} to ${emailDoc.to}`);
                     // Check rate limits before each send
-                    if (!(yield this.canSendEmail())) {
+                    if (!localLogOnlyMode && !(yield this.canSendEmail())) {
                         console.log("Rate limit reached, stopping queue processing");
                         skipped = pendingEmails.length - sent - failed;
                         break;
@@ -126,19 +174,34 @@ class EmailQueueService {
                             skipped++;
                             continue;
                         }
-                        // Send email
-                        yield misc_utils_1.mailTransporter.sendMail({
-                            from: emailDoc.from,
-                            to: emailDoc.to,
-                            subject: emailDoc.subject,
-                            html: emailDoc.html,
-                            text: emailDoc.text,
-                            attachments: emailDoc.attachments || [],
+                        if (localLogOnlyMode) {
+                            console.log(`[EMAIL DRY RUN] Would send to ${emailDoc.to}: ${emailDoc.subject}`);
+                        }
+                        else {
+                            yield misc_utils_1.mailTransporter.sendMail({
+                                from: emailDoc.from,
+                                to: emailDoc.to,
+                                subject: emailDoc.subject,
+                                html: emailDoc.html,
+                                text: emailDoc.text,
+                                attachments: emailDoc.attachments || [],
+                            });
+                        }
+                        // Complete dry runs without counting them as delivered or quota usage.
+                        yield EmailQueue_1.EmailQueue.updateOne({ _id: emailDoc._id }, {
+                            $set: {
+                                status: "sent",
+                                sentAt: new Date(),
+                                dryRun: localLogOnlyMode,
+                            },
                         });
-                        // Mark as sent atomically
-                        yield EmailQueue_1.EmailQueue.updateOne({ _id: emailDoc._id }, { $set: { status: "sent", sentAt: new Date() } });
-                        sent++;
-                        console.log(`✓ Email sent: ${emailDoc.subject} to ${emailDoc.to}`);
+                        if (localLogOnlyMode) {
+                            dryRun++;
+                        }
+                        else {
+                            sent++;
+                            console.log(`✓ Email sent: ${emailDoc.subject} to ${emailDoc.to}`);
+                        }
                     }
                     catch (error) {
                         // Log full error for debugging
@@ -170,7 +233,7 @@ class EmailQueueService {
             catch (error) {
                 console.error("Error processing email queue:", error);
             }
-            return { sent, failed, skipped };
+            return { sent, dryRun, failed, skipped };
         });
     }
     /**
@@ -182,13 +245,20 @@ class EmailQueueService {
             // Query pending emails once to ensure consistency
             const pendingEmailDocs = yield EmailQueue_1.EmailQueue.find({ status: "pending" })
                 .sort({ priority: -1, createdAt: 1 })
-                .select("to subject createdAt priority")
+                .select("to subject createdAt priority campaign")
                 .lean();
             const pending = pendingEmailDocs.length;
             const oldestPending = pendingEmailDocs.length > 0
                 ? pendingEmailDocs[pendingEmailDocs.length - 1]
                 : null;
-            const sent = yield EmailQueue_1.EmailQueue.countDocuments({ status: "sent" });
+            const sent = yield EmailQueue_1.EmailQueue.countDocuments({
+                status: "sent",
+                dryRun: { $ne: true },
+            });
+            const dryRun = yield EmailQueue_1.EmailQueue.countDocuments({
+                status: "sent",
+                dryRun: true,
+            });
             const failed = yield EmailQueue_1.EmailQueue.countDocuments({ status: "failed" });
             const total = yield EmailQueue_1.EmailQueue.countDocuments();
             // Get rate limit info
@@ -197,10 +267,12 @@ class EmailQueueService {
             const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
             const sentLastHour = yield EmailQueue_1.EmailQueue.countDocuments({
                 status: "sent",
+                dryRun: { $ne: true },
                 sentAt: { $gte: oneHourAgo },
             });
             const sentLastDay = yield EmailQueue_1.EmailQueue.countDocuments({
                 status: "sent",
+                dryRun: { $ne: true },
                 sentAt: { $gte: oneDayAgo },
             });
             // Calculate when next email can be sent
@@ -209,6 +281,7 @@ class EmailQueueService {
                 // Find oldest email in the last hour
                 const oldestInHour = yield EmailQueue_1.EmailQueue.findOne({
                     status: "sent",
+                    dryRun: { $ne: true },
                     sentAt: { $gte: oneHourAgo },
                 })
                     .sort({ sentAt: 1 })
@@ -226,6 +299,7 @@ class EmailQueueService {
                 // Find oldest email in the last day
                 const oldestInDay = yield EmailQueue_1.EmailQueue.findOne({
                     status: "sent",
+                    dryRun: { $ne: true },
                     sentAt: { $gte: oneDayAgo },
                 })
                     .sort({ sentAt: 1 })
@@ -243,10 +317,11 @@ class EmailQueueService {
             let pendingEmails;
             if (verbose) {
                 // Only include priority field if true (cleaner JSON output)
-                pendingEmails = pendingEmailDocs.map((email) => (Object.assign({ to: email.to, subject: email.subject, createdAt: email.createdAt }, (email.priority && { priority: true }))));
+                pendingEmails = pendingEmailDocs.map((email) => (Object.assign({ to: email.to, subject: email.subject, createdAt: email.createdAt, campaign: email.campaign }, (email.priority && { priority: true }))));
             }
             return Object.assign({ pending,
                 sent,
+                dryRun,
                 failed,
                 total, oldestPendingAge: oldestPending
                     ? Math.floor((Date.now() - oldestPending.createdAt.getTime()) / 1000 / 60)
@@ -283,4 +358,5 @@ exports.emailQueueService = new EmailQueueService({
     // defaults are assumed 1&1 limits
     maxEmailsPerHour: parseInt((0, misc_utils_1.getEnvVar)("EMAIL_LIMIT_HOUR") || "20"),
     maxEmailsPerDay: parseInt((0, misc_utils_1.getEnvVar)("EMAIL_LIMIT_DAY") || "100"),
+    batchSize: parseInt((0, misc_utils_1.getEnvVar)("EMAIL_BATCH_SIZE") || "5"),
 });

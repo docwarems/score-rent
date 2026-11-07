@@ -90,6 +90,8 @@ admin.get("/register-score-vue", (req: any, res: any) =>
 admin.get("/early-reminder", adminController.early_reminder_get);
 admin.post("/early-reminder", adminController.early_reminder_post);
 
+admin.get("/reminder-borrowers", adminController.reminder_borrowers_get);
+
 admin.get("/return-reminder", adminController.return_reminder_get);
 admin.post("/return-reminder", adminController.return_reminder_post);
 

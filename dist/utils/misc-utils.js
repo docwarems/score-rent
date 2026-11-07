@@ -28,14 +28,20 @@ exports.mailTransporter = nodemailer_1.default.createTransport({
     socketTimeout: 1000 * 15,
     logger: !!process.env.SMTP_DEBUG && process.env.SMTP_DEBUG.toLowerCase() == "true",
 });
-exports.mailTransporter.verify(function (error, success) {
-    if (error) {
-        console.log(error);
-    }
-    else {
-        console.log("SMTP server is ready to take our messages");
-    }
-});
+if (process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    process.env.EMAIL_QUEUE_MODE !== "log") {
+    exports.mailTransporter.verify(function (error, success) {
+        if (error) {
+            console.log(error);
+        }
+        else {
+            console.log("SMTP server is ready to take our messages");
+        }
+    });
+}
+else {
+    console.log("Local email log-only mode enabled; skipping SMTP verification");
+}
 exports.stage = process.env.STAGE || "dev";
 /**
  * Get stage specific env var

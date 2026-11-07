@@ -93,6 +93,7 @@ const uuid_1 = require("uuid");
 const i18next_1 = __importDefault(require("i18next"));
 const score_utils_1 = require("../utils/score-utils");
 const email_queue_utils_1 = require("../utils/email-queue-utils");
+const email_template_utils_1 = require("../utils/email-template-utils");
 const handleSaveErrors = (err, type) => {
     console.log(err.message, err.code);
     let errors = {
@@ -581,7 +582,7 @@ const sendCheckoutConfirmationEmail = (user, score, testRecipient) => __awaiter(
     const html = `
     Liebe(r) ${user.firstName} ${user.lastName},
     <p>
-    Du hast Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit HSC-Nummer ${score.id} ${extIdText} vom Hans-Sachs-Chor ausgeliehen.<br>
+    Du hast Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit Nummer ${score.id} ${extIdText} vom Hans-Sachs-Chor ausgeliehen.<br>
     Bitte behandle die Noten pfleglich und nehme Eintragungen nur mit Bleistift vor.<br>
     Nach dem Konzert gebe die Noten bitte zeitnah an den Chor zurück.<br>
     Vorher radiere bitte deine Eintragungen aus.<br>    
@@ -590,7 +591,7 @@ const sendCheckoutConfirmationEmail = (user, score, testRecipient) => __awaiter(
     <p>
     Und nun viel Spaß beim Proben und viel Erfolg beim Konzert!
     <p>
-    Dein Hans-Sachs-Chor Notenwart
+    Michael S. (Hans-Sachs-Chor Notenwart)
     <p>
     P.S.: Diese E-Mail wurde automatisch versendet
   `;
@@ -602,9 +603,9 @@ const sendCheckinConfirmationEmail = (user, score, testRecipient) => __awaiter(v
     const html = `
   Liebe(r) ${user.firstName} ${user.lastName},
   <p>
-  Du hast die Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit HSC-Nummer ${score.id}${extIdText} zurückgegeben. Vielen Dank!
+  Du hast die Noten "${(yield (0, score_utils_1.getScoreTypeMap)()).get(score.signature)}" mit Nummer ${score.id}${extIdText} zurückgegeben. Vielen Dank!
   <p>
-  Dein Hans-Sachs-Chor Notenwart
+  Michael S. (Hans-Sachs-Chor Notenwart)
   <p>
   p.s.: Diese E-Mail wurde automatisch versendet
 `;
@@ -768,7 +769,7 @@ module.exports.email_queue_stats_get = (req, res) => __awaiter(void 0, void 0, v
         if (showFailed) {
             failedEmails = yield EmailQueue_1.EmailQueue.find({ status: "failed" })
                 .sort({ createdAt: -1 })
-                .select("to subject error attempts maxAttempts createdAt")
+                .select("to subject error attempts maxAttempts createdAt campaign")
                 .lean();
             // Debug logging
             if (failedEmails.length > 0) {
@@ -813,114 +814,187 @@ module.exports.send_test_email_get = (req, res) => __awaiter(void 0, void 0, voi
     }
     res.redirect("/admin/email-queue-stats");
 });
-module.exports.early_reminder_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const signatures = yield (0, score_utils_1.getScoreTypes)();
-    res.render("early-reminder", {
-        signatures,
-        error: undefined,
-        success: undefined,
-        borrowers: undefined,
-    });
-});
-module.exports.early_reminder_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+/**
+ * Collect all checked out scores of the given signature together with their
+ * borrower. Returns one entry per checked out copy, because a reminder e-mail is
+ * sent for every borrowed copy - a user with two copies receives two e-mails.
+ */
+const collectReminderBorrowers = (signature) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    const { signature } = req.body;
-    const signatures = yield (0, score_utils_1.getScoreTypes)();
-    try {
-        // Find all scores with this signature that are currently checked out
-        const scores = yield Score_1.Score.find({
-            signature: signature,
-            checkedOutByUserId: { $ne: "" }, // not empty means checked out
+    const scores = yield Score_1.Score.find({
+        signature: signature,
+        checkedOutByUserId: { $ne: "" }, // not empty means checked out
+    });
+    const recipients = []; // one entry per checked out copy
+    const userIds = new Set();
+    const userCache = new Map(); // avoids re-reading a user that borrowed several copies
+    for (const score of scores) {
+        if (!score.checkedOutByUserId) {
+            continue;
+        }
+        if (!userCache.has(score.checkedOutByUserId)) {
+            userCache.set(score.checkedOutByUserId, yield User_1.User.findOne({ id: score.checkedOutByUserId }));
+        }
+        const user = userCache.get(score.checkedOutByUserId);
+        if (!user || !user.email) {
+            continue;
+        }
+        // Find the latest checkout for this score
+        const latestCheckout = score.checkouts
+            .filter((c) => !c.checkinTimestamp)
+            .sort((a, b) => b.checkoutTimestamp.getTime() - a.checkoutTimestamp.getTime())[0];
+        userIds.add(user.id);
+        recipients.push({
+            user,
+            scoreId: score.id,
+            checkoutDate: ((_a = latestCheckout === null || latestCheckout === void 0 ? void 0 : latestCheckout.checkoutTimestamp) === null || _a === void 0 ? void 0 : _a.toLocaleDateString("de-DE")) || "",
         });
-        if (scores.length === 0) {
-            return res.render("early-reminder", {
-                signatures,
-                error: t(req, "score.early.reminder.no.borrowers"),
-                success: undefined,
-                borrowers: undefined,
-            });
+    }
+    const borrowersInfo = recipients.map((recipient) => ({
+        userName: `${recipient.user.firstName} ${recipient.user.lastName}`,
+        userEmail: recipient.user.email,
+        scoreId: recipient.scoreId,
+        checkoutDate: recipient.checkoutDate,
+    }));
+    return {
+        scoreCount: scores.length,
+        recipients,
+        borrowerCount: userIds.size,
+        borrowersInfo,
+    };
+});
+/**
+ * Values available as {{placeholder}} in a reminder template for one recipient.
+ * A mail covers exactly one copy, so {{scoreId}} holds a single score number.
+ */
+const buildTemplateContext = (user, scoreId, scoreName) => ({
+    firstName: user.firstName || "",
+    lastName: user.lastName || "",
+    scoreName: scoreName || "",
+    scoreId: scoreId || "",
+    // Alias for templates that were saved before the rename.
+    scoreIds: scoreId || "",
+});
+/**
+ * Preview endpoint for the reminder pages: lists the borrowers that would receive
+ * an e-mail for the selected score, before the mailing is actually triggered.
+ * The sample context lets the page preview the template with real data.
+ */
+module.exports.reminder_borrowers_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const signature = (req.query.signature || "").trim();
+        if (!signature) {
+            return res.status(400).json({ error: "signature required" });
         }
-        // Get unique user IDs and prepare borrower info
-        const borrowerMap = new Map(); // userId -> { user, scoreIds[] }
-        const borrowersInfo = [];
-        for (const score of scores) {
-            if (score.checkedOutByUserId) {
-                const user = yield User_1.User.findOne({ id: score.checkedOutByUserId });
-                if (user && user.email) {
-                    if (!borrowerMap.has(user.id)) {
-                        borrowerMap.set(user.id, { user, scoreIds: [] });
-                    }
-                    borrowerMap.get(user.id).scoreIds.push(score.id);
-                    // Find the latest checkout for this score
-                    const latestCheckout = score.checkouts
-                        .filter((c) => !c.checkinTimestamp)
-                        .sort((a, b) => b.checkoutTimestamp.getTime() - a.checkoutTimestamp.getTime())[0];
-                    borrowersInfo.push({
-                        userName: `${user.firstName} ${user.lastName}`,
-                        userEmail: user.email,
-                        scoreId: score.id,
-                        checkoutDate: ((_a = latestCheckout === null || latestCheckout === void 0 ? void 0 : latestCheckout.checkoutTimestamp) === null || _a === void 0 ? void 0 : _a.toLocaleDateString("de-DE")) ||
-                            "",
-                    });
-                }
-            }
-        }
-        // Send emails to all unique borrowers
-        const scoreTypeMap = yield (0, score_utils_1.getScoreTypeMap)();
-        const scoreName = scoreTypeMap.get(signature); // composer + work
+        const { recipients, borrowerCount, borrowersInfo } = yield collectReminderBorrowers(signature);
         const testRecipient = (0, misc_utils_1.getEnvVar)("EMAIL_TEST_RECIPIENT");
-        let emailCount = 0;
-        for (const [userId, { user, scoreIds }] of borrowerMap) {
-            const recipientEmail = testRecipient ? testRecipient : user.email;
-            const scoreIdList = scoreIds.length > 1 ? scoreIds.join(", ") : scoreIds[0];
-            const subject = `Erinnerung: Rückgabe der Noten "${scoreName}"`;
-            const html = `
-Liebe(r) ${user.firstName} ${user.lastName},
-<p>
-Du hast die Noten "${scoreName}" mit HSC-Nummer ${scoreIdList} ausgeliehen.
-<p>
-Falls Du die Chorproben nicht bis zum Konzert weiterführst, bitte ich Dich, die Noten möglichst bald zurückzugeben, 
-damit andere Chormitglieder sie nutzen können, und damit es nach dem Konzert keine Verzögerung bei der Rückgabe der Noten an den Verlag gibt.
-<p>
-Du kannst auf diese E-Mail antworten um die Rückgabe mit mir abzustimmen!
-<p>
-Vielen Dank für Deine Kooperation!
-<p>
-Michael S. (Hans-Sachs-Chor Notenwart)
-`;
-            yield email_queue_utils_1.emailQueueService.queueEmail({
-                to: recipientEmail,
-                subject,
-                html,
-                from: process.env.SMTP_FROM,
-            });
-            emailCount++;
-        }
-        return res.render("early-reminder", {
-            signatures,
-            error: undefined,
-            success: t(req, "score.early.reminder.success", { count: emailCount }),
+        const scoreTypeMap = yield (0, score_utils_1.getScoreTypeMap)();
+        const scoreName = scoreTypeMap.get(signature) || "";
+        const firstRecipient = recipients[0];
+        const sampleContext = firstRecipient
+            ? buildTemplateContext(firstRecipient.user, firstRecipient.scoreId, scoreName)
+            : null;
+        return res.json({
             borrowers: borrowersInfo,
+            recipientCount: recipients.length,
+            borrowerCount,
+            testRecipient: testRecipient || null,
+            sampleContext,
         });
     }
     catch (error) {
-        console.error("Error sending early reminders:", error);
-        return res.render("early-reminder", {
-            signatures,
-            error: t(req, "score.early.reminder.error"),
-            success: undefined,
-            borrowers: undefined,
-        });
+        console.error("Error loading reminder borrowers:", error);
+        return res.status(500).json({ error: "Error loading borrowers" });
     }
 });
-module.exports.return_reminder_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const signatures = yield (0, score_utils_1.getScoreTypes)();
-    res.render("return-reminder", {
-        signatures,
-        error: undefined,
-        success: undefined,
-        borrowers: undefined,
+/**
+ * Shared state for rendering a reminder page, so that an edited template is kept
+ * when the page is re-rendered after an error.
+ */
+const reminderRenderState = (key, body) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b, _c;
+    const stored = yield (0, email_template_utils_1.getReminderTemplate)(key);
+    return {
+        signatures: yield (0, score_utils_1.getScoreTypes)(),
+        templateSubject: (_b = body === null || body === void 0 ? void 0 : body.subject) !== null && _b !== void 0 ? _b : stored.subject,
+        templateHtml: (_c = body === null || body === void 0 ? void 0 : body.html) !== null && _c !== void 0 ? _c : stored.html,
+        defaultSubject: email_template_utils_1.DEFAULT_REMINDER_TEMPLATES[key].subject,
+        defaultHtml: email_template_utils_1.DEFAULT_REMINDER_TEMPLATES[key].html,
+        placeholders: email_template_utils_1.TEMPLATE_PLACEHOLDERS,
+    };
+});
+module.exports.early_reminder_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    res.render("early-reminder", Object.assign(Object.assign({}, (yield reminderRenderState("early-reminder"))), { error: undefined, success: undefined, borrowers: undefined, campaign: "", signature: "", sent: false }));
+});
+/**
+ * Queues a reminder mailing for the selected score using the submitted template.
+ * Shared by the early and the return reminder page, which only differ in texts.
+ */
+const handleReminderPost = (req, res, options) => __awaiter(void 0, void 0, void 0, function* () {
+    var _d;
+    const { signature } = req.body;
+    const campaign = (req.body.campaign || "").trim();
+    // The subject is edited in a textarea so that it wraps, so strip any newlines
+    // that were pasted in.
+    const subject = (req.body.subject || "").replace(/[\r\n]+/g, " ").trim();
+    const html = (req.body.html || "").trim();
+    // Keep the submitted template in the form when the page is re-rendered.
+    const state = yield reminderRenderState(options.key, {
+        subject,
+        html: req.body.html,
     });
+    const renderError = (errorKey) => res.render(options.view, Object.assign(Object.assign({}, state), { error: t(req, errorKey), success: undefined, borrowers: undefined, campaign,
+        signature, sent: false }));
+    if (!campaign) {
+        return renderError("score.reminder.campaign.required");
+    }
+    if (!subject || !html) {
+        return renderError("score.reminder.template.required");
+    }
+    try {
+        const { scoreCount, recipients, borrowersInfo } = yield collectReminderBorrowers(signature);
+        if (scoreCount === 0 || recipients.length === 0) {
+            return renderError(options.noBorrowersKey);
+        }
+        // One e-mail per checked out copy, so a user with several copies is
+        // reminded of each of them separately.
+        const scoreTypeMap = yield (0, score_utils_1.getScoreTypeMap)();
+        const scoreName = scoreTypeMap.get(signature) || ""; // composer + work
+        const testRecipient = (0, misc_utils_1.getEnvVar)("EMAIL_TEST_RECIPIENT");
+        let emailCount = 0;
+        for (const { user, scoreId } of recipients) {
+            const context = buildTemplateContext(user, scoreId, scoreName);
+            yield email_queue_utils_1.emailQueueService.queueEmail({
+                to: testRecipient ? testRecipient : user.email,
+                subject: (0, email_template_utils_1.renderTemplate)(subject, context),
+                html: (0, email_template_utils_1.renderTemplate)(html, context),
+                from: process.env.SMTP_FROM,
+                campaign,
+            });
+            emailCount++;
+        }
+        // The text that was actually sent becomes the default for the next mailing.
+        yield (0, email_template_utils_1.saveReminderTemplate)(options.key, { subject, html }, (_d = res.locals.user) === null || _d === void 0 ? void 0 : _d.email);
+        return res.render(options.view, Object.assign(Object.assign({}, state), { error: undefined, success: t(req, options.successKey, { count: emailCount }), borrowers: borrowersInfo, campaign,
+            signature, sent: true }));
+    }
+    catch (error) {
+        console.error(options.logLabel, error);
+        return renderError(options.errorKey);
+    }
+});
+module.exports.early_reminder_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    return handleReminderPost(req, res, {
+        view: "early-reminder",
+        key: "early-reminder",
+        noBorrowersKey: "score.early.reminder.no.borrowers",
+        successKey: "score.early.reminder.success",
+        errorKey: "score.early.reminder.error",
+        logLabel: "Error sending early reminders:",
+    });
+});
+module.exports.return_reminder_get = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    res.render("return-reminder", Object.assign(Object.assign({}, (yield reminderRenderState("return-reminder"))), { error: undefined, success: undefined, borrowers: undefined, campaign: "", signature: "", sent: false }));
 });
 module.exports.editScoreState_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { scoreId } = req.body;
@@ -955,95 +1029,12 @@ module.exports.updateScoreState_post = (req, res) => __awaiter(void 0, void 0, v
     }
 });
 module.exports.return_reminder_post = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
-    const { signature } = req.body;
-    const signatures = yield (0, score_utils_1.getScoreTypes)();
-    try {
-        // Find all scores with this signature that are currently checked out
-        const scores = yield Score_1.Score.find({
-            signature: signature,
-            checkedOutByUserId: { $ne: "" }, // not empty means checked out
-        });
-        if (scores.length === 0) {
-            return res.render("return-reminder", {
-                signatures,
-                error: t(req, "score.return.reminder.no.borrowers"),
-                success: undefined,
-                borrowers: undefined,
-            });
-        }
-        // Get unique user IDs and prepare borrower info
-        const borrowerMap = new Map(); // userId -> { user, scoreIds[] }
-        const borrowersInfo = [];
-        for (const score of scores) {
-            if (score.checkedOutByUserId) {
-                const user = yield User_1.User.findOne({ id: score.checkedOutByUserId });
-                if (user && user.email) {
-                    if (!borrowerMap.has(user.id)) {
-                        borrowerMap.set(user.id, { user, scoreIds: [] });
-                    }
-                    borrowerMap.get(user.id).scoreIds.push(score.id);
-                    // Find the latest checkout for this score
-                    const latestCheckout = score.checkouts
-                        .filter((c) => !c.checkinTimestamp)
-                        .sort((a, b) => b.checkoutTimestamp.getTime() - a.checkoutTimestamp.getTime())[0];
-                    borrowersInfo.push({
-                        userName: `${user.firstName} ${user.lastName}`,
-                        userEmail: user.email,
-                        scoreId: score.id,
-                        checkoutDate: ((_b = latestCheckout === null || latestCheckout === void 0 ? void 0 : latestCheckout.checkoutTimestamp) === null || _b === void 0 ? void 0 : _b.toLocaleDateString("de-DE")) ||
-                            "",
-                    });
-                }
-            }
-        }
-        // Send emails to all unique borrowers
-        const scoreTypeMap = yield (0, score_utils_1.getScoreTypeMap)();
-        const scoreName = scoreTypeMap.get(signature);
-        const testRecipient = (0, misc_utils_1.getEnvVar)("EMAIL_TEST_RECIPIENT");
-        let emailCount = 0;
-        for (const [userId, { user, scoreIds }] of borrowerMap) {
-            const recipientEmail = testRecipient ? testRecipient : user.email;
-            const scoreIdList = scoreIds.length > 1 ? scoreIds.join(", ") : scoreIds[0];
-            const subject = `Rückgabe der Noten "${scoreName}" nach dem Konzert`;
-            const html = `
-Liebe(r) ${user.firstName} ${user.lastName},
-<p>
-Du hast die Noten "${scoreName}" mit HSC-Nummer ${scoreIdList} vom Hans-Sachs-Chor ausgeliehen.
-<p>
-Nun ist das Konzert vorbei - wir hoffen, es hat Dir Freude bereitet!
-<p>
-Bitte gib die Noten zeitnah zurück, damit wir sie an den Verlag zurücksenden können.<br>
-Bitte radiere vorher Deine Eintragungen aus.
-<p>
-Du kannst auf diese E-Mail antworten!
-<p>
-Vielen Dank!
-<p>
-Dein Hans-Sachs-Chor Notenwart
-`;
-            yield email_queue_utils_1.emailQueueService.queueEmail({
-                to: recipientEmail,
-                subject,
-                html,
-                from: process.env.SMTP_FROM,
-            });
-            emailCount++;
-        }
-        return res.render("return-reminder", {
-            signatures,
-            error: undefined,
-            success: t(req, "score.return.reminder.success", { count: emailCount }),
-            borrowers: borrowersInfo,
-        });
-    }
-    catch (error) {
-        console.error("Error sending return reminders:", error);
-        return res.render("return-reminder", {
-            signatures,
-            error: t(req, "score.return.reminder.error"),
-            success: undefined,
-            borrowers: undefined,
-        });
-    }
+    return handleReminderPost(req, res, {
+        view: "return-reminder",
+        key: "return-reminder",
+        noBorrowersKey: "score.return.reminder.no.borrowers",
+        successKey: "score.return.reminder.success",
+        errorKey: "score.return.reminder.error",
+        logLabel: "Error sending return reminders:",
+    });
 });

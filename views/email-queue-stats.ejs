@@ -120,6 +120,10 @@
         <td><%= stats.rateLimit.sentLastDay %> / <%= stats.rateLimit.maxEmailsPerDay %></td>
       </tr>
       <tr>
+        <td><%= t('email.queue.stats.dry.run') %></td>
+        <td><%= stats.dryRun %></td>
+      </tr>
+      <tr>
         <td><%= t('email.queue.stats.window') %></td>
         <td>
           <% if (stats.rateLimit.nextAvailableIn) { %>
@@ -140,6 +144,7 @@
           <tr>
             <th><%= t('email.queue.stats.to') %></th>
             <th><%= t('email.queue.stats.subject') %></th>
+            <th><%= t('email.queue.stats.campaign') %></th>
             <th><%= t('email.queue.stats.created') %></th>
             <th><%= t('email.queue.stats.priority') %></th>
           </tr>
@@ -147,6 +152,7 @@
             <tr>
               <td class="email-cell"><%= email.to %></td>
               <td><%= email.subject %></td>
+              <td><%= email.campaign || '-' %></td>
               <td><%= formatDateTime(email.createdAt) %></td>
               <td><%= email.priority ? t('email.queue.stats.yes') : '-' %></td>
             </tr>
@@ -168,6 +174,7 @@
           <tr>
             <th><%= t('email.queue.stats.to') %></th>
             <th><%= t('email.queue.stats.subject') %></th>
+            <th><%= t('email.queue.stats.campaign') %></th>
             <th><%= t('email.queue.stats.error') %></th>
             <th><%= t('email.queue.stats.attempts') %></th>
             <th><%= t('email.queue.stats.failed.date') %></th>
@@ -176,6 +183,7 @@
             <tr>
               <td class="email-cell"><%= email.to %></td>
               <td><%= email.subject %></td>
+              <td><%= email.campaign || '-' %></td>
               <td><small><%= email.error %></small></td>
               <td><%= email.attempts %> / <%= email.maxAttempts %></td>
               <td><%= formatDateTime(email.createdAt) %></td>

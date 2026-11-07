@@ -81,6 +81,40 @@ As a maintainer I need to get a view of all checkouts.
   - mark the checkout record as returned
   - log some metadata (e.g. date)
 
+## E-mail delivery and mass mailings
+
+Application e-mails, including reminder and mass-mailing messages, are stored in a MongoDB-backed queue before delivery. The AWS deployment has two Lambda functions: the API Lambda handles web requests, while a separate `emailQueueWorker` Lambda sends queued e-mails. When mail is queued, the API starts the worker asynchronously; it does not wait for delivery to finish. This prevents larger mailings from being cut short when an API Lambda invocation times out.
+
+- The worker sends priority messages first, then processes older messages before newer ones.
+- Processing is limited by `EMAIL_BATCH_SIZE` (default `5`), `EMAIL_LIMIT_HOUR` (default `20`), and `EMAIL_LIMIT_DAY` (default `100`). These limits apply to successfully delivered messages.
+- The worker waits briefly between messages. Failed deliveries are retried up to three times; messages that still fail are marked failed.
+- When a batch finishes, the worker starts another run if more messages can be sent immediately, or schedules a later run when the sending quota or a message's scheduled time requires a wait. It continues this way until there are no eligible messages, without requiring another API request. The worker has its own longer Lambda timeout and single-instance concurrency limit.
+- Locally, the queue is checked once a minute while the app is running. Set `EMAIL_QUEUE_MODE=log` to exercise the queue without sending messages; messages are logged and recorded as dry runs.
+- Administrators can inspect pending, sent, and failed messages, rate-limit usage, and the next available sending window at `/admin/email-queue-stats`.
+- Every mass mailing (early reminder, return reminder) requires a **campaign** name, entered on the page that triggers the mailing. It is stored with each queued message, is shown in the verbose and failed lists of the queue stats page, and is indexed so that a mailing can be evaluated later, e.g. `db.emailqueues.find({ campaign: "orff-2026-return", status: "failed" })`.
+
+### Reminder mailings
+
+The early-reminder and return-reminder pages let an administrator select a score and then show, before anything is sent, the list of copies that would be reminded, the number of e-mails and borrowers, and a warning if a test recipient is configured.
+
+One e-mail is sent **per checked-out copy**, so a borrower who has several copies of the same score receives one reminder for each of them, each naming its own score number.
+
+The subject and body of both reminder mails are editable on the page itself and are stored in the `emailtemplates` collection (one document per reminder type). If no document exists yet, the built-in German default text is used, so no migration is needed.
+
+- The text may contain the placeholders `{{firstName}}`, `{{lastName}}`, `{{scoreName}}` and `{{scoreId}}` (the score number of the copy the mail is about), which are replaced per recipient. Unknown placeholders are left in place so that typos remain visible.
+- The preview renders the subject and body with the data of the first entry in the list; the body is shown in a sandboxed frame because it is HTML.
+- The text is saved automatically when the mailing is started, so the stored template always matches what was sent last.
+- A **Reset** button restores the built-in default text in the form; it is persisted on the next send.
+
+### Testing e-mail delivery
+
+- **Dry run (`EMAIL_QUEUE_MODE=log`)**: only effective when running locally (ignored in Lambda). The queue is processed as usual, but nothing is sent and the SMTP connection is not verified at startup. Each message is logged (`[EMAIL DRY RUN]`) and stored as `sent` with `dryRun: true`. Dry-run messages don't count against the hourly/daily limits and are shown separately on the queue stats page.
+- **Test recipient (`EMAIL_TEST_RECIPIENT`)**: if set, the early-reminder, return-reminder, checkout and checkin confirmation e-mails are sent to this address instead of the real borrowers. It can be set per stage (e.g. `EMAIL_TEST_RECIPIENT_dev`); in the deployed Lambdas it comes from the environment, locally from `.env`. **Make sure it is unset in production**, otherwise real users won't receive their e-mails.
+- **Test e-mail**: on all stages except `prod`, the admin home page offers a "Send test e-mail" button (`/admin/test-email`). It queues a message to `EMAIL_TEST_RECIPIENT` and redirects to the queue stats page, so the complete queue/worker path can be verified.
+- **Queue stats** (`/admin/email-queue-stats`): shows counts, rate-limit usage, the next sending window and the dry-run count; `?verbose=1` lists pending messages and `?showFailed=1` lists failed ones.
+- **Playwright**: e2e test users don't trigger checkout/checkin confirmation e-mails.
+- **Rate limits for testing**: lower `EMAIL_BATCH_SIZE`, `EMAIL_LIMIT_HOUR` and `EMAIL_LIMIT_DAY` to exercise batching and the scheduled resume without sending many messages.
+
 ## TODO:
 
 - mit einem Leihzettel können mehrere Ausleihen erzeugt werden
